@@ -1420,10 +1420,9 @@ function renderWorkbook(sheets, styleRegistry, dxfs) {
   Replicates enhance.py's workbook construction entirely in JS, using
   xlsx-writer-v2.js as the low-level OOXML writer. Given the current
   `shifts` state (staffNo -> {day -> code}) and `STAFF` roster array,
-  produces a 7-sheet workbook identical in structure to the Python
-  pipeline's output: 使い方ガイド / ①担当一覧 / ②シフト表(oplus風) /
+  produces a workbook with: 使い方ガイド / ①担当一覧 / ②シフト表(oplus風) /
   ③科別勤務者一覧 / ④科別メンバー / ⑤夜勤バランス / ⑥休み希望 /
-  ⑦時間帯別集計.
+  ⑦時間帯別集計 / ⑧委員会一覧 / ⑨予定.
 */
 
 const NAVY = '1F4E79';
@@ -1462,7 +1461,7 @@ function effectiveShiftValue(shifts, staffNo, day) {
 // CODE_COLORS-for-departments) are derived from it here so the
 // workbook always reflects whatever departments the user has defined.
 // ============================================================
-function buildFullWorkbook(STAFF, shifts, year, month, CODE_COLORS, DEPARTMENTS) {
+function buildFullWorkbook(STAFF, shifts, year, month, CODE_COLORS, DEPARTMENTS, COMMITTEES, EVENTS) {
   const REQUIRED_HEADCOUNT = {};
   const DEPT_FULL_NAME = {};
   DEPARTMENTS.forEach(d => { REQUIRED_HEADCOUNT[d.code] = d.required; DEPT_FULL_NAME[d.code] = d.name; });
@@ -1538,6 +1537,10 @@ function buildFullWorkbook(STAFF, shifts, year, month, CODE_COLORS, DEPARTMENTS)
       '・休み希望が月6回以上 → ⚠休み希望超過（赤）',
       '・夜勤合計が他の常勤者平均より3回以上多い/少ない → ⚠偏りあり（黄）',
     ]],
+    ['⑥ ⑧委員会一覧・⑨予定シートについて', [
+      '⑧委員会一覧は、各委員会の所属メンバーを一覧できます（①担当一覧にも所属委員会の列があります）。',
+      '⑨予定は、ツールの「予定」タブで登録した院内研修・会議などの日程一覧です。',
+    ]],
   ];
   let gRow = 3;
   guideSections.forEach(([title, lines]) => {
@@ -1557,11 +1560,11 @@ function buildFullWorkbook(STAFF, shifts, year, month, CODE_COLORS, DEPARTMENTS)
   // ================================================================
   const roster = new SheetBuilder('①担当一覧');
   roster.set('A1', '担当科一覧 (主担当＋サブ担当2科)', { style: reg.style({ bold: true, size: 14 }) });
-  const rHeaders = ['No', '氏名', '区分', '主担当', 'サブ担当1', 'サブ担当2', '退勤時刻'];
+  const rHeaders = ['No', '氏名', '区分', '主担当', 'サブ担当1', 'サブ担当2', '退勤時刻', '所属委員会'];
   rHeaders.forEach((h, i) => roster.set(`${colLetter(i + 1)}3`, h, { style: sHeaderNavy }));
   roster.colWidth('A', 5); roster.colWidth('B', 14); roster.colWidth('C', 12);
   roster.colWidth('D', 18); roster.colWidth('E', 18); roster.colWidth('F', 18);
-  roster.colWidth('G', 9);
+  roster.colWidth('G', 9); roster.colWidth('H', 24);
   roster.freeze(3, 0);
 
   const deptColorByJpName = {};
@@ -1578,6 +1581,8 @@ function buildFullWorkbook(STAFF, shifts, year, month, CODE_COLORS, DEPARTMENTS)
       roster.set(`${colLetter(4 + j)}${r}`, val, { style: fillStyle(hex ? hex.replace('#', '') : null) });
     });
     roster.set(`G${r}`, staff.depTime ? `${staff.depTime}時` : '', { style: reg.style({ size: 9, bold: !!staff.depTime, color: staff.depTime ? '1F4E79' : 'BFBFBF', halign: 'center' }) });
+    const committeeNames = (COMMITTEES || []).filter(c => (staff.committees || []).includes(c.id)).map(c => c.name).join('・');
+    roster.set(`H${r}`, committeeNames, { style: sMuted });
   });
   sheets.push(roster);
 
@@ -1958,6 +1963,62 @@ function buildFullWorkbook(STAFF, shifts, year, month, CODE_COLORS, DEPARTMENTS)
   });
   tb.freeze(4, 2);
   sheets.push(tb);
+
+  // ================================================================
+  // Sheet: ⑧委員会一覧
+  // ================================================================
+  const committeeSheet = new SheetBuilder('⑧委員会一覧');
+  committeeSheet.set('A1', '  委員会一覧・所属メンバー', { style: sTitle });
+  committeeSheet.merge('A1:C1');
+  committeeSheet.colWidth('A', 24); committeeSheet.colWidth('B', 16); committeeSheet.colWidth('C', 12);
+  let cmRow = 3;
+  if (!COMMITTEES || !COMMITTEES.length) {
+    committeeSheet.set(`A${cmRow}`, '委員会は登録されていません。', { style: sMuted });
+  } else {
+    COMMITTEES.forEach(committee => {
+      const members = STAFF.filter(s => (s.committees || []).includes(committee.id));
+      committeeSheet.set(`A${cmRow}`, `  ${committee.name}（${members.length}名）`, {
+        style: reg.style({ bold: true, color: WHITE, fill: (committee.color || '607D8B').replace('#', ''), valign: 'center' }),
+      });
+      committeeSheet.merge(`A${cmRow}:C${cmRow}`);
+      cmRow++;
+      if (!members.length) {
+        committeeSheet.set(`B${cmRow}`, '（所属者なし）', { style: sMuted });
+        cmRow++;
+      } else {
+        members.forEach(m => {
+          committeeSheet.set(`B${cmRow}`, m.name, { style: sNormal });
+          committeeSheet.set(`C${cmRow}`, m.cat, { style: sMuted });
+          cmRow++;
+        });
+      }
+      cmRow++; // spacer row between committees
+    });
+  }
+  sheets.push(committeeSheet);
+
+  // ================================================================
+  // Sheet: ⑨予定
+  // ================================================================
+  const eventSheet = new SheetBuilder('⑨予定');
+  eventSheet.set('A1', `  ${year}年${month}月 の予定`, { style: sTitle });
+  eventSheet.merge('A1:C1');
+  const evHeaders = ['日付', '曜日', '内容'];
+  evHeaders.forEach((h, i) => eventSheet.set(`${colLetter(i + 1)}3`, h, { style: sHeaderNavy }));
+  eventSheet.colWidth('A', 10); eventSheet.colWidth('B', 8); eventSheet.colWidth('C', 32);
+  eventSheet.freeze(3, 0);
+  if (!EVENTS || !EVENTS.length) {
+    eventSheet.set('A4', '登録されている予定はありません。', { style: sMuted });
+  } else {
+    const sortedEvents = [...EVENTS].sort((a, b) => a.day - b.day);
+    sortedEvents.forEach((ev, i) => {
+      const r = 4 + i;
+      eventSheet.set(`A${r}`, `${month}/${ev.day}`, { style: sNormalCenter });
+      eventSheet.set(`B${r}`, weekdayLetterJP(year, month, ev.day), { style: sNormalCenter });
+      eventSheet.set(`C${r}`, ev.title, { style: fillStyle((ev.color || '607D8B').replace('#', ''), { halign: 'left' }) });
+    });
+  }
+  sheets.push(eventSheet);
 
   return renderWorkbook(sheets, reg, dxfs);
 }
@@ -2837,7 +2898,7 @@ function exportToExcel() {
   // (synchronous, CPU-bound) workbook build blocks the main thread
   setTimeout(() => {
     try {
-      const bytes = buildFullWorkbook(STAFF, shifts, year, month, codeColors(), DEPARTMENTS);
+      const bytes = buildFullWorkbook(STAFF, shifts, year, month, codeColors(), DEPARTMENTS, COMMITTEES, EVENTS);
       const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const url = URL.createObjectURL(blob);
       const fname = `外来看護師勤務表_${year}年${month}月.xlsx`;
@@ -2848,7 +2909,7 @@ function exportToExcel() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      showToast(`${fname} をダウンロードしました（全8シート）`);
+      showToast(`${fname} をダウンロードしました（全10シート）`);
     } catch (e) {
       showToast('ダウンロードに失敗しました: ' + e.message, 'error');
       console.error(e);
