@@ -531,6 +531,34 @@
     border-radius: 6px;
     padding: 2px;
   }
+  .committee-checks {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 140px;
+    overflow-y: auto;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 8px 10px;
+  }
+  .committee-checks label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12.5px;
+    font-weight: 400;
+    color: var(--ink);
+    margin-bottom: 0;
+    cursor: pointer;
+  }
+  .committee-checks .empty-hint { font-size: 12px; color: var(--muted); }
+  .committee-tag {
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 12px;
+    color: #fff;
+    font-weight: 700;
+  }
   :focus-visible {
     outline: 2px solid var(--navy);
     outline-offset: 2px;
@@ -882,6 +910,10 @@
         <option value="set_required">准夜・深夜とも可、必ずセット（准夜→深夜）で入れる</option>
       </select>
     </div>
+    <div class="form-row">
+      <label>所属委員会（複数選択可）</label>
+      <div class="committee-checks" id="editCommittees"></div>
+    </div>
     <button class="btn primary" id="staffSaveBtn" style="width:100%; margin-top:10px;">保存する</button>
     <button class="picker-close" id="staffEditCancel">キャンセル</button>
   </div>
@@ -911,12 +943,32 @@
   </div>
 </div>
 
+<div class="picker-overlay" id="committeeEditOverlay">
+  <div class="picker-box" style="width:360px;">
+    <h3 id="committeeEditTitle">委員会を編集</h3>
+    <div class="form-row">
+      <label>委員会名</label>
+      <input type="text" id="editCommitteeName" placeholder="例: 感染対策委員会">
+    </div>
+    <div class="form-row">
+      <label>色</label>
+      <input type="color" id="editCommitteeColor" value="#607D8B">
+    </div>
+    <button class="btn primary" id="committeeSaveBtn" style="width:100%; margin-top:10px;">保存する</button>
+    <button class="picker-close" id="committeeEditCancel">キャンセル</button>
+  </div>
+</div>
+
 <div class="picker-overlay" id="eventEditOverlay">
   <div class="picker-box" style="width:380px;">
     <h3 id="eventEditTitle">予定を編集</h3>
     <div class="form-row">
       <label>日付</label>
       <input type="number" id="editEventDay" min="1" max="31" placeholder="例: 10">
+    </div>
+    <div class="form-row">
+      <label>委員会から選択（任意）</label>
+      <select id="editEventCommittee"></select>
     </div>
     <div class="form-row">
       <label>内容</label>
@@ -2138,6 +2190,16 @@ let EVENTS = []; // { id, day, title, color }
 let nextEventId = 1;
 function eventsForDay(day) { return EVENTS.filter(e => e.day === day); }
 
+// COMMITTEES is the master list of hospital-wide committees (感染対策委員会
+// など). Staff belong to zero or more of them via staff.committees, an
+// array of committee ids -- separate from their clinical department
+// assignments (main/sub1/sub2).
+let COMMITTEES = []; // { id, name, color }
+let nextCommitteeId = 1;
+function committeesOf(staff) {
+  return (staff.committees || []).map(id => COMMITTEES.find(c => c.id === id)).filter(Boolean);
+}
+
 // シフト交換: グリッド表示で2つのセルを選び、両者の内容（シフト記号＋
 // 休み希望フラグ）をまるごと入れ替える。
 let swapMode = false;
@@ -2597,6 +2659,7 @@ function renderMain() {
       <h2>${staff.name}</h2>
       <span class="tag">${staff.cat}</span>
       ${staff.depTime ? `<span class="tag">${staff.depTime}時まで</span>` : ''}
+      ${committeesOf(staff).map(c => `<span class="committee-tag" style="background:${c.color}">${esc(c.name)}</span>`).join('')}
     </div>
     <div class="person-meta">
       ${(staff.main || staff.sub1 || staff.sub2)
@@ -2897,10 +2960,11 @@ function renderSidebarStaffManagement() {
   STAFF.forEach(s => {
     const item = document.createElement('div');
     item.className = 'mgmt-item';
+    const committeeNames = committeesOf(s).map(c => c.name).join('・');
     item.innerHTML = `
       <span>
         <div class="mgmt-main">${s.name}</div>
-        <div class="mgmt-sub">${s.cat}${s.depTime ? ' ・'+s.depTime+'時まで' : ''}${nightTypeLabel(s.nightType) ? ' ・'+nightTypeLabel(s.nightType) : ''}</div>
+        <div class="mgmt-sub">${s.cat}${s.depTime ? ' ・'+s.depTime+'時まで' : ''}${nightTypeLabel(s.nightType) ? ' ・'+nightTypeLabel(s.nightType) : ''}${committeeNames ? ' ・'+esc(committeeNames) : ''}</div>
       </span>
       <span class="mgmt-actions">
         <button data-act="edit">編集</button>
@@ -2918,7 +2982,7 @@ function renderSidebarStaffManagement() {
   main.innerHTML = `
     <div class="empty-state">
       左の一覧からスタッフを編集、または「＋ スタッフを追加」で新しいスタッフを登録してください。<br>
-      氏名・区分・主担当/サブ担当・退勤時刻（パートのみ）を設定できます。
+      氏名・区分・主担当/サブ担当・退勤時刻（パートのみ）・所属委員会を設定できます。
     </div>
   `;
 }
@@ -2936,6 +3000,14 @@ function openStaffEdit(staffNo) {
   document.getElementById('editSub2').innerHTML = deptSelectOptions(staff ? staff.sub2 : null);
   document.getElementById('editDepTime').value = staff && staff.depTime ? String(staff.depTime) : '';
   document.getElementById('editNightType').value = staff && staff.nightType ? staff.nightType : 'free';
+
+  const staffCommittees = staff ? (staff.committees || []) : [];
+  const checksBox = document.getElementById('editCommittees');
+  checksBox.innerHTML = COMMITTEES.length
+    ? COMMITTEES.map(c => `
+        <label><input type="checkbox" value="${c.id}" ${staffCommittees.includes(c.id) ? 'checked' : ''}>${esc(c.name)}</label>
+      `).join('')
+    : '<div class="empty-hint">委員会が未登録です。「科一覧」タブから追加できます。</div>';
 
   overlay.classList.add('open');
 }
@@ -2955,13 +3027,14 @@ function saveStaffEdit() {
   const depTimeRaw = document.getElementById('editDepTime').value;
   const depTime = depTimeRaw ? parseInt(depTimeRaw, 10) : null;
   const nightType = document.getElementById('editNightType').value;
+  const committees = Array.from(document.querySelectorAll('#editCommittees input[type="checkbox"]:checked')).map(el => parseInt(el.value, 10));
 
   if (editingStaffNo !== null) {
     const staff = STAFF.find(s => s.no === editingStaffNo);
-    Object.assign(staff, { name, cat, main, sub1, sub2, depTime, nightType });
+    Object.assign(staff, { name, cat, main, sub1, sub2, depTime, nightType, committees });
   } else {
     const newNo = STAFF.length ? Math.max(...STAFF.map(s => s.no)) + 1 : 1;
-    STAFF.push({ no: newNo, name, cat, main, sub1, sub2, depTime, nightType });
+    STAFF.push({ no: newNo, name, cat, main, sub1, sub2, depTime, nightType, committees });
     shifts[newNo] = {};
     shifts.__pto[newNo] = {};
   }
@@ -3010,6 +3083,9 @@ function renderSidebarDeptManagement() {
     <h2 style="margin-top:18px;">科一覧（${DEPARTMENTS.length}科）</h2>
     <button class="mgmt-add-btn" id="deptAddBtn">＋ 科を追加</button>
     <div class="mgmt-list" id="deptMgmtList"></div>
+    <h2 style="margin-top:18px;">委員会一覧（${COMMITTEES.length}件）</h2>
+    <button class="mgmt-add-btn" id="committeeAddBtn">＋ 委員会を追加</button>
+    <div class="mgmt-list" id="committeeMgmtList"></div>
   `;
   sidebar.appendChild(wrap);
 
@@ -3040,11 +3116,34 @@ function renderSidebarDeptManagement() {
 
   document.getElementById('deptAddBtn').onclick = () => openDeptEdit(null);
 
+  const committeeList = document.getElementById('committeeMgmtList');
+  COMMITTEES.forEach(c => {
+    const memberCount = STAFF.filter(s => (s.committees || []).includes(c.id)).length;
+    const item = document.createElement('div');
+    item.className = 'mgmt-item';
+    item.innerHTML = `
+      <span>
+        <div class="mgmt-main"><span class="dept-swatch" style="background:${c.color}"></span>${esc(c.name)}</div>
+        <div class="mgmt-sub">所属 ${memberCount}名</div>
+      </span>
+      <span class="mgmt-actions">
+        <button data-act="edit">編集</button>
+        <button data-act="del" class="danger">削除</button>
+      </span>
+    `;
+    item.querySelector('[data-act="edit"]').onclick = () => openCommitteeEdit(c.id);
+    item.querySelector('[data-act="del"]').onclick = () => deleteCommittee(c.id);
+    committeeList.appendChild(item);
+  });
+
+  document.getElementById('committeeAddBtn').onclick = () => openCommitteeEdit(null);
+
   const main = document.getElementById('mainArea');
   main.innerHTML = `
     <div class="empty-state">
-      左の一覧から科を編集、または「＋ 科を追加」で新しい科を登録してください。<br>
-      記号は1文字で、シフト表の入力記号として使われます（既存スタッフの主担当・サブ担当には影響しません。科を削除する前に、担当しているスタッフの設定を見直してください）。
+      左の一覧から科・委員会を編集、または「＋追加」ボタンで新しく登録してください。<br>
+      科の記号は1文字で、シフト表の入力記号として使われます（既存スタッフの主担当・サブ担当には影響しません。科を削除する前に、担当しているスタッフの設定を見直してください）。<br>
+      委員会は「スタッフ管理」の編集画面から各スタッフに割り当てられます。委員会の会議日は「予定」タブから登録できます。
     </div>
   `;
 }
@@ -3112,6 +3211,55 @@ function deleteDept(code) {
   showToast(`${dept.name} を削除しました`);
 }
 
+let editingCommitteeId = null; // null = adding new
+
+function openCommitteeEdit(id) {
+  editingCommitteeId = id;
+  const overlay = document.getElementById('committeeEditOverlay');
+  const committee = id !== null ? COMMITTEES.find(c => c.id === id) : null;
+
+  document.getElementById('committeeEditTitle').textContent = committee ? `${committee.name} を編集` : '新しい委員会を追加';
+  document.getElementById('editCommitteeName').value = committee ? committee.name : '';
+  document.getElementById('editCommitteeColor').value = committee ? committee.color : '#607D8B';
+
+  overlay.classList.add('open');
+}
+
+function closeCommitteeEdit() {
+  document.getElementById('committeeEditOverlay').classList.remove('open');
+  editingCommitteeId = null;
+}
+
+function saveCommitteeEdit() {
+  const name = document.getElementById('editCommitteeName').value.trim();
+  const color = document.getElementById('editCommitteeColor').value;
+  if (!name) { showToast('委員会名を入力してください', 'error'); return; }
+  const duplicate = COMMITTEES.find(c => c.name === name && c.id !== editingCommitteeId);
+  if (duplicate) { showToast(`「${name}」は既に登録されています`, 'error'); return; }
+
+  if (editingCommitteeId !== null) {
+    const committee = COMMITTEES.find(c => c.id === editingCommitteeId);
+    Object.assign(committee, { name, color });
+  } else {
+    COMMITTEES.push({ id: nextCommitteeId++, name, color });
+  }
+  closeCommitteeEdit();
+  renderSidebarDeptManagement();
+  showToast(`${name} を保存しました`);
+}
+
+function deleteCommittee(id) {
+  const committee = COMMITTEES.find(c => c.id === id);
+  const usedBy = STAFF.filter(s => (s.committees || []).includes(id));
+  let msg = `${committee.name} を削除します。`;
+  if (usedBy.length) msg += `\n注意: ${usedBy.length}名のスタッフがこの委員会に所属しています（削除すると各スタッフの所属からも外れます）。`;
+  if (!confirm(msg + '\nよろしいですか？')) return;
+  COMMITTEES = COMMITTEES.filter(c => c.id !== id);
+  STAFF.forEach(s => { if (s.committees) s.committees = s.committees.filter(cid => cid !== id); });
+  renderSidebarDeptManagement();
+  showToast(`${committee.name} を削除しました`);
+}
+
 // ============================================================
 // イベント予定モード: 研修・会議など、スタッフの誰かではなく「その日」
 // 自体に紐づく予定を管理する（休み希望や科一覧とは別レイヤー）。
@@ -3175,6 +3323,18 @@ function openEventEdit(id) {
   document.getElementById('editEventDay').max = String(nDaysDefault);
   document.getElementById('editEventTitle').value = ev ? ev.title : '';
   document.getElementById('editEventColor').value = ev ? ev.color : '#607D8B';
+
+  const committeeSelect = document.getElementById('editEventCommittee');
+  committeeSelect.innerHTML = '<option value="">（自由入力・委員会以外の予定）</option>' +
+    COMMITTEES.map(c => `<option value="${c.id}">${esc(c.name)}の会議</option>`).join('');
+  committeeSelect.value = '';
+  committeeSelect.onchange = () => {
+    const committee = COMMITTEES.find(c => c.id === parseInt(committeeSelect.value, 10));
+    if (committee) {
+      document.getElementById('editEventTitle').value = `${committee.name}の会議`;
+      document.getElementById('editEventColor').value = committee.color;
+    }
+  };
 
   overlay.classList.add('open');
 }
@@ -3253,6 +3413,11 @@ document.getElementById('deptEditCancel').onclick = closeDeptEdit;
 document.getElementById('deptSaveBtn').onclick = saveDeptEdit;
 document.getElementById('deptEditOverlay').addEventListener('click', (e) => {
   if (e.target.id === 'deptEditOverlay') closeDeptEdit();
+});
+document.getElementById('committeeEditCancel').onclick = closeCommitteeEdit;
+document.getElementById('committeeSaveBtn').onclick = saveCommitteeEdit;
+document.getElementById('committeeEditOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'committeeEditOverlay') closeCommitteeEdit();
 });
 document.getElementById('eventEditCancel').onclick = closeEventEdit;
 document.getElementById('eventSaveBtn').onclick = saveEventEdit;
