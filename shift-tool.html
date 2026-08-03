@@ -452,11 +452,12 @@
     flex: 1;
     border: none;
     background: none;
-    padding: 10px 4px;
-    font-size: 12.5px;
+    padding: 10px 2px;
+    font-size: 11.5px;
     font-weight: 700;
     color: var(--muted);
     cursor: pointer;
+    white-space: nowrap;
     border-bottom: 2px solid transparent;
   }
   .mode-tab.active { color: var(--navy); border-bottom-color: var(--navy); }
@@ -739,6 +740,45 @@
     .grid-table th, .grid-table td { padding: 2px 3px; position: static !important; }
     @page { size: landscape; margin: 8mm; }
   }
+  .d-event {
+    margin-top: 3px;
+    font-size: 9px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .grid-table tr.grid-event-row td { background: #eef4fa; font-weight: 700; font-size: 10px; }
+  .grid-table tr.grid-event-row td.name-col, .grid-table tr.grid-event-row td.cat-col { background: #eef4fa; }
+  .grid-table tr.grid-event-row td.event-cell {
+    max-width: 30px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 400;
+    font-size: 9.5px;
+    cursor: default;
+  }
+  .swap-toggle-btn {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--muted);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .swap-toggle-btn.active { background: #b3651f; color: #fff; border-color: #b3651f; }
+  .swap-hint {
+    font-size: 12px;
+    color: #b3651f;
+    font-weight: 700;
+    margin: -6px 0 12px;
+  }
+  .grid-table td.shift-cell.swap-selected {
+    outline: 3px solid #b3651f;
+    outline-offset: -3px;
+  }
 </style>
 </head>
 <body>
@@ -762,9 +802,10 @@
 <div class="layout">
   <div class="sidebar">
     <div class="mode-tabs">
-      <button class="mode-tab active" data-mode="shift">シフト入力</button>
-      <button class="mode-tab" data-mode="staff">スタッフ管理</button>
+      <button class="mode-tab active" data-mode="shift">シフト</button>
+      <button class="mode-tab" data-mode="staff">スタッフ</button>
       <button class="mode-tab" data-mode="dept">科一覧</button>
+      <button class="mode-tab" data-mode="event">予定</button>
     </div>
     <div id="sidebarShiftMode">
       <h2>スタッフ一覧</h2>
@@ -867,6 +908,26 @@
     </div>
     <button class="btn primary" id="deptSaveBtn" style="width:100%; margin-top:10px;">保存する</button>
     <button class="picker-close" id="deptEditCancel">キャンセル</button>
+  </div>
+</div>
+
+<div class="picker-overlay" id="eventEditOverlay">
+  <div class="picker-box" style="width:380px;">
+    <h3 id="eventEditTitle">予定を編集</h3>
+    <div class="form-row">
+      <label>日付</label>
+      <input type="number" id="editEventDay" min="1" max="31" placeholder="例: 10">
+    </div>
+    <div class="form-row">
+      <label>内容</label>
+      <input type="text" id="editEventTitle" placeholder="例: 院内研修、看護部会議など">
+    </div>
+    <div class="form-row">
+      <label>色</label>
+      <input type="color" id="editEventColor" value="#607D8B">
+    </div>
+    <button class="btn primary" id="eventSaveBtn" style="width:100%; margin-top:10px;">保存する</button>
+    <button class="picker-close" id="eventEditCancel">キャンセル</button>
   </div>
 </div>
 
@@ -2069,6 +2130,18 @@ const WEEKDAYS_JP = ['日','月','火','水','木','金','土'];
 let currentStaffIdx = null;
 let currentMode = 'shift'; // 'shift' | 'staff' | 'dept'
 let mainView = 'person'; // 'person' | 'grid' (grid = 全員一覧表示)
+
+// EVENTS holds ward-wide annotations (研修・会議など) keyed by day number
+// within the currently displayed month, mirroring how `shifts` itself
+// only tracks a single month at a time (no year/month key on entries).
+let EVENTS = []; // { id, day, title, color }
+let nextEventId = 1;
+function eventsForDay(day) { return EVENTS.filter(e => e.day === day); }
+
+// シフト交換: グリッド表示で2つのセルを選び、両者の内容（シフト記号＋
+// 休み希望フラグ）をまるごと入れ替える。
+let swapMode = false;
+let swapSelection = null; // { staffNo, day } | null
 // shifts[staffNo] = { 1: '内(13)', 2: '公', ... }
 // shifts.__pto[staffNo] = { 5: true, 10: true, ... }  (PTO request days)
 const shifts = {};
@@ -2086,6 +2159,8 @@ function switchMode(mode) {
     renderSidebarStaffManagement();
   } else if (mode === 'dept') {
     renderSidebarDeptManagement();
+  } else if (mode === 'event') {
+    renderSidebarEventManagement();
   }
 }
 
@@ -2363,6 +2438,15 @@ function renderGridView() {
     theadDays += `<th class="${isOffDay(d) ? 'weekend-col' : ''}">${d}<br>${WEEKDAYS_JP[wd]}</th>`;
   }
 
+  let eventRow = '';
+  for (let d = 1; d <= nDays; d++) {
+    const dayEvents = eventsForDay(d);
+    const title = dayEvents.map(e => e.title).join('・');
+    const style = dayEvents.length ? `border-left: 3px solid ${dayEvents[0].color};` : '';
+    eventRow += `<td class="event-cell${isOffDay(d) ? ' weekend-col' : ''}" style="${style}"${title ? ` title="${esc(title)}"` : ''}>${esc(title)}</td>`;
+  }
+  eventRow = `<tr class="grid-event-row"><td class="name-col">📌 予定</td><td class="cat-col"></td>${eventRow}</tr>`;
+
   let bodyRows = '';
   STAFF.forEach(staff => {
     const capable = capableCodes(staff);
@@ -2372,7 +2456,8 @@ function renderGridView() {
       const base = val ? val[0] : '';
       const isOutOfScope = base && depts.includes(base) && !capable.includes(base);
       const bg = val ? (colors[base] || '#fff') : '#fff';
-      cells += `<td class="shift-cell${isOffDay(d) ? ' weekend-col' : ''}${isOutOfScope ? ' warn-cell' : ''}" data-staff="${staff.no}" data-day="${d}" style="${val ? `background:${bg}55;` : ''}">${esc(val)}${isOutOfScope ? '△' : ''}</td>`;
+      const isSelected = swapMode && swapSelection && swapSelection.staffNo === staff.no && swapSelection.day === d;
+      cells += `<td class="shift-cell${isOffDay(d) ? ' weekend-col' : ''}${isOutOfScope ? ' warn-cell' : ''}${isSelected ? ' swap-selected' : ''}" data-staff="${staff.no}" data-day="${d}" style="${val ? `background:${bg}55;` : ''}">${esc(val)}${isOutOfScope ? '△' : ''}</td>`;
     }
     bodyRows += `<tr><td class="name-col">${esc(staff.name)}</td><td class="cat-col">${esc(staff.cat)}</td>${cells}</tr>`;
   });
@@ -2409,28 +2494,73 @@ function renderGridView() {
     ${viewToggleHtml()}
     <div class="print-only-title">${year}年${month}月 外来シフト表</div>
     <div class="person-meta">
-      セルをクリックすると記号を編集できます。表の下の行は各科・准夜・深夜の必要人数に対する過不足です（マイナス=不足・赤／プラス=過剰・黄）。
+      セルをクリックすると記号を編集できます。表の下の行は各科・准夜・深夜の必要人数に対する過不足です（マイナス=不足・赤／プラス=過剰・黄）。📌予定の行は、その日に登録されている院内研修・会議などの予定です。
     </div>
+    ${swapMode ? `<div class="swap-hint">🔄 交換モード: 入れ替えたいセルを2つクリックしてください${swapSelection ? '（1つ目を選択済み。2つ目をクリックすると入れ替わります）' : ''}</div>` : ''}
     <div class="toolbar" style="margin-top:0; margin-bottom:14px;">
       <button class="btn primary" id="gridDownloadBtn">勤務表をExcelでダウンロード（全員・全シート）</button>
       <button class="btn" id="gridPrintBtn">🖨 この一覧表を印刷する</button>
+      <button class="swap-toggle-btn${swapMode ? ' active' : ''}" id="swapToggleBtn">🔄 シフト交換モード${swapMode ? '：オン' : ''}</button>
     </div>
     <div class="grid-view-wrap">
       <table class="grid-table">
         <thead><tr><th class="name-col">氏名</th><th class="cat-col">区分</th>${theadDays}</tr></thead>
-        <tbody>${bodyRows}${summaryRows}</tbody>
+        <tbody>${eventRow}${bodyRows}${summaryRows}</tbody>
       </table>
     </div>
   `;
   wireViewToggle();
   main.querySelectorAll('td.shift-cell').forEach(td => {
     td.onclick = () => {
-      const staff = STAFF.find(s => s.no === parseInt(td.dataset.staff, 10));
-      openPicker(staff, parseInt(td.dataset.day, 10));
+      const staffNo = parseInt(td.dataset.staff, 10);
+      const day = parseInt(td.dataset.day, 10);
+      if (swapMode) {
+        handleSwapClick(staffNo, day);
+        return;
+      }
+      const staff = STAFF.find(s => s.no === staffNo);
+      openPicker(staff, day);
     };
   });
   document.getElementById('gridDownloadBtn').onclick = () => exportToExcel();
   document.getElementById('gridPrintBtn').onclick = () => window.print();
+  document.getElementById('swapToggleBtn').onclick = () => {
+    swapMode = !swapMode;
+    swapSelection = null;
+    renderMain();
+  };
+}
+
+function handleSwapClick(staffNo, day) {
+  if (!swapSelection) {
+    swapSelection = { staffNo, day };
+    renderMain();
+    return;
+  }
+  if (swapSelection.staffNo === staffNo && swapSelection.day === day) {
+    swapSelection = null; // clicking the same cell again cancels the selection
+    renderMain();
+    return;
+  }
+  const a = swapSelection;
+  const b = { staffNo, day };
+  const staffA = STAFF.find(s => s.no === a.staffNo);
+  const staffB = STAFF.find(s => s.no === b.staffNo);
+
+  const valA = shifts[a.staffNo][a.day];
+  const valB = shifts[b.staffNo][b.day];
+  const ptoA = shifts.__pto[a.staffNo][a.day];
+  const ptoB = shifts.__pto[b.staffNo][b.day];
+
+  if (valB === undefined) delete shifts[a.staffNo][a.day]; else shifts[a.staffNo][a.day] = valB;
+  if (valA === undefined) delete shifts[b.staffNo][b.day]; else shifts[b.staffNo][b.day] = valA;
+  if (ptoB) shifts.__pto[a.staffNo][a.day] = true; else delete shifts.__pto[a.staffNo][a.day];
+  if (ptoA) shifts.__pto[b.staffNo][b.day] = true; else delete shifts.__pto[b.staffNo][b.day];
+
+  swapSelection = null;
+  renderStaffList();
+  renderMain();
+  showToast(`${staffA.name}さんの${a.day}日と${staffB.name}さんの${b.day}日のシフトを交換しました`);
 }
 
 function renderMain() {
@@ -2505,12 +2635,16 @@ function renderMain() {
     const isOutOfScope = baseCode && deptCodes().includes(baseCode) && !capable.includes(baseCode);
     const bg = val ? (codeColors()[baseCode] || '#fff') : '#fff';
     const isPto = !!(dayPto[d]);
+    const dayEvents = eventsForDay(d);
+    const eventStyle = dayEvents.length ? `border-top: 3px solid ${dayEvents[0].color};` : '';
+    const eventTitleAttr = dayEvents.length ? ` title="${esc(dayEvents.map(e => e.title).join('・'))}"` : '';
     html += `
-      <div class="day-cell${isWeekendOrHoliday ? ' weekend' : ''}${isOutOfScope ? ' has-warn' : ''}" data-day="${d}" style="${val ? `background:${bg}33;` : ''}" ${isHoliday ? `title="${esc(hName)}"` : ''}>
+      <div class="day-cell${isWeekendOrHoliday ? ' weekend' : ''}${isOutOfScope ? ' has-warn' : ''}" data-day="${d}" style="${val ? `background:${bg}33;` : ''}${eventStyle}" ${isHoliday ? `title="${esc(hName)}"` : ''}>
         ${isOutOfScope ? '<span class="warn-icon">△</span>' : ''}
         ${isPto ? '<span class="pto-badge">希望休</span>' : ''}
         <span class="d-num">${d}</span>${isHoliday ? `<span class="holiday-dot" title="${esc(hName)}"></span>` : ''}
         <div class="d-val">${val}</div>
+        ${dayEvents.length ? `<div class="d-event"${eventTitleAttr}>📌 ${esc(dayEvents.map(e => e.title).join('・'))}</div>` : ''}
       </div>
     `;
   }
@@ -2978,6 +3112,107 @@ function deleteDept(code) {
   showToast(`${dept.name} を削除しました`);
 }
 
+// ============================================================
+// イベント予定モード: 研修・会議など、スタッフの誰かではなく「その日」
+// 自体に紐づく予定を管理する（休み希望や科一覧とは別レイヤー）。
+// ============================================================
+let editingEventId = null; // null = adding new
+
+function renderSidebarEventManagement() {
+  const sidebar = document.querySelector('.sidebar');
+  const modeTabs = sidebar.querySelector('.mode-tabs');
+  sidebar.innerHTML = '';
+  sidebar.appendChild(modeTabs);
+  const [year, month] = getYearMonth();
+
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+    <h2>${year}年${month}月の予定（${EVENTS.length}件）</h2>
+    <button class="mgmt-add-btn" id="eventAddBtn">＋ 予定を追加</button>
+    <div class="mgmt-list" id="eventMgmtList"></div>
+  `;
+  sidebar.appendChild(wrap);
+
+  const list = document.getElementById('eventMgmtList');
+  const sorted = [...EVENTS].sort((a, b) => a.day - b.day);
+  sorted.forEach(ev => {
+    const wd = WEEKDAYS_JP[new Date(year, month - 1, ev.day).getDay()];
+    const item = document.createElement('div');
+    item.className = 'mgmt-item';
+    item.innerHTML = `
+      <span>
+        <div class="mgmt-main"><span class="dept-swatch" style="background:${ev.color}"></span>${month}/${ev.day}（${wd}） ${esc(ev.title)}</div>
+      </span>
+      <span class="mgmt-actions">
+        <button data-act="edit">編集</button>
+        <button data-act="del" class="danger">削除</button>
+      </span>
+    `;
+    item.querySelector('[data-act="edit"]').onclick = () => openEventEdit(ev.id);
+    item.querySelector('[data-act="del"]').onclick = () => deleteEvent(ev.id);
+    list.appendChild(item);
+  });
+
+  document.getElementById('eventAddBtn').onclick = () => openEventEdit(null);
+
+  const main = document.getElementById('mainArea');
+  main.innerHTML = `
+    <div class="empty-state">
+      左の一覧から予定を編集、または「＋ 予定を追加」で院内研修・会議などの日程を登録してください。<br>
+      登録した予定は「個人ごとに入力」画面のカレンダーと「全員一覧」画面の表に表示され、シフトを組む際の目安になります。
+    </div>
+  `;
+}
+
+function openEventEdit(id) {
+  editingEventId = id;
+  const overlay = document.getElementById('eventEditOverlay');
+  const ev = id !== null ? EVENTS.find(e => e.id === id) : null;
+  const [, , nDaysDefault] = [0, 0, daysInMonth(...getYearMonth())];
+
+  document.getElementById('eventEditTitle').textContent = ev ? '予定を編集' : '新しい予定を追加';
+  document.getElementById('editEventDay').value = ev ? ev.day : '';
+  document.getElementById('editEventDay').max = String(nDaysDefault);
+  document.getElementById('editEventTitle').value = ev ? ev.title : '';
+  document.getElementById('editEventColor').value = ev ? ev.color : '#607D8B';
+
+  overlay.classList.add('open');
+}
+
+function closeEventEdit() {
+  document.getElementById('eventEditOverlay').classList.remove('open');
+  editingEventId = null;
+}
+
+function saveEventEdit() {
+  const [year, month] = getYearMonth();
+  const nDays = daysInMonth(year, month);
+  const day = parseInt(document.getElementById('editEventDay').value, 10);
+  const title = document.getElementById('editEventTitle').value.trim();
+  const color = document.getElementById('editEventColor').value;
+
+  if (!day || day < 1 || day > nDays) { showToast(`日付は1〜${nDays}の範囲で入力してください`, 'error'); return; }
+  if (!title) { showToast('内容を入力してください', 'error'); return; }
+
+  if (editingEventId !== null) {
+    const ev = EVENTS.find(e => e.id === editingEventId);
+    Object.assign(ev, { day, title, color });
+  } else {
+    EVENTS.push({ id: nextEventId++, day, title, color });
+  }
+  closeEventEdit();
+  renderSidebarEventManagement();
+  showToast(`${month}/${day} の予定を保存しました`);
+}
+
+function deleteEvent(id) {
+  const ev = EVENTS.find(e => e.id === id);
+  if (!confirm(`「${ev.title}」を削除します。よろしいですか？`)) return;
+  EVENTS = EVENTS.filter(e => e.id !== id);
+  renderSidebarEventManagement();
+  showToast('予定を削除しました');
+}
+
 document.getElementById('yearInput').addEventListener('change', renderMain);
 document.getElementById('monthInput').addEventListener('change', renderMain);
 document.getElementById('prevMonthBtn').addEventListener('click', () => shiftMonth(-1));
@@ -3018,6 +3253,11 @@ document.getElementById('deptEditCancel').onclick = closeDeptEdit;
 document.getElementById('deptSaveBtn').onclick = saveDeptEdit;
 document.getElementById('deptEditOverlay').addEventListener('click', (e) => {
   if (e.target.id === 'deptEditOverlay') closeDeptEdit();
+});
+document.getElementById('eventEditCancel').onclick = closeEventEdit;
+document.getElementById('eventSaveBtn').onclick = saveEventEdit;
+document.getElementById('eventEditOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'eventEditOverlay') closeEventEdit();
 });
 
 // ============================================================
