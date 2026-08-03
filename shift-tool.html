@@ -645,6 +645,100 @@
     color: var(--muted);
     font-size: 13px;
   }
+  .view-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .view-toggle button {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--muted);
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .view-toggle button.active {
+    background: var(--navy);
+    color: #fff;
+    border-color: var(--navy);
+  }
+  .print-only-title { display: none; }
+  .grid-view-wrap {
+    overflow: auto;
+    max-height: calc(100vh - 260px);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+  }
+  .grid-table {
+    border-collapse: collapse;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  .grid-table th, .grid-table td {
+    border: 1px solid var(--line);
+    padding: 3px 4px;
+    text-align: center;
+  }
+  .grid-table thead th {
+    background: var(--navy);
+    color: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    font-weight: 700;
+    font-size: 10.5px;
+  }
+  .grid-table td.weekend-col, .grid-table th.weekend-col { background: #fdf1f0; }
+  .grid-table th.weekend-col { background: var(--navy-dark); }
+  .grid-table th.name-col, .grid-table td.name-col {
+    position: sticky;
+    left: 0;
+    background: var(--panel);
+    z-index: 1;
+    text-align: left;
+    min-width: 90px;
+    max-width: 90px;
+  }
+  .grid-table th.cat-col, .grid-table td.cat-col {
+    position: sticky;
+    left: 90px;
+    background: var(--panel);
+    z-index: 1;
+    text-align: left;
+    color: var(--muted);
+    min-width: 76px;
+    max-width: 76px;
+    font-size: 10.5px;
+  }
+  .grid-table thead th.name-col, .grid-table thead th.cat-col { background: var(--navy); z-index: 3; }
+  .grid-table td.name-col { font-weight: 700; }
+  .grid-table td.shift-cell {
+    cursor: pointer;
+    min-width: 30px;
+    font-weight: 700;
+  }
+  .grid-table td.shift-cell:hover { outline: 2px solid var(--navy); outline-offset: -2px; }
+  .grid-table td.warn-cell { outline: 2px solid #e24b4a; outline-offset: -2px; color: #a83232; }
+  .grid-table tr.grid-summary-row td { background: #f2f2f2; font-weight: 700; }
+  .grid-table tr.grid-summary-row td.name-col, .grid-table tr.grid-summary-row td.cat-col { background: #f2f2f2; font-size: 10px; font-weight: 700; }
+  .grid-table td.shortage-neg { background: #f6d4d0; color: #a83232; }
+  .grid-table td.shortage-pos { background: #fdf0c8; color: #8a6d1f; }
+  .grid-table td.shortage-ok { color: var(--muted); font-weight: 400; }
+  @media print {
+    header, .sidebar, .view-toggle, .toolbar, .toast, .loading-overlay { display: none !important; }
+    body { background: #fff; }
+    .layout { display: block; min-height: 0; }
+    .main { padding: 6px; overflow: visible; }
+    .print-only-title { display: block; font-size: 16px; font-weight: 700; margin-bottom: 10px; }
+    .grid-view-wrap { max-height: none; overflow: visible; border: none; }
+    .grid-table { font-size: 8.5px; }
+    .grid-table th, .grid-table td { padding: 2px 3px; position: static !important; }
+    @page { size: landscape; margin: 8mm; }
+  }
 </style>
 </head>
 <body>
@@ -1974,6 +2068,7 @@ const WEEKDAYS_JP = ['日','月','火','水','木','金','土'];
 
 let currentStaffIdx = null;
 let currentMode = 'shift'; // 'shift' | 'staff' | 'dept'
+let mainView = 'person'; // 'person' | 'grid' (grid = 全員一覧表示)
 // shifts[staffNo] = { 1: '内(13)', 2: '公', ... }
 // shifts.__pto[staffNo] = { 5: true, 10: true, ... }  (PTO request days)
 const shifts = {};
@@ -2176,8 +2271,23 @@ function getYearMonth() {
 
 function jumpToStaff(staffNo) {
   currentStaffIdx = staffNo;
+  mainView = 'person';
   renderStaffList();
   renderMain();
+}
+
+function viewToggleHtml() {
+  return `
+    <div class="view-toggle" id="viewToggle">
+      <button data-view="person" class="${mainView === 'person' ? 'active' : ''}">👤 個人ごとに入力</button>
+      <button data-view="grid" class="${mainView === 'grid' ? 'active' : ''}">🗓 全員一覧・人数チェック</button>
+    </div>
+  `;
+}
+function wireViewToggle() {
+  document.querySelectorAll('#viewToggle button').forEach(btn => {
+    btn.onclick = () => { mainView = btn.dataset.view; renderMain(); };
+  });
 }
 
 function renderDashboard() {
@@ -2203,6 +2313,7 @@ function renderDashboard() {
     : '<div class="dashboard-empty">該当するスタッフはいません。</div>';
 
   main.innerHTML = `
+    ${viewToggleHtml()}
     <div class="person-header"><h2>${year}年${month}月 の入力状況</h2></div>
     <div class="person-meta">左の一覧からスタッフを選ぶと、日ごとのシフトを入力できます。</div>
     <div class="dashboard-cards">
@@ -2225,10 +2336,109 @@ function renderDashboard() {
   main.querySelectorAll('[data-jump]').forEach(btn => {
     btn.onclick = () => jumpToStaff(parseInt(btn.dataset.jump, 10));
   });
+  wireViewToggle();
+}
+
+// ================================================================
+// 全員一覧グリッド表示: 全スタッフ×全日を1画面で見られる表。
+// セルをクリックすると既存のopenPicker()がそのまま使え、各科・准夜・
+// 深夜の必要人数に対する過不足を表の下に色分けして表示する
+// （不足=赤／過剰=黄、Excelの【不足チェック】と同じ考え方）。
+// ================================================================
+function renderGridView() {
+  const main = document.getElementById('mainArea');
+  const [year, month] = getYearMonth();
+  const nDays = daysInMonth(year, month);
+  const colors = codeColors();
+  const depts = deptCodes();
+
+  function isOffDay(d) {
+    const wd = new Date(year, month - 1, d).getDay();
+    return wd === 0 || wd === 6 || isJapaneseHoliday(year, month, d);
+  }
+
+  let theadDays = '';
+  for (let d = 1; d <= nDays; d++) {
+    const wd = new Date(year, month - 1, d).getDay();
+    theadDays += `<th class="${isOffDay(d) ? 'weekend-col' : ''}">${d}<br>${WEEKDAYS_JP[wd]}</th>`;
+  }
+
+  let bodyRows = '';
+  STAFF.forEach(staff => {
+    const capable = capableCodes(staff);
+    let cells = '';
+    for (let d = 1; d <= nDays; d++) {
+      const val = effectiveShiftValue(shifts, staff.no, d);
+      const base = val ? val[0] : '';
+      const isOutOfScope = base && depts.includes(base) && !capable.includes(base);
+      const bg = val ? (colors[base] || '#fff') : '#fff';
+      cells += `<td class="shift-cell${isOffDay(d) ? ' weekend-col' : ''}${isOutOfScope ? ' warn-cell' : ''}" data-staff="${staff.no}" data-day="${d}" style="${val ? `background:${bg}55;` : ''}">${esc(val)}${isOutOfScope ? '△' : ''}</td>`;
+    }
+    bodyRows += `<tr><td class="name-col">${esc(staff.name)}</td><td class="cat-col">${esc(staff.cat)}</td>${cells}</tr>`;
+  });
+
+  function shortageCell(actual, need, offDay) {
+    if (offDay) return '<td class="weekend-col"></td>';
+    const diff = actual - need;
+    const cls = diff < 0 ? 'shortage-neg' : diff > 0 ? 'shortage-pos' : 'shortage-ok';
+    return `<td class="${cls}">${diff > 0 ? '+' + diff : diff}</td>`;
+  }
+
+  let summaryRows = '';
+  DEPARTMENTS.forEach(dept => {
+    let cells = '';
+    for (let d = 1; d <= nDays; d++) {
+      const offDay = isOffDay(d);
+      const actual = offDay ? 0 : STAFF.filter(s => (effectiveShiftValue(shifts, s.no, d)[0] || '') === dept.code).length;
+      cells += shortageCell(actual, dept.required, offDay);
+    }
+    summaryRows += `<tr class="grid-summary-row"><td class="name-col">${esc(dept.name)}(${esc(dept.code)})</td><td class="cat-col" title="必要人数(平日)">必要${dept.required}名</td>${cells}</tr>`;
+  });
+  [['准', '准夜', NIGHT_REQUIREMENTS.weekdayEvening], ['深', '深夜', NIGHT_REQUIREMENTS.weekdayLate]].forEach(([code, label, weekdayReq]) => {
+    let cells = '';
+    for (let d = 1; d <= nDays; d++) {
+      const offDay = isOffDay(d);
+      const need = offDay ? WEEKEND_HOLIDAY_REQ[code] : weekdayReq;
+      const actual = STAFF.filter(s => effectiveShiftValue(shifts, s.no, d) === code).length;
+      cells += shortageCell(actual, need, false);
+    }
+    summaryRows += `<tr class="grid-summary-row"><td class="name-col">${label}</td><td class="cat-col" title="必要人数(平日/土日祝)">${weekdayReq}/${WEEKEND_HOLIDAY_REQ[code]}名</td>${cells}</tr>`;
+  });
+
+  main.innerHTML = `
+    ${viewToggleHtml()}
+    <div class="print-only-title">${year}年${month}月 外来シフト表</div>
+    <div class="person-meta">
+      セルをクリックすると記号を編集できます。表の下の行は各科・准夜・深夜の必要人数に対する過不足です（マイナス=不足・赤／プラス=過剰・黄）。
+    </div>
+    <div class="toolbar" style="margin-top:0; margin-bottom:14px;">
+      <button class="btn primary" id="gridDownloadBtn">勤務表をExcelでダウンロード（全員・全シート）</button>
+      <button class="btn" id="gridPrintBtn">🖨 この一覧表を印刷する</button>
+    </div>
+    <div class="grid-view-wrap">
+      <table class="grid-table">
+        <thead><tr><th class="name-col">氏名</th><th class="cat-col">区分</th>${theadDays}</tr></thead>
+        <tbody>${bodyRows}${summaryRows}</tbody>
+      </table>
+    </div>
+  `;
+  wireViewToggle();
+  main.querySelectorAll('td.shift-cell').forEach(td => {
+    td.onclick = () => {
+      const staff = STAFF.find(s => s.no === parseInt(td.dataset.staff, 10));
+      openPicker(staff, parseInt(td.dataset.day, 10));
+    };
+  });
+  document.getElementById('gridDownloadBtn').onclick = () => exportToExcel();
+  document.getElementById('gridPrintBtn').onclick = () => window.print();
 }
 
 function renderMain() {
   const main = document.getElementById('mainArea');
+  if (mainView === 'grid') {
+    renderGridView();
+    return;
+  }
   if (currentStaffIdx === null) {
     renderDashboard();
     return;
@@ -2252,6 +2462,7 @@ function renderMain() {
   const ptoCount = Object.keys(dayPto).length;
 
   let html = `
+    ${viewToggleHtml()}
     <div class="person-header">
       <h2>${staff.name}</h2>
       <span class="tag">${staff.cat}</span>
@@ -2315,6 +2526,7 @@ function renderMain() {
     </div>
   `;
   main.innerHTML = html;
+  wireViewToggle();
 
   main.querySelectorAll('.day-cell[data-day]').forEach(cell => {
     cell.onclick = () => openPicker(staff, parseInt(cell.dataset.day));
