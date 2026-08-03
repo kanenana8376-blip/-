@@ -1,0 +1,3054 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>シフト入力ツール</title>
+<style>
+  :root {
+    --navy: #1F4E79;
+    --navy-dark: #163a59;
+    --ink: #2c2c2a;
+    --muted: #6b6b68;
+    --line: #d8d6cd;
+    --bg: #f7f5f0;
+    --panel: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  header {
+    background: var(--navy);
+    color: #fff;
+    padding: 18px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  header h1 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: 0.02em;
+  }
+  header .sub {
+    font-size: 12px;
+    color: #cfe0ee;
+    margin-top: 2px;
+  }
+  .month-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+  }
+  .month-input input {
+    border: none;
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 13px;
+    width: 90px;
+  }
+  .layout {
+    display: flex;
+    min-height: calc(100vh - 64px);
+  }
+  .sidebar {
+    width: 280px;
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+    padding: 16px;
+    overflow-y: auto;
+    max-height: calc(100vh - 64px);
+  }
+  .sidebar h2 {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 4px 0 10px;
+  }
+  .search {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+  .staff-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .staff-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    border: 1px solid transparent;
+  }
+  .staff-item:hover { background: #f0eee7; }
+  .staff-item.active {
+    background: #e8f0f8;
+    border-color: var(--navy);
+    font-weight: 700;
+  }
+  .staff-item .cat {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 400;
+  }
+  .staff-item .filled-badge {
+    font-size: 10px;
+    background: #e0e8f0;
+    color: #1F4E79;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .main {
+    flex: 1;
+    padding: 24px 28px;
+    overflow-x: auto;
+  }
+  .empty-state {
+    color: var(--muted);
+    font-size: 14px;
+    padding: 60px 0;
+    text-align: center;
+  }
+  .person-header {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+  }
+  .person-header h2 {
+    font-size: 20px;
+    margin: 0;
+  }
+  .person-header .tag {
+    font-size: 12px;
+    background: #eee;
+    color: var(--muted);
+    padding: 3px 9px;
+    border-radius: 12px;
+  }
+  .person-meta {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+  .person-meta b { color: var(--ink); font-weight: 700; }
+  .summary-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .summary-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 14px;
+    min-width: 64px;
+    text-align: center;
+  }
+  .summary-card .num { font-size: 18px; font-weight: 700; }
+  .summary-card .lbl { font-size: 10.5px; color: var(--muted); margin-top: 1px; }
+  .weekday-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .weekday-header div {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    padding: 2px 0;
+  }
+  .weekday-header div.sun { color: #c0392b; }
+  .weekday-header div.sat { color: #2566a8; }
+  .day-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+  }
+  .day-cell {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+    padding: 7px 6px 8px;
+    cursor: pointer;
+    transition: box-shadow .12s, border-color .12s;
+    position: relative;
+    min-height: 64px;
+  }
+  .day-cell.empty {
+    background: transparent;
+    border-color: transparent;
+    cursor: default;
+  }
+  .day-cell:hover { border-color: var(--navy); box-shadow: 0 0 0 1px var(--navy) inset; }
+  .day-cell .d-num {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .day-cell .d-wd { font-size: 10px; color: var(--muted); margin-left: 3px; }
+  .day-cell.weekend .d-num, .day-cell.weekend .d-wd { color: #c0392b; }
+  .day-cell .d-val {
+    margin-top: 5px;
+    font-size: 14px;
+    font-weight: 700;
+    min-height: 18px;
+  }
+  .day-cell.has-warn { outline: 2px solid #e24b4a; outline-offset: -1px; }
+  .day-cell .warn-icon {
+    position: absolute;
+    top: 4px;
+    right: 5px;
+    font-size: 11px;
+    color: #c0392b;
+  }
+  .picker-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(20,20,18,0.35);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+  }
+  .picker-overlay.open { display: flex; }
+  .picker-box {
+    background: #fff;
+    border-radius: 12px;
+    padding: 18px;
+    width: 320px;
+    max-width: 92vw;
+  }
+  .picker-box h3 {
+    font-size: 14px;
+    margin: 0 0 4px;
+  }
+  .picker-box .picker-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .picker-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .picker-opt {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 4px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    background: #fafafa;
+  }
+  .picker-opt:hover { border-color: var(--navy); }
+  .picker-opt.out-of-scope::after {
+    content: "△";
+    display: block;
+    font-size: 9px;
+    color: #c0392b;
+    margin-top: 2px;
+  }
+  .picker-clear {
+    margin-top: 12px;
+    width: 100%;
+    padding: 9px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--muted);
+  }
+  .picker-close {
+    margin-top: 8px;
+    width: 100%;
+    padding: 9px;
+    border: none;
+    border-radius: 8px;
+    background: #f0eee7;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--muted);
+  }
+  .toolbar {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 700;
+  }
+  .btn.primary {
+    background: var(--navy);
+    color: #fff;
+    border-color: var(--navy);
+  }
+  .btn.primary:hover { background: var(--navy-dark); }
+  .btn:hover { border-color: var(--navy); }
+  .legend {
+    margin-top: 22px;
+    font-size: 11.5px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .legend b { color: var(--ink); }
+  .toast {
+    position: fixed;
+    bottom: 22px;
+    right: 22px;
+    background: var(--navy);
+    color: #fff;
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.18);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity .2s, transform .2s;
+    pointer-events: none;
+    z-index: 80;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .btn-load {
+    background: #fff;
+    border: 1px solid #cfe0ee;
+    color: #fff;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    background: rgba(255,255,255,0.12);
+  }
+  .btn-load:hover { background: rgba(255,255,255,0.22); }
+  .picker-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  .picker-tab {
+    flex: 1;
+    border: none;
+    background: none;
+    padding: 8px 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .picker-tab.active { color: var(--navy); border-bottom-color: var(--navy); }
+  .picker-pto-desc {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin: 0 0 12px;
+    line-height: 1.5;
+  }
+  .loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(255,255,255,0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  .loading-overlay.show { display: flex; }
+  .loading-box {
+    background: var(--navy);
+    color: #fff;
+    padding: 16px 28px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .pto-badge {
+    position: absolute;
+    top: 4px;
+    left: 5px;
+    font-size: 9px;
+    background: #1f4e79;
+    color: #fff;
+    padding: 1px 5px;
+    border-radius: 6px;
+    font-weight: 700;
+  }
+  .holiday-dot {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #c0392b;
+    margin-left: 3px;
+    vertical-align: middle;
+  }
+  .night-req-box {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px;
+    background: #fff;
+    margin-bottom: 10px;
+  }
+  .night-req-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .night-req-row label { font-size: 12.5px; font-weight: 700; }
+  .night-req-row input {
+    width: 64px;
+    padding: 5px 8px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 13px;
+    text-align: center;
+  }
+  .night-req-note {
+    font-size: 10.5px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin: 4px 0 10px;
+  }
+  .mode-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 14px;
+  }
+  .mode-tab {
+    flex: 1;
+    border: none;
+    background: none;
+    padding: 10px 4px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .mode-tab.active { color: var(--navy); border-bottom-color: var(--navy); }
+  .mgmt-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .mgmt-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+  }
+  .mgmt-item .mgmt-main { font-size: 13px; font-weight: 700; }
+  .mgmt-item .mgmt-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .mgmt-item .mgmt-actions { display: flex; gap: 6px; }
+  .mgmt-item .mgmt-actions button {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 6px;
+    padding: 4px 9px;
+    font-size: 11.5px;
+    cursor: pointer;
+  }
+  .mgmt-item .mgmt-actions button.danger { color: #c0392b; border-color: #f0c4c0; }
+  .mgmt-add-btn {
+    width: 100%;
+    padding: 10px;
+    border: 1px dashed var(--navy);
+    background: #fff;
+    color: var(--navy);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 10px;
+  }
+  .dept-swatch {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    margin-right: 6px;
+    vertical-align: middle;
+    border: 1px solid rgba(0,0,0,0.1);
+  }
+  .form-row { margin-bottom: 12px; }
+  .form-row label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .form-row input[type="text"], .form-row input[type="number"], .form-row select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+  }
+  .form-row input[type="color"] {
+    width: 60px;
+    height: 34px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 2px;
+  }
+  :focus-visible {
+    outline: 2px solid var(--navy);
+    outline-offset: 2px;
+  }
+  .month-nav-btn {
+    border: none;
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .month-nav-btn:hover { background: rgba(255,255,255,0.26); }
+  .month-input .current-month {
+    font-weight: 700;
+    min-width: 74px;
+    text-align: center;
+  }
+  .toast.success { background: var(--navy); }
+  .toast.error { background: #a83232; }
+  .filter-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+  .filter-tabs button {
+    flex: 1;
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--muted);
+    border-radius: 6px;
+    padding: 6px 2px;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .filter-tabs button.active {
+    background: var(--navy);
+    color: #fff;
+    border-color: var(--navy);
+  }
+  .staff-item.zero-filled .cat { color: #a83232; }
+  .filled-badge.badge-zero { background: #f6d4d0; color: #a83232; }
+  .filled-badge.badge-full { background: #dcedc8; color: #33691e; }
+  .sidebar-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .sidebar-actions .btn-export {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--navy);
+    background: var(--navy);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .sidebar-actions .btn-export:hover { background: var(--navy-dark); }
+  .dashboard-cards {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 18px 0 24px;
+  }
+  .dashboard-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 20px;
+    min-width: 120px;
+    text-align: center;
+  }
+  .dashboard-card .num { font-size: 26px; font-weight: 700; }
+  .dashboard-card .lbl { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .dashboard-card.warn .num { color: #a83232; }
+  .dashboard-section {
+    margin-bottom: 26px;
+  }
+  .dashboard-section h3 {
+    font-size: 13.5px;
+    margin: 0 0 10px;
+    color: var(--ink);
+  }
+  .dashboard-section .hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin: -6px 0 12px;
+  }
+  .dashboard-chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .dashboard-chip {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 20px;
+    padding: 7px 14px;
+    font-size: 12.5px;
+    cursor: pointer;
+    font-weight: 700;
+  }
+  .dashboard-chip:hover { border-color: var(--navy); }
+  .dashboard-chip.chip-warn { border-color: #e7b3ae; color: #a83232; background: #fdf3f2; }
+  .dashboard-empty {
+    color: var(--muted);
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>外来看護師シフト入力ツール</h1>
+    <div class="sub">スタッフを選んで、1ヶ月分のシフトをまとめて入力します</div>
+  </div>
+  <div class="month-input">
+    <button class="btn-load" id="loadFileBtn"><i></i>既存のExcelを読み込む</button>
+    <input type="file" id="fileInput" accept=".xlsx" style="display:none;">
+    <span>対象月</span>
+    <button class="month-nav-btn" id="prevMonthBtn" title="前の月" aria-label="前の月">◀</button>
+    <input type="number" id="yearInput" value="2026" min="2020" max="2100">年
+    <input type="number" id="monthInput" value="6" min="1" max="12">月
+    <button class="month-nav-btn" id="nextMonthBtn" title="次の月" aria-label="次の月">▶</button>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="shift">シフト入力</button>
+      <button class="mode-tab" data-mode="staff">スタッフ管理</button>
+      <button class="mode-tab" data-mode="dept">科一覧</button>
+    </div>
+    <div id="sidebarShiftMode">
+      <h2>スタッフ一覧</h2>
+      <input class="search" id="searchBox" placeholder="氏名で検索...">
+      <div class="staff-list" id="staffList"></div>
+    </div>
+  </div>
+
+  <div class="main" id="mainArea">
+    <div class="empty-state">左の一覧からスタッフを選んでください</div>
+  </div>
+</div>
+
+<div class="picker-overlay" id="pickerOverlay">
+  <div class="picker-box">
+    <h3 id="pickerTitle">記号を選択</h3>
+    <div class="picker-sub" id="pickerSub"></div>
+    <div class="picker-tabs" id="pickerTabs">
+      <button class="picker-tab active" data-mode="shift">シフト記号</button>
+      <button class="picker-tab" data-mode="pto">休み希望</button>
+    </div>
+    <div class="picker-grid" id="pickerGrid"></div>
+    <div class="picker-pto" id="pickerPto" style="display:none;">
+      <p class="picker-pto-desc">この日を休み希望（○）にします。②シフト表では自動的に「公」になります。</p>
+      <button class="btn primary" id="ptoSetBtn" style="width:100%;">休み希望にする</button>
+      <button class="picker-clear" id="ptoClearBtn">休み希望を取り消す</button>
+    </div>
+    <button class="picker-clear" id="pickerClear">空欄にする</button>
+    <button class="picker-close" id="pickerCancel">キャンセル</button>
+  </div>
+</div>
+
+<div class="picker-overlay" id="staffEditOverlay">
+  <div class="picker-box" style="width:420px;">
+    <h3 id="staffEditTitle">スタッフを編集</h3>
+    <div class="form-row">
+      <label>氏名</label>
+      <input type="text" id="editName" placeholder="例: 常勤18">
+    </div>
+    <div class="form-row">
+      <label>区分</label>
+      <input type="text" id="editCat" placeholder="例: 一般常勤 / パート週3">
+    </div>
+    <div class="form-row">
+      <label>主担当</label>
+      <select id="editMain"></select>
+    </div>
+    <div class="form-row">
+      <label>サブ担当1</label>
+      <select id="editSub1"></select>
+    </div>
+    <div class="form-row">
+      <label>サブ担当2</label>
+      <select id="editSub2"></select>
+    </div>
+    <div class="form-row">
+      <label>退勤時刻（パートのみ）</label>
+      <select id="editDepTime">
+        <option value="">なし（常勤・師長など）</option>
+        <option value="13">13時</option>
+        <option value="14">14時</option>
+        <option value="15">15時</option>
+        <option value="16">16時</option>
+        <option value="17">17時</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>夜勤タイプ</label>
+      <select id="editNightType">
+        <option value="free">制限なし（准夜・深夜とも可、セット不要）</option>
+        <option value="none">夜勤不可（准夜・深夜とも入らない）</option>
+        <option value="evening_only">准夜勤のみ可（深夜勤は入らない）</option>
+        <option value="late_only">深夜勤のみ可（准夜勤は入らない）</option>
+        <option value="set_required">准夜・深夜とも可、必ずセット（准夜→深夜）で入れる</option>
+      </select>
+    </div>
+    <button class="btn primary" id="staffSaveBtn" style="width:100%; margin-top:10px;">保存する</button>
+    <button class="picker-close" id="staffEditCancel">キャンセル</button>
+  </div>
+</div>
+
+<div class="picker-overlay" id="deptEditOverlay">
+  <div class="picker-box" style="width:380px;">
+    <h3 id="deptEditTitle">科を編集</h3>
+    <div class="form-row">
+      <label>記号（1文字）</label>
+      <input type="text" id="editDeptCode" maxlength="1" placeholder="例: 内">
+    </div>
+    <div class="form-row">
+      <label>科の名前</label>
+      <input type="text" id="editDeptName" placeholder="例: 内視鏡">
+    </div>
+    <div class="form-row">
+      <label>色</label>
+      <input type="color" id="editDeptColor" value="#FFE4B5">
+    </div>
+    <div class="form-row">
+      <label>必要人数（平日/日）</label>
+      <input type="number" id="editDeptRequired" min="0" value="1">
+    </div>
+    <button class="btn primary" id="deptSaveBtn" style="width:100%; margin-top:10px;">保存する</button>
+    <button class="picker-close" id="deptEditCancel">キャンセル</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="loading-overlay" id="loadingOverlay"><div class="loading-box">読み込み中...</div></div>
+
+<script>
+/*
+  Expanded dependency-free XLSX writer (v2).
+  Supports multiple sheets, formulas, fills, merged cells, column
+  widths/hidden columns, conditional formatting rules, and basic
+  data validation lists. Builds a valid OOXML package using an
+  uncompressed ("STORE") ZIP container by hand, so it needs zero
+  external libraries and works fully offline.
+
+  This is a small, purpose-built subset of OOXML -- not a general
+  spreadsheet engine. It deliberately writes FORMULAS as formula
+  strings (no cached value), which is valid OOXML; Excel/LibreOffice
+  recalculate on open.
+*/
+
+// ---------- CRC32 ----------
+const CRC_TABLE = (() => {
+  const table = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    table[n] = c >>> 0;
+  }
+  return table;
+})();
+function crc32(bytes) {
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) crc = CRC_TABLE[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+function strToBytes(str) { return new TextEncoder().encode(str); }
+
+// ---------- minimal ZIP (store, no compression) ----------
+function buildZip(files) {
+  const localParts = [];
+  const centralParts = [];
+  let offset = 0;
+  files.forEach(file => {
+    const nameBytes = strToBytes(file.name);
+    const data = file.data;
+    const crc = crc32(data);
+    const size = data.length;
+
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true);
+    lh.setUint16(4, 20, true);
+    lh.setUint32(14, crc, true);
+    lh.setUint32(18, size, true);
+    lh.setUint32(22, size, true);
+    lh.setUint16(26, nameBytes.length, true);
+    const localChunk = new Uint8Array(30 + nameBytes.length + size);
+    localChunk.set(new Uint8Array(lh.buffer), 0);
+    localChunk.set(nameBytes, 30);
+    localChunk.set(data, 30 + nameBytes.length);
+    localParts.push(localChunk);
+
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true);
+    ch.setUint16(4, 20, true);
+    ch.setUint16(6, 20, true);
+    ch.setUint32(16, crc, true);
+    ch.setUint32(20, size, true);
+    ch.setUint32(24, size, true);
+    ch.setUint16(28, nameBytes.length, true);
+    ch.setUint32(42, offset, true);
+    const centralChunk = new Uint8Array(46 + nameBytes.length);
+    centralChunk.set(new Uint8Array(ch.buffer), 0);
+    centralChunk.set(nameBytes, 46);
+    centralParts.push(centralChunk);
+
+    offset += localChunk.length;
+  });
+  const centralStart = offset;
+  let centralSize = 0;
+  centralParts.forEach(p => centralSize += p.length);
+  const eocd = new DataView(new ArrayBuffer(22));
+  eocd.setUint32(0, 0x06054b50, true);
+  eocd.setUint16(8, files.length, true);
+  eocd.setUint16(10, files.length, true);
+  eocd.setUint32(12, centralSize, true);
+  eocd.setUint32(16, centralStart, true);
+  const out = new Uint8Array(offset + centralSize + 22);
+  let pos = 0;
+  localParts.forEach(p => { out.set(p, pos); pos += p.length; });
+  centralParts.forEach(p => { out.set(p, pos); pos += p.length; });
+  out.set(new Uint8Array(eocd.buffer), pos);
+  return out;
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+}
+function colLetter(n) {
+  let s = '';
+  while (n > 0) { const rem = (n - 1) % 26; s = String.fromCharCode(65 + rem) + s; n = Math.floor((n - 1) / 26); }
+  return s;
+}
+
+// ============================================================
+// Sheet builder: a thin object model so calling code can describe
+// a sheet declaratively, then renderWorkbook() turns N of these
+// into a complete xlsx.
+// ============================================================
+class SheetBuilder {
+  constructor(name) {
+    this.name = name;
+    this.cells = {};       // 'A1' -> {v, f, s (style key), t}
+    this.merges = [];      // 'A1:B1'
+    this.colWidths = {};   // 'A' -> width
+    this.colHidden = {};   // 'A' -> true
+    this.rowHeights = {};  // 1 -> height
+    this.condFormats = []; // {ref, type, formula, dxfId}
+    this.dataValidations = []; // {ref, formula1}
+    this.freezeRow = 0;
+    this.freezeCol = 0;
+    this.showGridLines = true;
+    this.tabColor = null;
+  }
+  set(ref, value, opts) {
+    opts = opts || {};
+    this.cells[ref] = { v: value, s: opts.style || null, formula: !!opts.formula };
+    return this;
+  }
+  formula(ref, formulaStr, opts) {
+    opts = opts || {};
+    this.cells[ref] = { f: formulaStr, s: opts.style || null };
+    return this;
+  }
+  merge(ref) { this.merges.push(ref); return this; }
+  colWidth(letterOrRange, width) {
+    if (letterOrRange.includes(':')) {
+      const [a, b] = letterOrRange.split(':');
+      const start = colNum(a), end = colNum(b);
+      for (let i = start; i <= end; i++) this.colWidths[colLetter(i)] = width;
+    } else this.colWidths[letterOrRange] = width;
+    return this;
+  }
+  hideCol(letter) { this.colHidden[letter] = true; return this; }
+  rowHeight(row, h) { this.rowHeights[row] = h; return this; }
+  freeze(row, col) { this.freezeRow = row; this.freezeCol = col; return this; }
+  noGrid() { this.showGridLines = false; return this; }
+  condFormat(ref, type, params) {
+    this.condFormats.push({ ref, type, params });
+    return this;
+  }
+  dataValidation(ref, listFormula) {
+    this.dataValidations.push({ ref, formula: listFormula });
+    return this;
+  }
+}
+
+function colNum(letter) {
+  let n = 0;
+  for (let i = 0; i < letter.length; i++) n = n * 26 + (letter.charCodeAt(i) - 64);
+  return n;
+}
+
+// ============================================================
+// Style registry: collects fonts/fills/borders/numFmts used across
+// ALL sheets and assigns shared cellXfs indices.
+// ============================================================
+class StyleRegistry {
+  constructor() {
+    this.fonts = [{ name: 'Yu Gothic', sz: 10, bold: false, color: null }];
+    this.fills = [null, null]; // 0=none,1=gray125 reserved by spec
+    this.numFmts = {}; // code -> id (custom only, 164+)
+    this.xfs = [{ fontId: 0, fillId: 0, numFmtId: 0, align: null, border: false }];
+    this.xfKey = new Map();
+    this._nextNumFmtId = 164;
+  }
+  font(opts) {
+    opts = opts || {};
+    const key = JSON.stringify(opts);
+    let idx = this.fonts.findIndex(f => JSON.stringify(f) === key);
+    if (idx === -1) { idx = this.fonts.length; this.fonts.push(Object.assign({ name: 'Yu Gothic', sz: 10, bold: false, color: null }, opts)); }
+    return idx;
+  }
+  fill(hex) {
+    if (!hex) return 0;
+    const key = hex.toUpperCase();
+    let idx = this.fills.indexOf(key);
+    if (idx === -1) { idx = this.fills.length; this.fills.push(key); }
+    return idx;
+  }
+  numFmt(code) {
+    if (!code) return 0;
+    if (this.numFmts[code] !== undefined) return this.numFmts[code];
+    const id = this._nextNumFmtId++;
+    this.numFmts[code] = id;
+    return id;
+  }
+  xf(opts) {
+    // opts: {fontId, fillId, numFmtId, align: {h,v,wrap}, border}
+    const key = JSON.stringify(opts);
+    if (this.xfKey.has(key)) return this.xfKey.get(key);
+    const idx = this.xfs.length;
+    this.xfs.push(opts);
+    this.xfKey.set(key, idx);
+    return idx;
+  }
+  // convenience: build a style and return its xf index in one call
+  style({ bold, size, color, fill, halign, valign, wrap, border, numFmt }) {
+    const fontId = this.font({ name: 'Yu Gothic', sz: size || 10, bold: !!bold, color: color || null });
+    const fillId = this.fill(fill);
+    const numFmtId = this.numFmt(numFmt);
+    return this.xf({
+      fontId, fillId, numFmtId,
+      align: (halign || valign || wrap) ? { h: halign, v: valign, wrap: !!wrap } : null,
+      border: !!border,
+    });
+  }
+}
+
+// ============================================================
+// XML rendering
+// ============================================================
+function renderStylesXml(reg) {
+  let fontsXml = reg.fonts.map(f => {
+    let s = '<font>';
+    if (f.bold) s += '<b/>';
+    s += `<sz val="${f.sz}"/>`;
+    if (f.color) s += `<color rgb="FF${f.color}"/>`;
+    s += `<name val="${esc(f.name)}"/></font>`;
+    return s;
+  }).join('');
+
+  let fillsXml = '<fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>';
+  reg.fills.slice(2).forEach(hex => {
+    fillsXml += `<fill><patternFill patternType="solid"><fgColor rgb="FF${hex}"/><bgColor indexed="64"/></patternFill></fill>`;
+  });
+
+  let numFmtsXml = '';
+  const numFmtEntries = Object.entries(reg.numFmts);
+  if (numFmtEntries.length) {
+    numFmtsXml = `<numFmts count="${numFmtEntries.length}">` +
+      numFmtEntries.map(([code, id]) => `<numFmt numFmtId="${id}" formatCode="${esc(code)}"/>`).join('') +
+      '</numFmts>';
+  }
+
+  let borderXml = '<border><left/><right/><top/><bottom/><diagonal/></border>' +
+    '<border><left style="thin"><color rgb="FFBFBFBF"/></left><right style="thin"><color rgb="FFBFBFBF"/></right>' +
+    '<top style="thin"><color rgb="FFBFBFBF"/></top><bottom style="thin"><color rgb="FFBFBFBF"/></bottom><diagonal/></border>';
+
+  let cellXfsXml = reg.xfs.map(xf => {
+    const align = xf.align;
+    let alignXml = '';
+    if (align && (align.h || align.v || align.wrap)) {
+      alignXml = `<alignment${align.h ? ` horizontal="${align.h}"` : ''}${align.v ? ` vertical="${align.v}"` : ''}${align.wrap ? ' wrapText="1"' : ''}/>`;
+    }
+    const borderId = xf.border ? 1 : 0;
+    return `<xf numFmtId="${xf.numFmtId || 0}" fontId="${xf.fontId || 0}" fillId="${xf.fillId || 0}" borderId="${borderId}" applyFont="1" applyFill="1" applyBorder="${borderId ? 1 : 0}" applyAlignment="${alignXml ? 1 : 0}" applyNumberFormat="${xf.numFmtId ? 1 : 0}">${alignXml}</xf>`;
+  }).join('');
+
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    numFmtsXml +
+    `<fonts count="${reg.fonts.length}">${fontsXml}</fonts>` +
+    `<fills count="${reg.fills.length}">${fillsXml}</fills>` +
+    `<borders count="2">${borderXml}</borders>` +
+    '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+    `<cellXfs count="${reg.xfs.length}">${cellXfsXml}</cellXfs>` +
+    '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>' +
+    '</styleSheet>';
+}
+
+function renderSheetXml(sheet) {
+  // figure out used range
+  let maxRow = 0, maxCol = 0;
+  Object.keys(sheet.cells).forEach(ref => {
+    const m = ref.match(/^([A-Z]+)(\d+)$/);
+    maxCol = Math.max(maxCol, colNum(m[1]));
+    maxRow = Math.max(maxRow, parseInt(m[2]));
+  });
+
+  const rowsMap = {};
+  Object.entries(sheet.cells).forEach(([ref, cell]) => {
+    const m = ref.match(/^([A-Z]+)(\d+)$/);
+    const r = parseInt(m[2]);
+    if (!rowsMap[r]) rowsMap[r] = [];
+    rowsMap[r].push({ ref, col: colNum(m[1]), cell });
+  });
+
+  let sheetData = '';
+  for (let r = 1; r <= maxRow; r++) {
+    const rowCells = (rowsMap[r] || []).sort((a, b) => a.col - b.col);
+    if (rowCells.length === 0 && !sheet.rowHeights[r]) continue;
+    const hAttr = sheet.rowHeights[r] ? ` ht="${sheet.rowHeights[r]}" customHeight="1"` : '';
+    let cellsXml = '';
+    rowCells.forEach(({ ref, cell }) => {
+      const sAttr = cell.s !== null && cell.s !== undefined ? ` s="${cell.s}"` : '';
+      if (cell.f !== undefined) {
+        cellsXml += `<c r="${ref}"${sAttr}><f>${esc(cell.f)}</f></c>`;
+      } else if (typeof cell.v === 'number') {
+        cellsXml += `<c r="${ref}"${sAttr}><v>${cell.v}</v></c>`;
+      } else if (cell.v === null || cell.v === undefined || cell.v === '') {
+        cellsXml += `<c r="${ref}"${sAttr}/>`;
+      } else {
+        cellsXml += `<c r="${ref}" t="inlineStr"${sAttr}><is><t xml:space="preserve">${esc(cell.v)}</t></is></c>`;
+      }
+    });
+    sheetData += `<row r="${r}"${hAttr}>${cellsXml}</row>`;
+  }
+
+  let colsXml = '';
+  const colEntries = Object.keys(sheet.colWidths).map(l => colNum(l));
+  if (colEntries.length || Object.keys(sheet.colHidden).length) {
+    const allLetters = new Set([...Object.keys(sheet.colWidths), ...Object.keys(sheet.colHidden)]);
+    const nums = [...allLetters].map(colNum).sort((a, b) => a - b);
+    colsXml = '<cols>' + nums.map(n => {
+      const letter = colLetter(n);
+      const w = sheet.colWidths[letter] || 8.43;
+      const hidden = sheet.colHidden[letter] ? ' hidden="1"' : '';
+      return `<col min="${n}" max="${n}" width="${w}" customWidth="1"${hidden}/>`;
+    }).join('') + '</cols>';
+  }
+
+  let mergeXml = '';
+  if (sheet.merges.length) {
+    mergeXml = `<mergeCells count="${sheet.merges.length}">` +
+      sheet.merges.map(m => `<mergeCell ref="${m}"/>`).join('') + '</mergeCells>';
+  }
+
+  let cfXml = '';
+  sheet.condFormats.forEach(cf => {
+    if (cf.type === 'cellIs') {
+      cfXml += `<conditionalFormatting sqref="${cf.ref}"><cfRule type="cellIs" dxfId="${cf.params.dxfId}" priority="${cfXml.length + 1}" operator="${cf.params.operator}"><formula>${esc(cf.params.formula)}</formula></cfRule></conditionalFormatting>`;
+    } else if (cf.type === 'expression') {
+      cfXml += `<conditionalFormatting sqref="${cf.ref}"><cfRule type="expression" dxfId="${cf.params.dxfId}" priority="${cfXml.length + 1}"><formula>${esc(cf.params.formula)}</formula></cfRule></conditionalFormatting>`;
+    }
+  });
+
+  let dvXml = '';
+  if (sheet.dataValidations.length) {
+    dvXml = `<dataValidations count="${sheet.dataValidations.length}">` +
+      sheet.dataValidations.map(dv =>
+        `<dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" sqref="${dv.ref}"><formula1>${esc(dv.formula)}</formula1></dataValidation>`
+      ).join('') + '</dataValidations>';
+  }
+
+  let paneXml = '';
+  if (sheet.freezeRow || sheet.freezeCol) {
+    const topLeft = colLetter(sheet.freezeCol + 1) + (sheet.freezeRow + 1);
+    paneXml = `<pane xSplit="${sheet.freezeCol}" ySplit="${sheet.freezeRow}" topLeftCell="${topLeft}" activePane="bottomRight" state="frozen"/>`;
+  }
+  const sheetViewXml = `<sheetViews><sheetView${sheet.showGridLines ? '' : ' showGridLines="0"'} workbookViewId="0">${paneXml}</sheetView></sheetViews>`;
+
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    sheetViewXml +
+    colsXml +
+    `<sheetData>${sheetData}</sheetData>` +
+    mergeXml +
+    dvXml +
+    cfXml +
+    '</worksheet>';
+}
+
+function renderDxfsXml(dxfs) {
+  // dxfs: array of {fontColor, fill}
+  const items = dxfs.map(d => {
+    let s = '<dxf>';
+    if (d.fontColor || d.bold) {
+      s += '<font>';
+      if (d.fontColor) s += `<color rgb="FF${d.fontColor}"/>`;
+      if (d.bold) s += '<b/>';
+      s += '</font>';
+    }
+    if (d.fill) s += `<fill><patternFill><bgColor rgb="FF${d.fill}"/></patternFill></fill>`;
+    s += '</dxf>';
+    return s;
+  }).join('');
+  return { count: dxfs.length, xml: items };
+}
+
+// ============================================================
+// Public API: build a full multi-sheet workbook
+// ============================================================
+function renderWorkbook(sheets, styleRegistry, dxfs) {
+  const dxfData = renderDxfsXml(dxfs || []);
+
+  let stylesXml = renderStylesXml(styleRegistry);
+  if (dxfData.count) {
+    stylesXml = stylesXml.replace('</styleSheet>', `<dxfs count="${dxfData.count}">${dxfData.xml}</dxfs></styleSheet>`);
+  }
+
+  const sheetEntries = sheets.map((s, i) => ({ sheet: s, idx: i + 1 }));
+
+  const workbookXml =
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+    '<sheets>' + sheetEntries.map(e => `<sheet name="${esc(e.sheet.name)}" sheetId="${e.idx}" r:id="rId${e.idx}"/>`).join('') + '</sheets>' +
+    '</workbook>';
+
+  const workbookRels =
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    sheetEntries.map(e => `<Relationship Id="rId${e.idx}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${e.idx}.xml"/>`).join('') +
+    `<Relationship Id="rId${sheetEntries.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>` +
+    '</Relationships>';
+
+  const rootRels =
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' +
+    '</Relationships>';
+
+  const contentTypes =
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+    '<Default Extension="xml" ContentType="application/xml"/>' +
+    '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+    sheetEntries.map(e => `<Override PartName="/xl/worksheets/sheet${e.idx}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('') +
+    '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+    '</Types>';
+
+  const files = [
+    { name: '[Content_Types].xml', data: strToBytes(contentTypes) },
+    { name: '_rels/.rels', data: strToBytes(rootRels) },
+    { name: 'xl/workbook.xml', data: strToBytes(workbookXml) },
+    { name: 'xl/_rels/workbook.xml.rels', data: strToBytes(workbookRels) },
+    { name: 'xl/styles.xml', data: strToBytes(stylesXml) },
+  ];
+  sheetEntries.forEach(e => {
+    files.push({ name: `xl/worksheets/sheet${e.idx}.xml`, data: strToBytes(renderSheetXml(e.sheet)) });
+  });
+
+  return buildZip(files);
+}
+
+/*
+  Replicates enhance.py's workbook construction entirely in JS, using
+  xlsx-writer-v2.js as the low-level OOXML writer. Given the current
+  `shifts` state (staffNo -> {day -> code}) and `STAFF` roster array,
+  produces a 7-sheet workbook identical in structure to the Python
+  pipeline's output: 使い方ガイド / ①担当一覧 / ②シフト表(oplus風) /
+  ③科別勤務者一覧 / ④科別メンバー / ⑤夜勤バランス / ⑥休み希望 /
+  ⑦時間帯別集計.
+*/
+
+const NAVY = '1F4E79';
+const WHITE = 'FFFFFF';
+const WARN_RED = 'FFC7CE';
+const WARN_RED_FONT = '9C0006';
+const WARN_YEL = 'FFEB9C';
+const WARN_YEL_FONT = '9C6500';
+const OK_GREEN = 'C6EFCE';
+const OK_GREEN_FONT = '006100';
+
+function lastDayOfMonth(year, month) { return new Date(year, month, 0).getDate(); }
+function weekdayLetterJP(year, month, day) {
+  return ['日','月','火','水','木','金','土'][new Date(year, month - 1, day).getDay()];
+}
+function capableCodesOf(staff) {
+  return [staff.main, staff.sub1, staff.sub2].map(s => {
+    const m = s.match(/\(([^)]+)\)/);
+    return m ? m[1] : null;
+  }).filter(Boolean);
+}
+// Effective shift value for a given staff/day: a PTO request always wins,
+// forcing the day to 公 regardless of whatever was typed into the shift
+// grid for that cell (matches the agreed workflow: PTO is entered first
+// and takes priority over any existing shift).
+function effectiveShiftValue(shifts, staffNo, day) {
+  if (shifts.__pto && shifts.__pto[staffNo] && shifts.__pto[staffNo][day]) return '公';
+  return (shifts[staffNo] && shifts[staffNo][day]) || '';
+}
+
+// ============================================================
+// Build the complete workbook. Returns Uint8Array bytes ready to
+// save as .xlsx. DEPARTMENTS is the live, user-editable department
+// master list: [{code, name, color, required}, ...]. All the lookups
+// that used to be hardcoded (REQUIRED_HEADCOUNT, DEPT_FULL_NAME,
+// CODE_COLORS-for-departments) are derived from it here so the
+// workbook always reflects whatever departments the user has defined.
+// ============================================================
+function buildFullWorkbook(STAFF, shifts, year, month, CODE_COLORS, DEPARTMENTS) {
+  const REQUIRED_HEADCOUNT = {};
+  const DEPT_FULL_NAME = {};
+  DEPARTMENTS.forEach(d => { REQUIRED_HEADCOUNT[d.code] = d.required; DEPT_FULL_NAME[d.code] = d.name; });
+
+  const reg = new StyleRegistry();
+  const dxfs = [];
+  const nDays = lastDayOfMonth(year, month);
+  const FIRST_DAY_COL_NUM = 3; // C
+  const dayColLetters = [];
+  for (let d = 0; d < nDays; d++) dayColLetters.push(colLetterFromIndex(FIRST_DAY_COL_NUM + d));
+  const lastDayColLetter = dayColLetters[dayColLetters.length - 1];
+
+  function colLetterFromIndex(n) { return colLetter(n); }
+
+  // ---- shared styles ----
+  const sHeaderNavy = reg.style({ bold: true, color: WHITE, fill: NAVY, halign: 'center', valign: 'center' });
+  const sHeaderNavySm = reg.style({ bold: true, color: WHITE, fill: NAVY, halign: 'center', valign: 'center', size: 8 });
+  const sTitle = reg.style({ bold: true, color: WHITE, fill: NAVY, valign: 'center', size: 14 });
+  const sSubtitle = reg.style({ color: '595959', size: 8 });
+  const sNormal = reg.style({ size: 9 });
+  const sNormalCenter = reg.style({ size: 9, halign: 'center' });
+  const sNormalBoldCenter = reg.style({ size: 9, bold: true, halign: 'center' });
+  const sMuted = reg.style({ size: 9, color: '595959' });
+  const sGuideHeading = reg.style({ size: 12, bold: true, color: NAVY });
+  const sGuideBody = reg.style({ size: 10, color: '404040' });
+  const sGuideNote = reg.style({ size: 9, color: '9C9C9C' });
+
+  const okStyle = reg.style({ bold: true, color: OK_GREEN_FONT, fill: OK_GREEN, halign: 'center' });
+  const warnRedStyle = reg.style({ bold: true, color: WARN_RED_FONT, fill: WARN_RED, halign: 'center' });
+  const warnYelStyle = reg.style({ bold: true, color: WARN_YEL_FONT, fill: WARN_YEL, halign: 'center' });
+
+  const fillStyleCache = {};
+  function fillStyle(hex, opts) {
+    opts = opts || {};
+    const key = (hex || 'none') + JSON.stringify(opts);
+    if (fillStyleCache[key] !== undefined) return fillStyleCache[key];
+    const s = reg.style(Object.assign({ fill: hex, halign: 'center', size: 9 }, opts));
+    fillStyleCache[key] = s;
+    return s;
+  }
+
+  const sheets = [];
+
+  // ================================================================
+  // Sheet: 使い方ガイド
+  // ================================================================
+  const guide = new SheetBuilder('使い方ガイド');
+  guide.noGrid();
+  guide.colWidth('A', 100);
+  guide.set('A1', `  勤務表の使い方ガイド（${year}年${month}月）`, { style: sTitle });
+  guide.rowHeight(1, 28);
+  const guideSections = [
+    ['① シフト入力の基本', [
+      'このツールでスタッフを選び、日付をクリックして記号を入れていきます。',
+      '記号は内/化/循/小/皮/泌/耳/健/膠/救/准/深/公/有 の14種類です。',
+      'パートのスタッフは、その人の退勤時刻（13/14/15/16/17時）付きの記号のみ選べます。',
+    ]],
+    ['② 担当外の科は赤く警告されます', [
+      '①担当一覧の主担当・サブ担当2科に入っていない科を選ぶと、',
+      'ツール上のセルと、Excelに出力した際のセルの両方で赤く警告されます。',
+    ]],
+    ['③ 人数不足は②シフト表の下で確認できます', [
+      '【不足チェック】の欄で、各科の必要人数に対する不足（赤）・過剰（黄）がわかります。',
+    ]],
+    ['④ ⑥休み希望シートで希望休を管理', [
+      '希望日に「○」を入れた分は、②シフト表の該当日が自動的に「公」になります。',
+      '月6回以上の希望は赤く警告されます。',
+    ]],
+    ['⑤ ⑤夜勤バランスシートで偏り・ルール違反をチェック', [
+      '・最大連続夜勤が3日以上 → ⚠連続夜勤（赤）',
+      '・最大連続出勤が5日以上 → ⚠連続出勤過多（赤）',
+      '・夜勤の翌日に出勤 → ⚠夜勤明け勤務（赤）',
+      '・休み希望が月6回以上 → ⚠休み希望超過（赤）',
+      '・夜勤合計が他の常勤者平均より3回以上多い/少ない → ⚠偏りあり（黄）',
+    ]],
+  ];
+  let gRow = 3;
+  guideSections.forEach(([title, lines]) => {
+    guide.set(`A${gRow}`, '  ' + title, { style: sGuideHeading });
+    gRow++;
+    lines.forEach(line => {
+      guide.set(`A${gRow}`, '　　' + line, { style: sGuideBody });
+      gRow++;
+    });
+    gRow++;
+  });
+  guide.set(`A${gRow + 1}`, '  ※ このシートはシフト入力ツールから自動生成されています。', { style: sGuideNote });
+  sheets.push(guide);
+
+  // ================================================================
+  // Sheet: ①担当一覧
+  // ================================================================
+  const roster = new SheetBuilder('①担当一覧');
+  roster.set('A1', '担当科一覧 (主担当＋サブ担当2科)', { style: reg.style({ bold: true, size: 14 }) });
+  const rHeaders = ['No', '氏名', '区分', '主担当', 'サブ担当1', 'サブ担当2', '退勤時刻'];
+  rHeaders.forEach((h, i) => roster.set(`${colLetter(i + 1)}3`, h, { style: sHeaderNavy }));
+  roster.colWidth('A', 5); roster.colWidth('B', 14); roster.colWidth('C', 12);
+  roster.colWidth('D', 18); roster.colWidth('E', 18); roster.colWidth('F', 18);
+  roster.colWidth('G', 9);
+  roster.freeze(3, 0);
+
+  const deptColorByJpName = {};
+  Object.entries(DEPT_FULL_NAME).forEach(([code, name]) => { deptColorByJpName[name] = CODE_COLORS[code]; });
+
+  STAFF.forEach((staff, i) => {
+    const r = 4 + i;
+    roster.set(`A${r}`, staff.no);
+    roster.set(`B${r}`, staff.name, { style: reg.style({ size: 9, bold: i < 3 }) });
+    roster.set(`C${r}`, staff.cat, { style: sMuted });
+    [staff.main, staff.sub1, staff.sub2].forEach((val, j) => {
+      const deptName = val.split(' ')[0];
+      const hex = deptColorByJpName[deptName];
+      roster.set(`${colLetter(4 + j)}${r}`, val, { style: fillStyle(hex ? hex.replace('#', '') : null) });
+    });
+    roster.set(`G${r}`, staff.depTime ? `${staff.depTime}時` : '', { style: reg.style({ size: 9, bold: !!staff.depTime, color: staff.depTime ? '1F4E79' : 'BFBFBF', halign: 'center' }) });
+  });
+  sheets.push(roster);
+
+  // ================================================================
+  // Sheet: ②シフト表(oplus風)
+  // ================================================================
+  const shift = new SheetBuilder('②シフト表(oplus風)');
+  shift.set('A1', `  ${year}年${month}月 外来シフト表`, { style: sTitle });
+  shift.merge(`A1:${lastDayColLetter}1`);
+  shift.rowHeight(1, 22);
+  const deptLegendParts = DEPARTMENTS.map(d => `${d.code}=${d.name}`);
+  const legend = `【凡例】${deptLegendParts.join(' / ')} / 救=救急外来 / 准=準夜 / 深=深夜 / 公=公休 / 有=有給 / 代=師長代行`;
+  shift.set('A2', legend, { style: sSubtitle });
+  shift.merge(`A2:${lastDayColLetter}2`);
+
+  shift.set('A3', '氏名', { style: sHeaderNavy }); shift.merge('A3:A4');
+  shift.set('B3', '区分', { style: sHeaderNavy }); shift.merge('B3:B4');
+  for (let d = 1; d <= nDays; d++) {
+    const col = dayColLetters[d - 1];
+    shift.set(`${col}3`, d, { style: sHeaderNavy });
+    shift.set(`${col}4`, weekdayLetterJP(year, month, d), { style: sHeaderNavy });
+  }
+  shift.colWidth('A', 12); shift.colWidth('B', 9);
+  dayColLetters.forEach(c => shift.colWidth(c, 3.4));
+  shift.freeze(4, 2);
+
+  const FIRST_DATA_ROW = 5;
+  const LAST_DATA_ROW = FIRST_DATA_ROW + STAFF.length - 1;
+
+  STAFF.forEach((staff, i) => {
+    const r = FIRST_DATA_ROW + i;
+    shift.set(`A${r}`, staff.name, { style: i < 3 ? reg.style({ size: 9, bold: true }) : sNormal });
+    shift.set(`B${r}`, staff.cat, { style: sMuted });
+    const capable = capableCodesOf(staff);
+    for (let d = 1; d <= nDays; d++) {
+      const col = dayColLetters[d - 1];
+      const val = effectiveShiftValue(shifts, staff.no, d);
+      if (!val) { shift.set(`${col}${r}`, ''); continue; }
+      const base = val[0];
+      const isDept = Object.keys(REQUIRED_HEADCOUNT).includes(base);
+      const outOfScope = isDept && !capable.includes(base);
+      const hex = CODE_COLORS[base];
+      const styleIdx = outOfScope
+        ? reg.style({ size: 9, bold: true, color: WARN_RED_FONT, fill: WARN_RED, halign: 'center' })
+        : fillStyle(hex ? hex.replace('#', '') : null);
+      shift.set(`${col}${r}`, val, { style: styleIdx });
+    }
+  });
+
+  // department count rows (wildcard logic done at write-time since this is
+  // a snapshot export, not a live formula -- but we still WRITE the formula
+  // so Excel keeps it live/editable after download)
+  let countRow = LAST_DATA_ROW + 1;
+  const deptCountRowOf = {};
+  Object.entries(DEPT_FULL_NAME).forEach(([code, name]) => {
+    shift.set(`A${countRow}`, name, { style: reg.style({ size: 9, bold: true, fill: (CODE_COLORS[code] || '').replace('#','') }) });
+    dayColLetters.forEach(col => {
+      shift.formula(`${col}${countRow}`, `COUNTIF(${col}${FIRST_DATA_ROW}:${col}${LAST_DATA_ROW},"${code}*")`, { style: sNormalBoldCenter });
+    });
+    deptCountRowOf[code] = countRow;
+    countRow++;
+  });
+  ['救','准','深','公','有'].forEach(code => {
+    const label = { '救': '救急', '准': '准夜', '深': '深夜', '公': '公休', '有': '有給' }[code];
+    shift.set(`A${countRow}`, label, { style: reg.style({ size: 9, bold: true, fill: (CODE_COLORS[code] || '').replace('#','') }) });
+    dayColLetters.forEach(col => {
+      shift.formula(`${col}${countRow}`, `COUNTIF(${col}${FIRST_DATA_ROW}:${col}${LAST_DATA_ROW},"${code}")`, { style: sNormalBoldCenter });
+    });
+    countRow++;
+  });
+  const reqRow = countRow;
+  shift.set(`A${reqRow}`, '必要人数(平日)', { style: reg.style({ size: 9, bold: true }) });
+  for (let d = 1; d <= nDays; d++) {
+    const col = dayColLetters[d - 1];
+    const wd = weekdayLetterJP(year, month, d);
+    const isOffDay = wd === '土' || wd === '日' || isJapaneseHoliday(year, month, d);
+    const text = isOffDay ? '救2/准2/深2' : `計18/准${NIGHT_REQUIREMENTS.weekdayEvening}/深${NIGHT_REQUIREMENTS.weekdayLate}`;
+    shift.set(`${col}${reqRow}`, text, { style: reg.style({ size: 8, halign: 'center' }) });
+  }
+  countRow = reqRow + 2;
+
+  // shortage check rows
+  shift.set(`A${countRow}`, '【不足チェック】(平日のみ／必要人数との差)', { style: reg.style({ size: 9, bold: true, italic: true, color: WARN_RED_FONT }) });
+  countRow++;
+  const shortageRows = [];
+  Object.entries(REQUIRED_HEADCOUNT).forEach(([code, need]) => {
+    const name = DEPT_FULL_NAME[code];
+    shift.set(`A${countRow}`, name, { style: reg.style({ size: 9, bold: true, fill: 'F2F2F2' }) });
+    for (let d = 1; d <= nDays; d++) {
+      const col = dayColLetters[d - 1];
+      const wd = weekdayLetterJP(year, month, d);
+      const isOffDay = wd === '土' || wd === '日' || isJapaneseHoliday(year, month, d);
+      if (isOffDay) { shift.set(`${col}${countRow}`, ''); continue; }
+      shift.formula(`${col}${countRow}`, `${col}${deptCountRowOf[code]}-${need}`, { style: reg.style({ size: 8, halign: 'center' }) });
+    }
+    shortageRows.push(countRow);
+    countRow++;
+  });
+  shortageRows.forEach(r => {
+    const ref = `${dayColLetters[0]}${r}:${lastDayColLetter}${r}`;
+    dxfs.push({ fill: WARN_RED, fontColor: WARN_RED_FONT });
+    shift.condFormat(ref, 'cellIs', { operator: 'lessThan', formula: '0', dxfId: dxfs.length - 1 });
+    dxfs.push({ fill: WARN_YEL, fontColor: WARN_YEL_FONT });
+    shift.condFormat(ref, 'cellIs', { operator: 'greaterThan', formula: '0', dxfId: dxfs.length - 1 });
+  });
+
+  // out-of-scope conditional formatting (kept live for any future manual edits in Excel)
+  dxfs.push({ fill: WARN_RED, fontColor: WARN_RED_FONT, bold: true });
+  const oosDxfId = dxfs.length - 1;
+  dayColLetters.forEach(col => {
+    const ref = `${col}${FIRST_DATA_ROW}:${col}${LAST_DATA_ROW}`;
+    const formula = `AND(${col}${FIRST_DATA_ROW}<>"",ISERROR(MATCH(${col}${FIRST_DATA_ROW},{"救";"准";"深";"公";"有";"代"},0)),ISERROR(FIND(LEFT(${col}${FIRST_DATA_ROW},1),VLOOKUP($A${FIRST_DATA_ROW},①担当一覧!$B:$F,3,FALSE)&VLOOKUP($A${FIRST_DATA_ROW},①担当一覧!$B:$F,4,FALSE)&VLOOKUP($A${FIRST_DATA_ROW},①担当一覧!$B:$F,5,FALSE))))`;
+    shift.condFormat(ref, 'expression', { formula, dxfId: oosDxfId });
+  });
+
+  sheets.push(shift);
+
+  // ================================================================
+  // Sheet: ③科別勤務者一覧 (dynamically derived from shifts, per user request)
+  // ================================================================
+  const deptList = new SheetBuilder('③科別勤務者一覧');
+  deptList.set('A1', `  ${year}年${month}月 科別 勤務者一覧`, { style: sTitle });
+  deptList.merge(`A1:${lastDayColLetter}1`);
+  deptList.set('A2', '科', { style: sHeaderNavySm }); deptList.merge('A2:A3');
+  deptList.set('B2', '#', { style: sHeaderNavySm }); deptList.merge('B2:B3');
+  for (let d = 1; d <= nDays; d++) {
+    const col = dayColLetters[d - 1];
+    deptList.set(`${col}2`, d, { style: sHeaderNavySm });
+    deptList.set(`${col}3`, weekdayLetterJP(year, month, d), { style: sHeaderNavySm });
+  }
+  deptList.colWidth('A', 12); deptList.colWidth('B', 3.5);
+  dayColLetters.forEach(c => deptList.colWidth(c, 6.5));
+
+  let dRow = 4;
+  const allCodesForList = Object.keys(DEPT_FULL_NAME).concat(['准', '深']);
+  const labelForList = Object.assign({}, DEPT_FULL_NAME, { '准': '準夜', '深': '深夜' });
+  allCodesForList.forEach(code => {
+    const need = REQUIRED_HEADCOUNT[code];
+    const headerText = need ? `  ${labelForList[code]} (${code})  必要 ${need}名/平日` : `  ${labelForList[code]}`;
+    deptList.set(`A${dRow}`, headerText, { style: reg.style({ bold: true, fill: 'F2F2F2' }) });
+    dRow++;
+    // for each day, list the staff working this code (any time-suffix variant)
+    const perDayNames = [];
+    let maxCount = 0;
+    for (let d = 1; d <= nDays; d++) {
+      const names = [];
+      STAFF.forEach(staff => {
+        const val = effectiveShiftValue(shifts, staff.no, d);
+        if (val && val[0] === code) names.push(staff.name);
+      });
+      perDayNames.push(names);
+      maxCount = Math.max(maxCount, names.length);
+    }
+    for (let i = 0; i < Math.max(maxCount, 1); i++) {
+      deptList.set(`B${dRow}`, i + 1, { style: sNormalCenter });
+      for (let d = 1; d <= nDays; d++) {
+        const col = dayColLetters[d - 1];
+        const name = perDayNames[d - 1][i] || '';
+        deptList.set(`${col}${dRow}`, name, { style: reg.style({ size: 8, halign: 'center' }) });
+      }
+      dRow++;
+    }
+  });
+  sheets.push(deptList);
+
+  // ================================================================
+  // Sheet: ④科別メンバー
+  // ================================================================
+  const members = new SheetBuilder('④科別メンバー');
+  members.set('A1', '  科別メンバー一覧 (担当できるスタッフ)', { style: sTitle });
+  members.merge('A1:D1');
+  members.set('A2', '各科を担当できるスタッフの名簿。必要人数に対する配属余裕度を確認できます。', { style: sSubtitle });
+  members.merge('A2:D2');
+  members.set('A4', '  ◆ 表1: 科別の担当者リスト', { style: reg.style({ bold: true, size: 11 }) });
+  ['科', '必要/日', '主担当人数', 'サブ担当人数'].forEach((h, i) => members.set(`${colLetter(i + 1)}5`, h, { style: sHeaderNavySm }));
+  let mRow = 6;
+  Object.entries(REQUIRED_HEADCOUNT).forEach(([code, need]) => {
+    const mainCount = STAFF.filter(s => s.main.includes(`(${code})`)).length;
+    const subCount = STAFF.filter(s => s.sub1.includes(`(${code})`) || s.sub2.includes(`(${code})`)).length;
+    members.set(`A${mRow}`, `${DEPT_FULL_NAME[code]} (${code})`, { style: sNormal });
+    members.set(`B${mRow}`, `${need}名`, { style: sNormalCenter });
+    members.set(`C${mRow}`, `${mainCount}名`, { style: sNormalCenter });
+    members.set(`D${mRow}`, `${subCount}名`, { style: sNormalCenter });
+    mRow++;
+  });
+  mRow += 1;
+  members.set(`A${mRow}`, '  ◆ 表2: 対応可能マトリックス (◎=主担当・○=サブ担当)', { style: reg.style({ bold: true, size: 11 }) });
+  mRow++;
+  const matrixHeaderRow = mRow;
+  members.set(`A${mRow}`, '氏名', { style: sHeaderNavySm });
+  members.set(`B${mRow}`, '区分', { style: sHeaderNavySm });
+  Object.keys(DEPT_FULL_NAME).forEach((code, i) => members.set(`${colLetter(3 + i)}${mRow}`, code, { style: sHeaderNavySm }));
+  mRow++;
+  STAFF.forEach(staff => {
+    members.set(`A${mRow}`, staff.name, { style: sNormal });
+    members.set(`B${mRow}`, staff.cat, { style: sMuted });
+    Object.keys(DEPT_FULL_NAME).forEach((code, i) => {
+      let mark = '';
+      if (staff.main.includes(`(${code})`)) mark = '◎';
+      else if (staff.sub1.includes(`(${code})`) || staff.sub2.includes(`(${code})`)) mark = '○';
+      members.set(`${colLetter(3 + i)}${mRow}`, mark, { style: sNormalCenter });
+    });
+    mRow++;
+  });
+  members.colWidth('A', 16); members.colWidth('B', 8);
+  Object.keys(DEPT_FULL_NAME).forEach((_, i) => members.colWidth(colLetter(3 + i), 4));
+  sheets.push(members);
+
+  // ================================================================
+  // Sheet: ⑤夜勤バランス
+  // ================================================================
+  const NB = new SheetBuilder('⑤夜勤バランス');
+  NB.noGrid();
+  NB.set('A1', '  夜勤バランスチェック（准夜・深夜の偏り検出）', { style: sTitle });
+  NB.merge('A1:L1');
+  NB.set('A2', '准夜=准 / 深夜=深 を対象。最大連続夜勤・最終夜勤からの間隔・平均との差で偏りを確認できます。', { style: sSubtitle });
+  NB.merge('A2:L2');
+  const nbHeaders = ['氏名', '区分', '准夜回数', '深夜回数', '夜勤合計', '最大連続夜勤(日)',
+    '最終夜勤からの間隔(日)', '月平均との差', '最大連続出勤(日)', '夜勤明け勤務', '休み希望(月)', '判定'];
+  nbHeaders.forEach((h, i) => NB.set(`${colLetter(i + 1)}4`, h, { style: reg.style({ bold: true, color: WHITE, fill: NAVY, halign: 'center', valign: 'center', wrap: true, size: 9 }) }));
+  NB.rowHeight(4, 30);
+  const nbWidths = { A: 12, B: 10, C: 9, D: 9, E: 9, F: 13, G: 16, H: 12, I: 13, J: 11, K: 11, L: 10 };
+  Object.entries(nbWidths).forEach(([c, w]) => NB.colWidth(c, w));
+
+  const SHIFT_REF = "'②シフト表(oplus風)'";
+  const totals = [];
+  STAFF.forEach((staff, i) => {
+    const r = 5 + i;
+    NB.set(`A${r}`, staff.name, { style: sNormal });
+    NB.set(`B${r}`, staff.cat, { style: sMuted });
+
+    let cCount = 0, dCount = 0, workFlags = [], nightFlags = [];
+    let maxNightStreak = 0, curNightStreak = 0, lastNightDay = 0;
+    let maxWorkStreak = 0, curWorkStreak = 0;
+    let nightFollowedByWork = 0;
+    for (let d = 1; d <= nDays; d++) {
+      const val = effectiveShiftValue(shifts, staff.no, d);
+      const isNight = val === '准' || val === '深';
+      const isWork = val !== '' && val !== '公' && val !== '有';
+      if (val === '准') cCount++;
+      if (val === '深') dCount++;
+      nightFlags.push(isNight ? 1 : 0);
+      workFlags.push(isWork ? 1 : 0);
+      curNightStreak = isNight ? curNightStreak + 1 : 0;
+      maxNightStreak = Math.max(maxNightStreak, curNightStreak);
+      curWorkStreak = isWork ? curWorkStreak + 1 : 0;
+      maxWorkStreak = Math.max(maxWorkStreak, curWorkStreak);
+      if (isNight) lastNightDay = d;
+    }
+    for (let d = 1; d < nDays; d++) {
+      if (nightFlags[d - 1] === 1 && workFlags[d] === 1) nightFollowedByWork++;
+    }
+    const total = cCount + dCount;
+    const gap = total === 0 ? '-' : (nDays - lastNightDay);
+    const ptoCount = Object.values((shifts[staff.no] || {})).filter(() => false).length; // placeholder, replaced below
+    totals.push(total);
+
+    NB.set(`C${r}`, cCount, { style: sNormalCenter });
+    NB.set(`D${r}`, dCount, { style: sNormalCenter });
+    NB.set(`E${r}`, total, { style: sNormalCenter });
+    NB.set(`F${r}`, maxNightStreak, { style: sNormalBoldCenter });
+    NB.set(`G${r}`, gap, { style: sNormalCenter });
+    NB.set(`I${r}`, maxWorkStreak, { style: sNormalBoldCenter });
+    NB.set(`J${r}`, nightFollowedByWork, { style: sNormalBoldCenter });
+  });
+
+  const eligibleTotals = STAFF.map((s, i) => totals[i]).filter(t => t > 0);
+  const avgTotal = eligibleTotals.length ? eligibleTotals.reduce((a, b) => a + b, 0) / eligibleTotals.length : 0;
+
+  STAFF.forEach((staff, i) => {
+    const r = 5 + i;
+    const total = totals[i];
+    const diff = total === 0 ? '-' : Math.round((total - avgTotal) * 10) / 10;
+    NB.set(`H${r}`, diff, { style: reg.style({ size: 9, halign: 'center' }) });
+
+    // PTO count from the dedicated PTO tracking (passed in via shifts metadata is not separate;
+    // we approximate using the explicit pto set captured at fill-time, see below)
+    const ptoDays = (shifts.__pto && shifts.__pto[staff.no]) ? Object.keys(shifts.__pto[staff.no]).length : 0;
+    NB.set(`K${r}`, ptoDays, { style: sNormalCenter });
+
+    const maxNightStreak = parseInt(NB.cells[`F${r}`].v, 10) || 0;
+    const maxWorkStreak = parseInt(NB.cells[`I${r}`].v, 10) || 0;
+    const nightFollowedByWork = parseInt(NB.cells[`J${r}`].v, 10) || 0;
+    let verdict = 'OK', style = okStyle;
+    if (maxNightStreak >= 3) { verdict = '⚠連続夜勤'; style = warnRedStyle; }
+    else if (maxWorkStreak >= 5) { verdict = '⚠連続出勤過多'; style = warnRedStyle; }
+    else if (nightFollowedByWork > 0) { verdict = '⚠夜勤明け勤務'; style = warnRedStyle; }
+    else if (ptoDays > 5) { verdict = '⚠休み希望超過'; style = warnRedStyle; }
+    else if (total > 0 && typeof diff === 'number' && Math.abs(diff) >= 3) { verdict = '⚠偏りあり'; style = warnYelStyle; }
+    NB.set(`L${r}`, verdict, { style });
+  });
+  NB.freeze(4, 2);
+  sheets.push(NB);
+
+  // ================================================================
+  // Sheet: ⑥休み希望
+  // ================================================================
+  const pto = new SheetBuilder('⑥休み希望');
+  pto.noGrid();
+  pto.set('A1', '  休み希望入力シート（月5回まで／希望日に「○」を入力）', { style: sTitle });
+  pto.merge(`A1:${colLetter(2 + nDays + 1)}1`);
+  pto.set('A2', '希望日に「○」を入力してください（最大5個）。入力した日は②シフト表の該当日が公休として反映されます。', { style: sSubtitle });
+  pto.merge(`A2:${colLetter(2 + nDays + 1)}2`);
+  pto.set('A3', '氏名', { style: sHeaderNavySm }); pto.merge('A3:A4');
+  pto.set('B3', '区分', { style: sHeaderNavySm }); pto.merge('B3:B4');
+  for (let d = 1; d <= nDays; d++) {
+    const col = colLetter(2 + d);
+    pto.set(`${col}3`, d, { style: sHeaderNavySm });
+    pto.set(`${col}4`, weekdayLetterJP(year, month, d), { style: sHeaderNavySm });
+  }
+  const reqColLetter = colLetter(2 + nDays + 1);
+  pto.set(`${reqColLetter}3`, '希望数', { style: sHeaderNavySm }); pto.merge(`${reqColLetter}3:${reqColLetter}4`);
+  pto.colWidth('A', 12); pto.colWidth('B', 10);
+  for (let d = 1; d <= nDays; d++) pto.colWidth(colLetter(2 + d), 3.4);
+  pto.colWidth(reqColLetter, 8);
+
+  STAFF.forEach((staff, i) => {
+    const r = 5 + i;
+    pto.set(`A${r}`, staff.name, { style: sNormal });
+    pto.set(`B${r}`, staff.cat, { style: sMuted });
+    const ptoSet = (shifts.__pto && shifts.__pto[staff.no]) || {};
+    let count = 0;
+    for (let d = 1; d <= nDays; d++) {
+      const col = colLetter(2 + d);
+      const marked = !!ptoSet[d];
+      if (marked) count++;
+      pto.set(`${col}${r}`, marked ? '○' : '', { style: reg.style({ size: 9, bold: true, color: '1F4E79', halign: 'center', border: true }) });
+    }
+    const style = count > 5 ? warnRedStyle : okStyle;
+    pto.set(`${reqColLetter}${r}`, count, { style });
+  });
+  pto.freeze(4, 2);
+  sheets.push(pto);
+
+  // ================================================================
+  // Sheet: ⑦時間帯別集計
+  // ================================================================
+  const tb = new SheetBuilder('⑦時間帯別集計');
+  tb.noGrid();
+  tb.set('A1', '  時間帯別集計（科ごとの退勤時刻パターン別の人数）', { style: sTitle });
+  tb.merge(`A1:${lastDayColLetter}1`);
+  tb.set('A2', '②シフト表の「科(時刻)」表記を時刻ごとに分けて集計します。常勤等の時刻なし入力は対象外です。', { style: sSubtitle });
+  tb.merge(`A2:${lastDayColLetter}2`);
+  tb.set('A3', '科', { style: sHeaderNavySm }); tb.merge('A3:A4');
+  tb.set('B3', '時刻', { style: sHeaderNavySm }); tb.merge('B3:B4');
+  for (let d = 1; d <= nDays; d++) {
+    const col = dayColLetters[d - 1];
+    tb.set(`${col}3`, d, { style: sHeaderNavySm });
+    tb.set(`${col}4`, weekdayLetterJP(year, month, d), { style: sHeaderNavySm });
+  }
+  const tbTotalCol = colLetter(colNum(lastDayColLetter) + 1);
+  tb.set(`${tbTotalCol}3`, '月合計', { style: sHeaderNavySm }); tb.merge(`${tbTotalCol}3:${tbTotalCol}4`);
+  tb.colWidth('A', 11); tb.colWidth('B', 7);
+  dayColLetters.forEach(c => tb.colWidth(c, 3.4));
+  tb.colWidth(tbTotalCol, 9);
+
+  let tRow = 5;
+  Object.entries(DEPT_FULL_NAME).forEach(([code, name]) => {
+    const startRow = tRow;
+    [13, 14, 15, 16, 17].forEach(time => {
+      tb.set(`A${tRow}`, name, { style: reg.style({ size: 9, color: '595959', valign: 'center' }) });
+      tb.set(`B${tRow}`, `${time}時`, { style: sNormalBoldCenter });
+      let monthTotal = 0;
+      for (let d = 1; d <= nDays; d++) {
+        const col = dayColLetters[d - 1];
+        let count = 0;
+        STAFF.forEach(staff => {
+          const val = effectiveShiftValue(shifts, staff.no, d);
+          if (val === `${code}(${time})`) count++;
+        });
+        monthTotal += count;
+        tb.set(`${col}${tRow}`, count, { style: reg.style({ size: 8, halign: 'center' }) });
+      }
+      tb.set(`${tbTotalCol}${tRow}`, monthTotal, { style: sNormalBoldCenter });
+      tRow++;
+    });
+    tb.merge(`A${startRow}:A${tRow - 1}`);
+  });
+  tb.freeze(4, 2);
+  sheets.push(tb);
+
+  return renderWorkbook(sheets, reg, dxfs);
+}
+
+/*
+  Minimal, dependency-free XLSX reader.
+  Reads a .xlsx File/ArrayBuffer and returns a map of
+  sheetName -> { cells: {ref: value}, merges: [...] }
+
+  Handles both the uncompressed ("STORE") ZIP entries our own writer
+  produces AND the standard DEFLATE-compressed entries that real Excel
+  / LibreOffice produce, using the browser's built-in
+  DecompressionStream('deflate-raw') for inflate (widely supported in
+  modern Chrome/Edge/Firefox/Safari -- no external library needed).
+
+  Supports shared strings (sharedStrings.xml) and inline strings
+  (t="inlineStr"), which covers files written by Excel, LibreOffice,
+  and our own writer.
+*/
+
+// ---------- ZIP reading (handles both STORE and DEFLATE) ----------
+async function readZipEntries(arrayBuffer) {
+  const data = new Uint8Array(arrayBuffer);
+  const view = new DataView(arrayBuffer);
+
+  // find End Of Central Directory record by scanning from the end
+  let eocdOffset = -1;
+  for (let i = data.length - 22; i >= 0 && i >= data.length - 22 - 65536; i--) {
+    if (view.getUint32(i, true) === 0x06054b50) { eocdOffset = i; break; }
+  }
+  if (eocdOffset === -1) throw new Error('ZIPの終端レコードが見つかりません（ファイルが壊れている可能性があります）');
+
+  const entryCount = view.getUint16(eocdOffset + 10, true);
+  const centralDirOffset = view.getUint32(eocdOffset + 16, true);
+
+  const entries = {};
+  let pos = centralDirOffset;
+  for (let i = 0; i < entryCount; i++) {
+    if (view.getUint32(pos, true) !== 0x02014b50) break;
+    const compMethod = view.getUint16(pos + 10, true);
+    const compSize = view.getUint32(pos + 20, true);
+    const uncompSize = view.getUint32(pos + 24, true);
+    const nameLen = view.getUint16(pos + 28, true);
+    const extraLen = view.getUint16(pos + 30, true);
+    const commentLen = view.getUint16(pos + 32, true);
+    const localHeaderOffset = view.getUint32(pos + 42, true);
+    const name = new TextDecoder().decode(data.slice(pos + 46, pos + 46 + nameLen));
+
+    // local header: read actual compressed data location (name/extra length can differ from central dir, so re-read)
+    const lhNameLen = view.getUint16(localHeaderOffset + 26, true);
+    const lhExtraLen = view.getUint16(localHeaderOffset + 28, true);
+    const dataStart = localHeaderOffset + 30 + lhNameLen + lhExtraLen;
+    const compData = data.slice(dataStart, dataStart + compSize);
+
+    entries[name] = { compMethod, compData, uncompSize };
+    pos += 46 + nameLen + extraLen + commentLen;
+  }
+
+  // inflate any DEFLATE entries
+  const result = {};
+  for (const [name, entry] of Object.entries(entries)) {
+    if (entry.compMethod === 0) {
+      result[name] = entry.compData;
+    } else if (entry.compMethod === 8) {
+      result[name] = await inflateRaw(entry.compData);
+    } else {
+      throw new Error(`未対応の圧縮方式です (${name})`);
+    }
+  }
+  return result;
+}
+
+async function inflateRaw(compressedBytes) {
+  if (typeof DecompressionStream === 'undefined') {
+    throw new Error('このブラウザはZIP解凍に対応していません。Chrome/Edge/Firefoxの最新版をお使いください。');
+  }
+  const ds = new DecompressionStream('deflate-raw');
+  const stream = new Blob([compressedBytes]).stream().pipeThrough(ds);
+  const buf = await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+
+function bytesToStr(bytes) { return new TextDecoder('utf-8').decode(bytes); }
+
+// ---------- minimal XML helpers (regex-based, sufficient for OOXML's predictable structure) ----------
+function extractAttr(tag, attr) {
+  const m = tag.match(new RegExp(attr + '="([^"]*)"'));
+  return m ? m[1] : null;
+}
+
+function decodeXmlEntities(s) {
+  return s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'").replace(/&#(\d+);/g, (_, n) => String.fromCharCode(n))
+    .replace(/&amp;/g, '&');
+}
+
+function parseSharedStrings(xml) {
+  if (!xml) return [];
+  const strings = [];
+  const siBlocks = xml.match(/<si>[\s\S]*?<\/si>/g) || [];
+  siBlocks.forEach(block => {
+    const texts = (block.match(/<t[^>]*>([\s\S]*?)<\/t>/g) || [])
+      .map(t => decodeXmlEntities(t.replace(/<t[^>]*>/, '').replace('</t>', '')));
+    strings.push(texts.join(''));
+  });
+  return strings;
+}
+
+function parseSheetXml(xml, sharedStrings) {
+  const cells = {};
+  const rowBlocks = xml.match(/<row [^>]*>[\s\S]*?<\/row>|<row [^>]*\/>/g) || [];
+  rowBlocks.forEach(rowBlock => {
+    const cellTags = rowBlock.match(/<c [^>]*\/>|<c [^>]*>[\s\S]*?<\/c>/g) || [];
+    cellTags.forEach(cTag => {
+      const ref = extractAttr(cTag, 'r');
+      if (!ref) return;
+      const type = extractAttr(cTag, 't');
+      let value = null;
+      const vMatch = cTag.match(/<v>([\s\S]*?)<\/v>/);
+      const isMatch = cTag.match(/<is>([\s\S]*?)<\/is>/);
+      if (type === 's' && vMatch) {
+        const idx = parseInt(vMatch[1], 10);
+        value = sharedStrings[idx] !== undefined ? sharedStrings[idx] : '';
+      } else if (type === 'inlineStr' && isMatch) {
+        const tMatch = isMatch[1].match(/<t[^>]*>([\s\S]*?)<\/t>/);
+        value = tMatch ? decodeXmlEntities(tMatch[1]) : '';
+      } else if (vMatch) {
+        const raw = vMatch[1];
+        value = type === 'str' ? decodeXmlEntities(raw) : parseFloat(raw);
+      }
+      if (value !== null && value !== '') cells[ref] = value;
+    });
+  });
+  return cells;
+}
+
+function parseWorkbookSheetNames(workbookXml, relsXml) {
+  const sheetTags = workbookXml.match(/<sheet [^>]*\/>/g) || [];
+  const relMap = {};
+  (relsXml.match(/<Relationship [^>]*\/>/g) || []).forEach(r => {
+    const id = extractAttr(r, 'Id');
+    const target = extractAttr(r, 'Target');
+    relMap[id] = target;
+  });
+  return sheetTags.map(tag => ({
+    name: decodeXmlEntities(extractAttr(tag, 'name')),
+    rId: extractAttr(tag, 'r:id'),
+    target: relMap[extractAttr(tag, 'r:id')],
+  }));
+}
+
+// ============================================================
+// Public API
+// ============================================================
+async function readXlsxFile(arrayBuffer) {
+  const files = await readZipEntries(arrayBuffer);
+  const decoded = {};
+  Object.entries(files).forEach(([name, bytes]) => { decoded[name] = bytesToStr(bytes); });
+
+  const workbookXml = decoded['xl/workbook.xml'];
+  const relsXml = decoded['xl/_rels/workbook.xml.rels'];
+  if (!workbookXml || !relsXml) throw new Error('xlsxの構造を認識できませんでした（workbook.xmlが見つかりません）');
+
+  const sheetMeta = parseWorkbookSheetNames(workbookXml, relsXml);
+  const sharedStrings = parseSharedStrings(decoded['xl/sharedStrings.xml']);
+
+  const sheets = {};
+  sheetMeta.forEach(meta => {
+    const path = 'xl/' + meta.target.replace(/^\/?xl\//, '').replace(/^\.?\//, '');
+    const xml = decoded[path] || decoded[meta.target] || decoded['xl/' + meta.target];
+    if (!xml) return;
+    sheets[meta.name] = parseSheetXml(xml, sharedStrings);
+  });
+  return sheets;
+}
+
+function colNumFromRef(ref) {
+  const m = ref.match(/^([A-Z]+)(\d+)$/);
+  let n = 0;
+  for (let i = 0; i < m[1].length; i++) n = n * 26 + (m[1].charCodeAt(i) - 64);
+  return { col: n, row: parseInt(m[2], 10) };
+}
+
+let STAFF = [{"no": 1, "name": "看護師長", "cat": "師長", "main": "", "sub1": "", "sub2": "", "depTime": null}, {"no": 2, "name": "副師長1", "cat": "副師長", "main": "内視鏡 (内)", "sub1": "化学療法室 (化)", "sub2": "循環器科 (循)", "depTime": null}, {"no": 3, "name": "副師長2", "cat": "副師長", "main": "化学療法室 (化)", "sub1": "内視鏡 (内)", "sub2": "泌尿器科 (泌)", "depTime": null}, {"no": 4, "name": "常勤01", "cat": "一般常勤", "main": "皮膚科 (皮)", "sub1": "膠原病科 (膠)", "sub2": "健康管理科 (健)", "depTime": null}, {"no": 5, "name": "常勤02", "cat": "一般常勤", "main": "化学療法室 (化)", "sub1": "泌尿器科 (泌)", "sub2": "耳鼻科 (耳)", "depTime": null}, {"no": 6, "name": "常勤03", "cat": "一般常勤", "main": "膠原病科 (膠)", "sub1": "泌尿器科 (泌)", "sub2": "小児科 (小)", "depTime": null}, {"no": 7, "name": "常勤04", "cat": "一般常勤", "main": "健康管理科 (健)", "sub1": "耳鼻科 (耳)", "sub2": "循環器科 (循)", "depTime": null}, {"no": 8, "name": "常勤05", "cat": "一般常勤", "main": "小児科 (小)", "sub1": "耳鼻科 (耳)", "sub2": "泌尿器科 (泌)", "depTime": null}, {"no": 9, "name": "常勤06", "cat": "一般常勤", "main": "内視鏡 (内)", "sub1": "健康管理科 (健)", "sub2": "耳鼻科 (耳)", "depTime": null}, {"no": 10, "name": "常勤07", "cat": "一般常勤", "main": "小児科 (小)", "sub1": "皮膚科 (皮)", "sub2": "内視鏡 (内)", "depTime": null}, {"no": 11, "name": "常勤08", "cat": "一般常勤", "main": "耳鼻科 (耳)", "sub1": "健康管理科 (健)", "sub2": "化学療法室 (化)", "depTime": null}, {"no": 12, "name": "常勤09", "cat": "一般常勤", "main": "化学療法室 (化)", "sub1": "循環器科 (循)", "sub2": "皮膚科 (皮)", "depTime": null}, {"no": 13, "name": "常勤10", "cat": "一般常勤", "main": "化学療法室 (化)", "sub1": "健康管理科 (健)", "sub2": "耳鼻科 (耳)", "depTime": null}, {"no": 14, "name": "常勤11", "cat": "一般常勤", "main": "泌尿器科 (泌)", "sub1": "膠原病科 (膠)", "sub2": "皮膚科 (皮)", "depTime": null}, {"no": 15, "name": "常勤12", "cat": "一般常勤", "main": "泌尿器科 (泌)", "sub1": "耳鼻科 (耳)", "sub2": "循環器科 (循)", "depTime": null}, {"no": 16, "name": "常勤13", "cat": "一般常勤", "main": "循環器科 (循)", "sub1": "小児科 (小)", "sub2": "内視鏡 (内)", "depTime": null}, {"no": 17, "name": "常勤14", "cat": "一般常勤", "main": "内視鏡 (内)", "sub1": "循環器科 (循)", "sub2": "健康管理科 (健)", "depTime": null}, {"no": 18, "name": "常勤15", "cat": "一般常勤", "main": "膠原病科 (膠)", "sub1": "泌尿器科 (泌)", "sub2": "小児科 (小)", "depTime": null}, {"no": 19, "name": "常勤16", "cat": "一般常勤", "main": "内視鏡 (内)", "sub1": "小児科 (小)", "sub2": "泌尿器科 (泌)", "depTime": null}, {"no": 20, "name": "常勤17", "cat": "一般常勤", "main": "化学療法室 (化)", "sub1": "循環器科 (循)", "sub2": "耳鼻科 (耳)", "depTime": null}, {"no": 21, "name": "パート01", "cat": "パート週5", "main": "内視鏡 (内)", "sub1": "耳鼻科 (耳)", "sub2": "泌尿器科 (泌)", "depTime": 13}, {"no": 22, "name": "パート02", "cat": "パート週5", "main": "泌尿器科 (泌)", "sub1": "皮膚科 (皮)", "sub2": "小児科 (小)", "depTime": 14}, {"no": 23, "name": "パート03", "cat": "パート週5", "main": "皮膚科 (皮)", "sub1": "健康管理科 (健)", "sub2": "内視鏡 (内)", "depTime": 15}, {"no": 24, "name": "パート04", "cat": "パート週5", "main": "小児科 (小)", "sub1": "化学療法室 (化)", "sub2": "健康管理科 (健)", "depTime": 16}, {"no": 25, "name": "パート05", "cat": "パート週5", "main": "内視鏡 (内)", "sub1": "耳鼻科 (耳)", "sub2": "循環器科 (循)", "depTime": 13}, {"no": 26, "name": "パート06", "cat": "パート週5", "main": "健康管理科 (健)", "sub1": "膠原病科 (膠)", "sub2": "耳鼻科 (耳)", "depTime": 14}, {"no": 27, "name": "パート07", "cat": "パート週5", "main": "内視鏡 (内)", "sub1": "皮膚科 (皮)", "sub2": "耳鼻科 (耳)", "depTime": 15}, {"no": 28, "name": "パート08", "cat": "パート週5", "main": "化学療法室 (化)", "sub1": "膠原病科 (膠)", "sub2": "皮膚科 (皮)", "depTime": 16}, {"no": 29, "name": "パート09", "cat": "パート週5", "main": "小児科 (小)", "sub1": "健康管理科 (健)", "sub2": "皮膚科 (皮)", "depTime": 13}, {"no": 30, "name": "パート10", "cat": "パート週5", "main": "小児科 (小)", "sub1": "膠原病科 (膠)", "sub2": "循環器科 (循)", "depTime": 14}, {"no": 31, "name": "パート11", "cat": "パート週4", "main": "泌尿器科 (泌)", "sub1": "皮膚科 (皮)", "sub2": "内視鏡 (内)", "depTime": 15}, {"no": 32, "name": "パート12", "cat": "パート週4", "main": "耳鼻科 (耳)", "sub1": "内視鏡 (内)", "sub2": "泌尿器科 (泌)", "depTime": 16}, {"no": 33, "name": "パート13", "cat": "パート週4", "main": "循環器科 (循)", "sub1": "小児科 (小)", "sub2": "健康管理科 (健)", "depTime": 13}, {"no": 34, "name": "パート14", "cat": "パート週4", "main": "皮膚科 (皮)", "sub1": "泌尿器科 (泌)", "sub2": "小児科 (小)", "depTime": 14}, {"no": 35, "name": "パート15", "cat": "パート週4", "main": "化学療法室 (化)", "sub1": "健康管理科 (健)", "sub2": "皮膚科 (皮)", "depTime": 15}, {"no": 36, "name": "パート16", "cat": "パート週4", "main": "小児科 (小)", "sub1": "膠原病科 (膠)", "sub2": "耳鼻科 (耳)", "depTime": 16}, {"no": 37, "name": "パート17", "cat": "パート週4", "main": "耳鼻科 (耳)", "sub1": "健康管理科 (健)", "sub2": "循環器科 (循)", "depTime": 13}, {"no": 38, "name": "パート18", "cat": "パート週4", "main": "膠原病科 (膠)", "sub1": "耳鼻科 (耳)", "sub2": "循環器科 (循)", "depTime": 14}, {"no": 39, "name": "パート19", "cat": "パート週4", "main": "化学療法室 (化)", "sub1": "泌尿器科 (泌)", "sub2": "膠原病科 (膠)", "depTime": 15}, {"no": 40, "name": "パート20", "cat": "パート週4", "main": "泌尿器科 (泌)", "sub1": "化学療法室 (化)", "sub2": "耳鼻科 (耳)", "depTime": 16}, {"no": 41, "name": "パート21", "cat": "パート週3", "main": "化学療法室 (化)", "sub1": "内視鏡 (内)", "sub2": "健康管理科 (健)", "depTime": 13}, {"no": 42, "name": "パート22", "cat": "パート週3", "main": "化学療法室 (化)", "sub1": "皮膚科 (皮)", "sub2": "循環器科 (循)", "depTime": 14}, {"no": 43, "name": "パート23", "cat": "パート週3", "main": "泌尿器科 (泌)", "sub1": "内視鏡 (内)", "sub2": "化学療法室 (化)", "depTime": 15}, {"no": 44, "name": "パート24", "cat": "パート週3", "main": "化学療法室 (化)", "sub1": "耳鼻科 (耳)", "sub2": "皮膚科 (皮)", "depTime": 16}, {"no": 45, "name": "パート25", "cat": "パート週3", "main": "化学療法室 (化)", "sub1": "泌尿器科 (泌)", "sub2": "小児科 (小)", "depTime": 13}, {"no": 46, "name": "パート26", "cat": "パート週3", "main": "健康管理科 (健)", "sub1": "皮膚科 (皮)", "sub2": "小児科 (小)", "depTime": 14}, {"no": 47, "name": "パート27", "cat": "パート週3", "main": "内視鏡 (内)", "sub1": "耳鼻科 (耳)", "sub2": "膠原病科 (膠)", "depTime": 15}, {"no": 48, "name": "パート28", "cat": "パート週3", "main": "内視鏡 (内)", "sub1": "膠原病科 (膠)", "sub2": "健康管理科 (健)", "depTime": 16}, {"no": 49, "name": "パート29", "cat": "パート週3", "main": "膠原病科 (膠)", "sub1": "循環器科 (循)", "sub2": "小児科 (小)", "depTime": 13}, {"no": 50, "name": "パート30", "cat": "パート週3", "main": "膠原病科 (膠)", "sub1": "内視鏡 (内)", "sub2": "泌尿器科 (泌)", "depTime": 14}];
+
+// DEPARTMENTS is the editable department master list. Each entry's
+// `code` is the single-character symbol used throughout the shift grid
+// (e.g. "内"), `name` is the full display name (e.g. "内視鏡"), `color`
+// is the hex fill used for that department's cells, and `required` is
+// the weekday headcount target used by the shortage check.
+let DEPARTMENTS = [
+  { code: '内', name: '内視鏡', color: '#FFE4B5', required: 4 },
+  { code: '化', name: '化学療法室', color: '#FFD8A8', required: 5 },
+  { code: '循', name: '循環器科', color: '#F8BBD0', required: 1 },
+  { code: '小', name: '小児科', color: '#C8E6C9', required: 2 },
+  { code: '皮', name: '皮膚科', color: '#FFF59D', required: 1 },
+  { code: '泌', name: '泌尿器科', color: '#B3E5FC', required: 2 },
+  { code: '耳', name: '耳鼻科', color: '#D1C4E9', required: 1 },
+  { code: '健', name: '健康管理科', color: '#DCEDC8', required: 1 },
+  { code: '膠', name: '膠原病科', color: '#F5C9B5', required: 1 },
+];
+
+// NIGHT_REQUIREMENTS holds the per-month night-shift staffing targets.
+// 平日 (weekday) counts are editable each month since they vary; 土日祝
+// (weekend/holiday) counts are fixed per the agreed rule (救2/准2/深2).
+let NIGHT_REQUIREMENTS = {
+  weekdayEvening: 1, // 平日の准夜
+  weekdayLate: 1,    // 平日の深夜
+};
+const WEEKEND_HOLIDAY_REQ = { '救': 2, '准': 2, '深': 2 };
+
+const NON_DEPT_CODES = ['救','准','深','公','有'];
+const NON_DEPT_COLORS = { '救':'#EF9A9A','准':'#F4B183','深':'#9DC3E6','公':'#D9D9D9','有':'#FFF2CC','代':'#CFD8DC' };
+function deptCodes() { return DEPARTMENTS.map(d => d.code); }
+function codeColors() {
+  const m = Object.assign({}, NON_DEPT_COLORS);
+  DEPARTMENTS.forEach(d => { m[d.code] = d.color; });
+  return m;
+}
+const WEEKDAYS_JP = ['日','月','火','水','木','金','土'];
+
+let currentStaffIdx = null;
+let currentMode = 'shift'; // 'shift' | 'staff' | 'dept'
+// shifts[staffNo] = { 1: '内(13)', 2: '公', ... }
+// shifts.__pto[staffNo] = { 5: true, 10: true, ... }  (PTO request days)
+const shifts = {};
+STAFF.forEach(s => shifts[s.no] = {});
+shifts.__pto = {};
+STAFF.forEach(s => shifts.__pto[s.no] = {});
+
+function switchMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+  if (mode === 'shift') {
+    renderSidebarShift();
+    renderMain();
+  } else if (mode === 'staff') {
+    renderSidebarStaffManagement();
+  } else if (mode === 'dept') {
+    renderSidebarDeptManagement();
+  }
+}
+
+function capableCodes(staff) {
+  const codes = [staff.main, staff.sub1, staff.sub2].map(s => {
+    const m = s.match(/\(([^)]+)\)/);
+    return m ? m[1] : null;
+  }).filter(Boolean);
+  return codes;
+}
+
+const NIGHT_TYPE_LABELS = {
+  none: '夜勤不可',
+  evening_only: '准夜のみ',
+  late_only: '深夜のみ',
+  set_required: '夜勤セット必須',
+};
+function nightTypeLabel(nightType) {
+  return NIGHT_TYPE_LABELS[nightType] || '';
+}
+
+// ============================================================
+// 日本の祝日（固定祝日＋春分・秋分の日＋振替休日）を自動計算する。
+// ハッピーマンデー制度（成人の日・海の日・敬老の日・スポーツの日が
+// 第2月曜/第3月曜になる）にも対応。2000年以降の運用を前提とする。
+// ============================================================
+function nthMonday(year, month, n) {
+  const first = new Date(year, month - 1, 1);
+  const firstMonday = 1 + ((8 - first.getDay()) % 7);
+  return firstMonday + (n - 1) * 7;
+}
+function vernalEquinoxDay(year) {
+  // 近似式（国立天文台の式に基づく、2000-2099年で有効）
+  return Math.floor(20.8431 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+}
+function autumnalEquinoxDay(year) {
+  return Math.floor(23.2488 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+}
+function japaneseHolidaysForYear(year) {
+  // returns a Set of 'YYYY-MM-DD' strings for all holidays (including 振替休日)
+  const holidays = new Map(); // 'YYYY-MM-DD' -> name
+
+  function add(month, day, name) {
+    const key = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    holidays.set(key, name);
+  }
+
+  add(1, 1, '元日');
+  add(1, nthMonday(year, 1, 2), '成人の日');
+  add(2, 11, '建国記念の日');
+  if (year >= 2020) add(2, 23, '天皇誕生日');
+  add(3, vernalEquinoxDay(year), '春分の日');
+  add(4, 29, '昭和の日');
+  add(5, 3, '憲法記念日');
+  add(5, 4, 'みどりの日');
+  add(5, 5, 'こどもの日');
+  add(7, nthMonday(year, 7, 3), '海の日');
+  if (year >= 2016) add(8, 11, '山の日');
+  add(9, nthMonday(year, 9, 3), '敬老の日');
+  add(9, autumnalEquinoxDay(year), '秋分の日');
+  add(10, nthMonday(year, 10, 2), 'スポーツの日');
+  add(11, 3, '文化の日');
+  add(11, 23, '勤労感謝の日');
+
+  // 振替休日: 祝日が日曜なら、その後の最初の平日（祝日でない日）を休日にする
+  const sorted = [...holidays.keys()].sort();
+  sorted.forEach(key => {
+    const [y, m, d] = key.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    if (date.getDay() === 0) {
+      let next = new Date(y, m - 1, d + 1);
+      let nextKey = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`;
+      while (holidays.has(nextKey)) {
+        next = new Date(next.getFullYear(), next.getMonth(), next.getDate() + 1);
+        nextKey = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`;
+      }
+      holidays.set(nextKey, '振替休日');
+    }
+  });
+
+  // 国民の休日: 祝日と祝日に挟まれた平日（祝日でなく、日曜でもない日）も休日とする
+  const afterSubstitutes = [...holidays.keys()];
+  afterSubstitutes.forEach(key => {
+    const [y, m, d] = key.split('-').map(Number);
+    const middle = new Date(y, m - 1, d + 1);
+    const middleKey = `${middle.getFullYear()}-${String(middle.getMonth() + 1).padStart(2, '0')}-${String(middle.getDate()).padStart(2, '0')}`;
+    if (holidays.has(middleKey) || middle.getDay() === 0 || middle.getDay() === 6) return;
+    const after = new Date(y, m - 1, d + 2);
+    const afterKey = `${after.getFullYear()}-${String(after.getMonth() + 1).padStart(2, '0')}-${String(after.getDate()).padStart(2, '0')}`;
+    if (holidays.has(afterKey)) holidays.set(middleKey, '国民の休日');
+  });
+
+  return holidays;
+}
+const _holidayCache = {};
+function isJapaneseHoliday(year, month, day) {
+  if (!_holidayCache[year]) _holidayCache[year] = japaneseHolidaysForYear(year);
+  const key = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  return _holidayCache[year].has(key);
+}
+function holidayName(year, month, day) {
+  if (!_holidayCache[year]) _holidayCache[year] = japaneseHolidaysForYear(year);
+  const key = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  return _holidayCache[year].get(key) || '';
+}
+
+function daysInMonth(year, month) {
+  return new Date(year, month, 0).getDate();
+}
+
+let staffFilter = 'all'; // 'all' | 'zero' | 'incomplete'
+
+function renderSidebarShift() {
+  const sidebar = document.querySelector('.sidebar');
+  // restore the shift-mode sidebar markup (staff search + list) since
+  // staff/dept management modes replace this area with their own UI
+  let shiftDiv = document.getElementById('sidebarShiftMode');
+  if (!shiftDiv) {
+    shiftDiv = document.createElement('div');
+    shiftDiv.id = 'sidebarShiftMode';
+  }
+  shiftDiv.innerHTML = `
+    <div class="sidebar-actions">
+      <button class="mgmt-add-btn" id="autoGenerateBtn" style="margin-bottom:0;">⚙ 残りの日を自動で埋める</button>
+      <button class="btn-export" id="sidebarExportBtn">⬇ 勤務表をExcelでダウンロード（全員）</button>
+    </div>
+    <h2>スタッフ一覧</h2>
+    <input class="search" id="searchBox" placeholder="氏名で検索...">
+    <div class="filter-tabs" id="staffFilterTabs">
+      <button data-filter="all">すべて</button>
+      <button data-filter="zero">未入力</button>
+      <button data-filter="incomplete">入力途中</button>
+    </div>
+    <div class="staff-list" id="staffList"></div>
+  `;
+  // replace whatever is currently in the sidebar (after the mode tabs) with this
+  const modeTabs = sidebar.querySelector('.mode-tabs');
+  sidebar.innerHTML = '';
+  sidebar.appendChild(modeTabs);
+  sidebar.appendChild(shiftDiv);
+  document.getElementById('searchBox').addEventListener('input', renderStaffList);
+  document.getElementById('autoGenerateBtn').addEventListener('click', runAutoGenerate);
+  document.getElementById('sidebarExportBtn').addEventListener('click', () => exportToExcel());
+  document.querySelectorAll('#staffFilterTabs button').forEach(btn => {
+    btn.onclick = () => { staffFilter = btn.dataset.filter; renderStaffList(); };
+  });
+  renderStaffList();
+}
+
+function renderStaffList() {
+  const q = document.getElementById('searchBox').value.trim();
+  const list = document.getElementById('staffList');
+  const [year, month] = getYearMonth();
+  const nDays = daysInMonth(year, month);
+  document.querySelectorAll('#staffFilterTabs button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === staffFilter);
+  });
+  list.innerHTML = '';
+  STAFF.filter(s => !q || s.name.includes(q)).filter(s => {
+    const filledCount = Object.values(shifts[s.no]).filter(v => v).length;
+    if (staffFilter === 'zero') return filledCount === 0;
+    if (staffFilter === 'incomplete') return filledCount > 0 && filledCount < nDays;
+    return true;
+  }).forEach(s => {
+    const div = document.createElement('div');
+    const filledCount = Object.values(shifts[s.no]).filter(v => v).length;
+    div.className = 'staff-item' + (currentStaffIdx === s.no ? ' active' : '') + (filledCount === 0 ? ' zero-filled' : '');
+    const ptoCount = Object.keys(shifts.__pto[s.no] || {}).length;
+    const badgeClass = filledCount === 0 ? 'filled-badge badge-zero' : filledCount >= nDays ? 'filled-badge badge-full' : 'filled-badge';
+    let badge = `<span class="${badgeClass}">${filledCount}/${nDays}日</span>`;
+    div.innerHTML = `<span>${s.name}<div class="cat">${s.cat}${s.depTime ? ' ・'+s.depTime+'時まで' : ''}${ptoCount ? ' ・希望'+ptoCount+'件' : ''}</div></span>` + badge;
+    div.onclick = () => { currentStaffIdx = s.no; renderStaffList(); renderMain(); };
+    list.appendChild(div);
+  });
+  if (!list.children.length) {
+    list.innerHTML = '<div class="dashboard-empty" style="padding:20px 4px;">該当するスタッフがいません。</div>';
+  }
+}
+
+function getYearMonth() {
+  return [parseInt(document.getElementById('yearInput').value), parseInt(document.getElementById('monthInput').value)];
+}
+
+function jumpToStaff(staffNo) {
+  currentStaffIdx = staffNo;
+  renderStaffList();
+  renderMain();
+}
+
+function renderDashboard() {
+  const main = document.getElementById('mainArea');
+  const [year, month] = getYearMonth();
+  const nDays = daysInMonth(year, month);
+
+  const zeroStaff = [];
+  const incompleteStaff = [];
+  let fullCount = 0;
+  const ptoOverStaff = [];
+  STAFF.forEach(s => {
+    const filledCount = Object.values(shifts[s.no]).filter(v => v).length;
+    const ptoCount = Object.keys(shifts.__pto[s.no] || {}).length;
+    if (filledCount === 0) zeroStaff.push(s);
+    else if (filledCount < nDays) incompleteStaff.push(s);
+    else fullCount++;
+    if (ptoCount > 5) ptoOverStaff.push(s);
+  });
+
+  const chipList = (staffArr) => staffArr.length
+    ? `<div class="dashboard-chip-list">${staffArr.map(s => `<button class="dashboard-chip chip-warn" data-jump="${s.no}">${s.name}</button>`).join('')}</div>`
+    : '<div class="dashboard-empty">該当するスタッフはいません。</div>';
+
+  main.innerHTML = `
+    <div class="person-header"><h2>${year}年${month}月 の入力状況</h2></div>
+    <div class="person-meta">左の一覧からスタッフを選ぶと、日ごとのシフトを入力できます。</div>
+    <div class="dashboard-cards">
+      <div class="dashboard-card"><div class="num">${STAFF.length}</div><div class="lbl">スタッフ数</div></div>
+      <div class="dashboard-card${zeroStaff.length ? ' warn' : ''}"><div class="num">${zeroStaff.length}</div><div class="lbl">未入力</div></div>
+      <div class="dashboard-card"><div class="num">${incompleteStaff.length}</div><div class="lbl">入力途中</div></div>
+      <div class="dashboard-card"><div class="num">${fullCount}</div><div class="lbl">全日入力済み</div></div>
+    </div>
+    <div class="dashboard-section">
+      <h3>まだ入力がないスタッフ</h3>
+      <div class="hint">クリックするとそのスタッフのシフト入力画面に移動します。</div>
+      ${chipList(zeroStaff)}
+    </div>
+    <div class="dashboard-section">
+      <h3>⚠ 休み希望が月6回以上のスタッフ</h3>
+      <div class="hint">エクセル出力の⑤夜勤バランスシートで「休み希望超過」として警告される対象です。</div>
+      ${chipList(ptoOverStaff)}
+    </div>
+  `;
+  main.querySelectorAll('[data-jump]').forEach(btn => {
+    btn.onclick = () => jumpToStaff(parseInt(btn.dataset.jump, 10));
+  });
+}
+
+function renderMain() {
+  const main = document.getElementById('mainArea');
+  if (currentStaffIdx === null) {
+    renderDashboard();
+    return;
+  }
+  const staff = STAFF.find(s => s.no === currentStaffIdx);
+  const [year, month] = getYearMonth();
+  const nDays = daysInMonth(year, month);
+  const capable = capableCodes(staff);
+  const dayShifts = shifts[staff.no];
+  const dayPto = shifts.__pto[staff.no] || {};
+
+  let counts = { 出勤: 0, 夜勤: 0, 公休: 0, 有給: 0 };
+  for (let d = 1; d <= nDays; d++) {
+    const v = dayShifts[d];
+    if (!v) continue;
+    if (v === '公') counts.公休++;
+    else if (v === '有') counts.有給++;
+    else if (v === '准' || v === '深') { counts.夜勤++; counts.出勤++; }
+    else counts.出勤++;
+  }
+  const ptoCount = Object.keys(dayPto).length;
+
+  let html = `
+    <div class="person-header">
+      <h2>${staff.name}</h2>
+      <span class="tag">${staff.cat}</span>
+      ${staff.depTime ? `<span class="tag">${staff.depTime}時まで</span>` : ''}
+    </div>
+    <div class="person-meta">
+      ${(staff.main || staff.sub1 || staff.sub2)
+        ? `主担当: <b>${staff.main || 'なし'}</b> ／ サブ担当: <b>${staff.sub1 || 'なし'}</b>・<b>${staff.sub2 || 'なし'}</b>`
+        : '担当科: <b>なし</b>（師長・師長代行など）'}
+    </div>
+    <div class="summary-row">
+      <div class="summary-card"><div class="num">${counts.出勤}</div><div class="lbl">出勤</div></div>
+      <div class="summary-card"><div class="num">${counts.夜勤}</div><div class="lbl">夜勤(准/深)</div></div>
+      <div class="summary-card"><div class="num">${counts.公休}</div><div class="lbl">公休</div></div>
+      <div class="summary-card"><div class="num">${counts.有給}</div><div class="lbl">有給</div></div>
+      <div class="summary-card" style="${ptoCount > 5 ? 'background:#FFC7CE;' : ''}"><div class="num">${ptoCount}</div><div class="lbl">休み希望(月5まで)</div></div>
+    </div>
+    <div class="weekday-header">
+      ${WEEKDAYS_JP.map((w, i) => `<div class="${i === 0 ? 'sun' : i === 6 ? 'sat' : ''}">${w}</div>`).join('')}
+    </div>
+    <div class="day-grid">
+  `;
+
+  // Sunday-first calendar: insert leading blank cells so day 1 lands in
+  // the correct weekday column, then continue normally through the month.
+  const firstWeekday = new Date(year, month - 1, 1).getDay(); // 0=Sun
+  for (let i = 0; i < firstWeekday; i++) {
+    html += `<div class="day-cell empty"></div>`;
+  }
+
+  for (let d = 1; d <= nDays; d++) {
+    const dateObj = new Date(year, month - 1, d);
+    const wd = dateObj.getDay();
+    const isWeekend = wd === 0 || wd === 6;
+    const hName = holidayName(year, month, d);
+    const isHoliday = !!hName;
+    const isWeekendOrHoliday = isWeekend || isHoliday;
+    const val = dayShifts[d] || '';
+    const baseCode = val ? val[0] : '';
+    const isOutOfScope = baseCode && deptCodes().includes(baseCode) && !capable.includes(baseCode);
+    const bg = val ? (codeColors()[baseCode] || '#fff') : '#fff';
+    const isPto = !!(dayPto[d]);
+    html += `
+      <div class="day-cell${isWeekendOrHoliday ? ' weekend' : ''}${isOutOfScope ? ' has-warn' : ''}" data-day="${d}" style="${val ? `background:${bg}33;` : ''}" ${isHoliday ? `title="${esc(hName)}"` : ''}>
+        ${isOutOfScope ? '<span class="warn-icon">△</span>' : ''}
+        ${isPto ? '<span class="pto-badge">希望休</span>' : ''}
+        <span class="d-num">${d}</span>${isHoliday ? `<span class="holiday-dot" title="${esc(hName)}"></span>` : ''}
+        <div class="d-val">${val}</div>
+      </div>
+    `;
+  }
+  html += `</div>
+    <div class="toolbar">
+      <button class="btn primary" id="downloadBtn"><i></i>勤務表をExcelでダウンロード（全員・全シート）</button>
+      <button class="btn" id="clearPersonBtn">この人の入力をすべて消す</button>
+    </div>
+    <div class="legend">
+      △ = 主担当・サブ担当に入っていない科（救急・准夜・深夜・公休・有給は対象外）<br>
+      希望休バッジ = 休み希望（②シフト表では自動的に「公」として出力されます）<br>
+      <b>使い方:</b> 日付のセルをクリックして記号を選びます。${staff.depTime ? `このスタッフは${staff.depTime}時までの勤務のため、科を選ぶと自動的に「科(${staff.depTime})」になります。` : ''}
+    </div>
+  `;
+  main.innerHTML = html;
+
+  main.querySelectorAll('.day-cell[data-day]').forEach(cell => {
+    cell.onclick = () => openPicker(staff, parseInt(cell.dataset.day));
+  });
+  document.getElementById('downloadBtn').onclick = () => exportToExcel();
+  document.getElementById('clearPersonBtn').onclick = () => {
+    if (confirm(`${staff.name}さんの入力内容（シフトと休み希望）をすべて削除します。よろしいですか？`)) {
+      shifts[staff.no] = {};
+      shifts.__pto[staff.no] = {};
+      renderStaffList();
+      renderMain();
+    }
+  };
+}
+
+function openPicker(staff, day) {
+  const overlay = document.getElementById('pickerOverlay');
+  const grid = document.getElementById('pickerGrid');
+  const ptoPanel = document.getElementById('pickerPto');
+  const clearBtn = document.getElementById('pickerClear');
+  document.getElementById('pickerTitle').textContent = `${staff.name} さん - ${day}日`;
+  const [year, month] = getYearMonth();
+  const wd = WEEKDAYS_JP[new Date(year, month - 1, day).getDay()];
+  document.getElementById('pickerSub').textContent = `${month}月${day}日（${wd}）`;
+
+  const capable = capableCodes(staff);
+  const isViceManager = staff.cat && staff.cat.includes('副師長');
+  let codes;
+  if (staff.depTime) {
+    codes = deptCodes().map(c => `${c}(${staff.depTime})`).concat(['公', '有']);
+  } else {
+    codes = deptCodes().concat(NON_DEPT_CODES);
+    if (isViceManager) codes = codes.concat(['代']);
+  }
+
+  function renderShiftGrid() {
+    grid.innerHTML = '';
+    codes.forEach(code => {
+      const base = code[0];
+      const outOfScope = deptCodes().includes(base) && !capable.includes(base);
+      const opt = document.createElement('div');
+      opt.className = 'picker-opt' + (outOfScope ? ' out-of-scope' : '');
+      opt.style.background = (codeColors()[base] || '#fff') + '55';
+      opt.textContent = code;
+      opt.onclick = () => {
+        shifts[staff.no][day] = code;
+        overlay.classList.remove('open');
+        renderStaffList();
+        renderMain();
+      };
+      grid.appendChild(opt);
+    });
+  }
+
+  function setMode(mode) {
+    document.querySelectorAll('.picker-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+    if (mode === 'shift') {
+      grid.style.display = '';
+      ptoPanel.style.display = 'none';
+      clearBtn.style.display = '';
+      clearBtn.textContent = '空欄にする';
+      clearBtn.onclick = () => {
+        delete shifts[staff.no][day];
+        overlay.classList.remove('open');
+        renderStaffList();
+        renderMain();
+      };
+    } else {
+      grid.style.display = 'none';
+      ptoPanel.style.display = '';
+      clearBtn.style.display = 'none';
+    }
+  }
+
+  renderShiftGrid();
+  document.querySelectorAll('.picker-tab').forEach(tab => {
+    tab.onclick = () => setMode(tab.dataset.mode);
+  });
+  setMode('shift');
+
+  document.getElementById('ptoSetBtn').onclick = () => {
+    shifts.__pto[staff.no][day] = true;
+    overlay.classList.remove('open');
+    renderStaffList();
+    renderMain();
+  };
+  document.getElementById('ptoClearBtn').onclick = () => {
+    delete shifts.__pto[staff.no][day];
+    overlay.classList.remove('open');
+    renderStaffList();
+    renderMain();
+  };
+  document.getElementById('pickerCancel').onclick = () => overlay.classList.remove('open');
+
+  overlay.classList.add('open');
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('success', 'error');
+  t.classList.add(type === 'error' ? 'error' : 'success');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+function exportToExcel() {
+  const [year, month] = getYearMonth();
+  showLoading(true);
+  // yield to the browser so the loading overlay actually paints before the
+  // (synchronous, CPU-bound) workbook build blocks the main thread
+  setTimeout(() => {
+    try {
+      const bytes = buildFullWorkbook(STAFF, shifts, year, month, codeColors(), DEPARTMENTS);
+      const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const fname = `外来看護師勤務表_${year}年${month}月.xlsx`;
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fname;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast(`${fname} をダウンロードしました（全8シート）`);
+    } catch (e) {
+      showToast('ダウンロードに失敗しました: ' + e.message, 'error');
+      console.error(e);
+    } finally {
+      showLoading(false);
+    }
+  }, 30);
+}
+
+function showLoading(show) {
+  document.getElementById('loadingOverlay').classList.toggle('show', show);
+}
+
+async function loadExistingFile(file) {
+  showLoading(true);
+  try {
+    const buf = await file.arrayBuffer();
+    const sheetData = await readXlsxFile(buf);
+    const shiftSheet = sheetData['②シフト表(oplus風)'];
+    const ptoSheet = sheetData['⑥休み希望'];
+    if (!shiftSheet) {
+      throw new Error('②シフト表(oplus風)が見つかりませんでした。このツールで作成したファイル、または同じ形式のファイルを選んでください。');
+    }
+
+    // detect year/month from the title cell A1, e.g. "  2026年6月 外来シフト表"
+    const titleCell = Object.entries(shiftSheet).find(([ref]) => ref === 'A1');
+    let detectedYear = null, detectedMonth = null;
+    if (titleCell) {
+      const m = String(titleCell[1]).match(/(\d{4})年(\d{1,2})月/);
+      if (m) { detectedYear = parseInt(m[1], 10); detectedMonth = parseInt(m[2], 10); }
+    }
+    if (detectedYear) document.getElementById('yearInput').value = detectedYear;
+    if (detectedMonth) document.getElementById('monthInput').value = detectedMonth;
+    const [year, month] = getYearMonth();
+    const nDays = daysInMonth(year, month);
+
+    // reset state
+    STAFF.forEach(s => { shifts[s.no] = {}; shifts.__pto[s.no] = {}; });
+
+    // ②シフト表 data rows start at row 5, columns C(3) onward = day 1..nDays
+    STAFF.forEach((staff, i) => {
+      const row = 5 + i;
+      const nameCell = shiftSheet[`A${row}`];
+      if (nameCell !== staff.name) return; // staff order mismatch safety check, skip if not aligned
+      for (let d = 1; d <= nDays; d++) {
+        const col = colLetter(2 + d);
+        const val = shiftSheet[`${col}${row}`];
+        if (val) shifts[staff.no][d] = val;
+      }
+    });
+
+    // ⑥休み希望 data rows also start at row 5
+    if (ptoSheet) {
+      STAFF.forEach((staff, i) => {
+        const row = 5 + i;
+        const nameCell = ptoSheet[`A${row}`];
+        if (nameCell !== staff.name) return;
+        for (let d = 1; d <= nDays; d++) {
+          const col = colLetter(2 + d);
+          const val = ptoSheet[`${col}${row}`];
+          if (val === '○') shifts.__pto[staff.no][d] = true;
+        }
+      });
+    }
+
+    renderStaffList();
+    renderMain();
+    showToast(`${file.name} を読み込みました（${year}年${month}月）`);
+  } catch (e) {
+    showToast('読み込みに失敗しました: ' + e.message, 'error');
+    console.error(e);
+  } finally {
+    showLoading(false);
+  }
+}
+
+// ============================================================
+// スタッフ管理モード
+// ============================================================
+let editingStaffNo = null; // null = adding new
+
+function deptSelectOptions(selectedFullText) {
+  // builds <option> markup for main/sub1/sub2 selects: value is the
+  // "name (code)" string format used throughout STAFF, e.g. "内視鏡 (内)".
+  // An empty "なし" option lets 師長/師長代行 staff have no department.
+  const noneOpt = `<option value=""${!selectedFullText ? ' selected' : ''}>なし</option>`;
+  const deptOpts = DEPARTMENTS.map(d => {
+    const full = `${d.name} (${d.code})`;
+    return `<option value="${full}"${full === selectedFullText ? ' selected' : ''}>${full}</option>`;
+  }).join('');
+  return noneOpt + deptOpts;
+}
+
+function renderSidebarStaffManagement() {
+  const sidebar = document.querySelector('.sidebar');
+  const modeTabs = sidebar.querySelector('.mode-tabs');
+  sidebar.innerHTML = '';
+  sidebar.appendChild(modeTabs);
+
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+    <h2>スタッフ管理（${STAFF.length}名）</h2>
+    <button class="mgmt-add-btn" id="staffAddBtn">＋ スタッフを追加</button>
+    <div class="mgmt-list" id="staffMgmtList"></div>
+  `;
+  sidebar.appendChild(wrap);
+
+  const list = document.getElementById('staffMgmtList');
+  STAFF.forEach(s => {
+    const item = document.createElement('div');
+    item.className = 'mgmt-item';
+    item.innerHTML = `
+      <span>
+        <div class="mgmt-main">${s.name}</div>
+        <div class="mgmt-sub">${s.cat}${s.depTime ? ' ・'+s.depTime+'時まで' : ''}${nightTypeLabel(s.nightType) ? ' ・'+nightTypeLabel(s.nightType) : ''}</div>
+      </span>
+      <span class="mgmt-actions">
+        <button data-act="edit">編集</button>
+        <button data-act="del" class="danger">削除</button>
+      </span>
+    `;
+    item.querySelector('[data-act="edit"]').onclick = () => openStaffEdit(s.no);
+    item.querySelector('[data-act="del"]').onclick = () => deleteStaff(s.no);
+    list.appendChild(item);
+  });
+
+  document.getElementById('staffAddBtn').onclick = () => openStaffEdit(null);
+
+  const main = document.getElementById('mainArea');
+  main.innerHTML = `
+    <div class="empty-state">
+      左の一覧からスタッフを編集、または「＋ スタッフを追加」で新しいスタッフを登録してください。<br>
+      氏名・区分・主担当/サブ担当・退勤時刻（パートのみ）を設定できます。
+    </div>
+  `;
+}
+
+function openStaffEdit(staffNo) {
+  editingStaffNo = staffNo;
+  const overlay = document.getElementById('staffEditOverlay');
+  const staff = staffNo !== null ? STAFF.find(s => s.no === staffNo) : null;
+
+  document.getElementById('staffEditTitle').textContent = staff ? `${staff.name} さんを編集` : '新しいスタッフを追加';
+  document.getElementById('editName').value = staff ? staff.name : '';
+  document.getElementById('editCat').value = staff ? staff.cat : '';
+  document.getElementById('editMain').innerHTML = deptSelectOptions(staff ? staff.main : null);
+  document.getElementById('editSub1').innerHTML = deptSelectOptions(staff ? staff.sub1 : null);
+  document.getElementById('editSub2').innerHTML = deptSelectOptions(staff ? staff.sub2 : null);
+  document.getElementById('editDepTime').value = staff && staff.depTime ? String(staff.depTime) : '';
+  document.getElementById('editNightType').value = staff && staff.nightType ? staff.nightType : 'free';
+
+  overlay.classList.add('open');
+}
+
+function closeStaffEdit() {
+  document.getElementById('staffEditOverlay').classList.remove('open');
+  editingStaffNo = null;
+}
+
+function saveStaffEdit() {
+  const name = document.getElementById('editName').value.trim();
+  if (!name) { showToast('氏名を入力してください', 'error'); return; }
+  const cat = document.getElementById('editCat').value.trim() || '未設定';
+  const main = document.getElementById('editMain').value;
+  const sub1 = document.getElementById('editSub1').value;
+  const sub2 = document.getElementById('editSub2').value;
+  const depTimeRaw = document.getElementById('editDepTime').value;
+  const depTime = depTimeRaw ? parseInt(depTimeRaw, 10) : null;
+  const nightType = document.getElementById('editNightType').value;
+
+  if (editingStaffNo !== null) {
+    const staff = STAFF.find(s => s.no === editingStaffNo);
+    Object.assign(staff, { name, cat, main, sub1, sub2, depTime, nightType });
+  } else {
+    const newNo = STAFF.length ? Math.max(...STAFF.map(s => s.no)) + 1 : 1;
+    STAFF.push({ no: newNo, name, cat, main, sub1, sub2, depTime, nightType });
+    shifts[newNo] = {};
+    shifts.__pto[newNo] = {};
+  }
+  closeStaffEdit();
+  renderSidebarStaffManagement();
+  showToast(`${name} さんを保存しました`);
+}
+
+function deleteStaff(staffNo) {
+  const staff = STAFF.find(s => s.no === staffNo);
+  if (!confirm(`${staff.name} さんを削除します。入力済みのシフト・休み希望も削除されます。よろしいですか？`)) return;
+  STAFF = STAFF.filter(s => s.no !== staffNo);
+  delete shifts[staffNo];
+  delete shifts.__pto[staffNo];
+  if (currentStaffIdx === staffNo) currentStaffIdx = null;
+  renderSidebarStaffManagement();
+  showToast(`${staff.name} さんを削除しました`);
+}
+
+// ============================================================
+// 科一覧管理モード
+// ============================================================
+let editingDeptCode = null; // null = adding new
+
+function renderSidebarDeptManagement() {
+  const sidebar = document.querySelector('.sidebar');
+  const modeTabs = sidebar.querySelector('.mode-tabs');
+  sidebar.innerHTML = '';
+  sidebar.appendChild(modeTabs);
+
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+    <h2>夜勤必要人数</h2>
+    <div class="night-req-box">
+      <div class="night-req-row">
+        <label>平日の准夜</label>
+        <input type="number" id="weekdayEveningReq" min="0" value="${NIGHT_REQUIREMENTS.weekdayEvening}">
+      </div>
+      <div class="night-req-row">
+        <label>平日の深夜</label>
+        <input type="number" id="weekdayLateReq" min="0" value="${NIGHT_REQUIREMENTS.weekdayLate}">
+      </div>
+      <p class="night-req-note">土日・祝日は固定で救急2名・准夜2名・深夜2名です（平日は救急なし）。平日の准夜・深夜は月によって変わるため、ここで毎月設定してください。</p>
+      <button class="btn primary" id="nightReqSaveBtn" style="width:100%;">保存する</button>
+    </div>
+    <h2 style="margin-top:18px;">科一覧（${DEPARTMENTS.length}科）</h2>
+    <button class="mgmt-add-btn" id="deptAddBtn">＋ 科を追加</button>
+    <div class="mgmt-list" id="deptMgmtList"></div>
+  `;
+  sidebar.appendChild(wrap);
+
+  document.getElementById('nightReqSaveBtn').onclick = () => {
+    NIGHT_REQUIREMENTS.weekdayEvening = parseInt(document.getElementById('weekdayEveningReq').value, 10) || 0;
+    NIGHT_REQUIREMENTS.weekdayLate = parseInt(document.getElementById('weekdayLateReq').value, 10) || 0;
+    showToast('夜勤必要人数を保存しました');
+  };
+
+  const list = document.getElementById('deptMgmtList');
+  DEPARTMENTS.forEach(d => {
+    const item = document.createElement('div');
+    item.className = 'mgmt-item';
+    item.innerHTML = `
+      <span>
+        <div class="mgmt-main"><span class="dept-swatch" style="background:${d.color}"></span>${d.name} (${d.code})</div>
+        <div class="mgmt-sub">必要 ${d.required}名/平日</div>
+      </span>
+      <span class="mgmt-actions">
+        <button data-act="edit">編集</button>
+        <button data-act="del" class="danger">削除</button>
+      </span>
+    `;
+    item.querySelector('[data-act="edit"]').onclick = () => openDeptEdit(d.code);
+    item.querySelector('[data-act="del"]').onclick = () => deleteDept(d.code);
+    list.appendChild(item);
+  });
+
+  document.getElementById('deptAddBtn').onclick = () => openDeptEdit(null);
+
+  const main = document.getElementById('mainArea');
+  main.innerHTML = `
+    <div class="empty-state">
+      左の一覧から科を編集、または「＋ 科を追加」で新しい科を登録してください。<br>
+      記号は1文字で、シフト表の入力記号として使われます（既存スタッフの主担当・サブ担当には影響しません。科を削除する前に、担当しているスタッフの設定を見直してください）。
+    </div>
+  `;
+}
+
+function openDeptEdit(code) {
+  editingDeptCode = code;
+  const overlay = document.getElementById('deptEditOverlay');
+  const dept = code !== null ? DEPARTMENTS.find(d => d.code === code) : null;
+
+  document.getElementById('deptEditTitle').textContent = dept ? `${dept.name} を編集` : '新しい科を追加';
+  document.getElementById('editDeptCode').value = dept ? dept.code : '';
+  document.getElementById('editDeptName').value = dept ? dept.name : '';
+  document.getElementById('editDeptColor').value = dept ? dept.color : '#FFE4B5';
+  document.getElementById('editDeptRequired').value = dept ? dept.required : 1;
+
+  overlay.classList.add('open');
+}
+
+function closeDeptEdit() {
+  document.getElementById('deptEditOverlay').classList.remove('open');
+  editingDeptCode = null;
+}
+
+function saveDeptEdit() {
+  const code = document.getElementById('editDeptCode').value.trim();
+  const name = document.getElementById('editDeptName').value.trim();
+  const color = document.getElementById('editDeptColor').value;
+  const required = parseInt(document.getElementById('editDeptRequired').value, 10) || 0;
+
+  if (!code || code.length !== 1) { showToast('記号は1文字で入力してください', 'error'); return; }
+  if (!name) { showToast('科の名前を入力してください', 'error'); return; }
+  if (NON_DEPT_CODES.includes(code)) {
+    showToast(`「${code}」は救急・夜勤・公休などで使用済みのため使えません`, 'error');
+    return;
+  }
+  const duplicate = DEPARTMENTS.find(d => d.code === code && d.code !== editingDeptCode);
+  if (duplicate) { showToast(`記号「${code}」は既に「${duplicate.name}」で使われています`, 'error'); return; }
+
+  if (editingDeptCode !== null) {
+    const dept = DEPARTMENTS.find(d => d.code === editingDeptCode);
+    const oldCode = dept.code;
+    Object.assign(dept, { code, name, color, required });
+    // if the code itself changed, the simplest consistent behavior is to
+    // leave existing shift entries untouched (they keep referencing the
+    // old character) -- warn the user instead of silently rewriting data.
+    if (oldCode !== code) {
+      showToast(`記号を「${oldCode}」→「${code}」に変更しました。既存の入力済みシフトは手動で見直してください。`);
+    }
+  } else {
+    DEPARTMENTS.push({ code, name, color, required });
+  }
+  closeDeptEdit();
+  renderSidebarDeptManagement();
+  showToast(`${name} を保存しました`);
+}
+
+function deleteDept(code) {
+  const dept = DEPARTMENTS.find(d => d.code === code);
+  const usedBy = STAFF.filter(s => [s.main, s.sub1, s.sub2].some(v => v.includes(`(${code})`)));
+  let msg = `${dept.name} を削除します。`;
+  if (usedBy.length) msg += `\n注意: ${usedBy.length}名のスタッフがこの科を担当に設定しています（削除後は手動で設定を見直してください）。`;
+  if (!confirm(msg + '\nよろしいですか？')) return;
+  DEPARTMENTS = DEPARTMENTS.filter(d => d.code !== code);
+  renderSidebarDeptManagement();
+  showToast(`${dept.name} を削除しました`);
+}
+
+document.getElementById('yearInput').addEventListener('change', renderMain);
+document.getElementById('monthInput').addEventListener('change', renderMain);
+document.getElementById('prevMonthBtn').addEventListener('click', () => shiftMonth(-1));
+document.getElementById('nextMonthBtn').addEventListener('click', () => shiftMonth(1));
+function shiftMonth(delta) {
+  const yearInput = document.getElementById('yearInput');
+  const monthInput = document.getElementById('monthInput');
+  let year = parseInt(yearInput.value, 10);
+  let month = parseInt(monthInput.value, 10) + delta;
+  if (month < 1) { month = 12; year -= 1; }
+  else if (month > 12) { month = 1; year += 1; }
+  yearInput.value = year;
+  monthInput.value = month;
+  renderMain();
+}
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  document.querySelectorAll('.picker-overlay.open').forEach(o => o.classList.remove('open'));
+});
+document.getElementById('pickerOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'pickerOverlay') e.target.classList.remove('open');
+});
+document.getElementById('loadFileBtn').addEventListener('click', () => document.getElementById('fileInput').click());
+document.getElementById('fileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) loadExistingFile(file);
+  e.target.value = '';
+});
+document.querySelectorAll('.mode-tab').forEach(tab => {
+  tab.onclick = () => switchMode(tab.dataset.mode);
+});
+document.getElementById('staffEditCancel').onclick = closeStaffEdit;
+document.getElementById('staffSaveBtn').onclick = saveStaffEdit;
+document.getElementById('staffEditOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'staffEditOverlay') closeStaffEdit();
+});
+document.getElementById('deptEditCancel').onclick = closeDeptEdit;
+document.getElementById('deptSaveBtn').onclick = saveDeptEdit;
+document.getElementById('deptEditOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'deptEditOverlay') closeDeptEdit();
+});
+
+// ============================================================
+// 自動生成: 既存の入力（シフト・休み希望）は残し、未入力の日だけを
+// 埋める。優先順位は合意した通り:
+//   1. 休み希望（最優先、絶対に守る）
+//   2. 各科の必要人数を満たす
+//   3. 担当可能な科のみ割り当てる
+//   4. 連続出勤は最大4日
+//   5. 夜勤（准/深）の翌日は休み
+//   6. パートは夜勤・救急対象外
+// 完璧に満たせない日は「公」で埋め、後で人が見直せるようにする
+// （無理に基準を破ってまで埋めることはしない）。
+// ============================================================
+function runAutoGenerate() {
+  const [year, month] = getYearMonth();
+  const nDays = daysInMonth(year, month);
+
+  if (!confirm('入力済みのシフト・休み希望はそのまま残し、未入力の日だけを自動で埋めます。よろしいですか？')) return;
+
+  showLoading(true);
+  setTimeout(() => {
+    try {
+      const result = autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays);
+      renderStaffList();
+      renderMain();
+      showToast(`自動生成しました（${result.filledCount}件を入力、${result.shortageCount}件は人数不足のまま残っています）`);
+    } catch (e) {
+      showToast('自動生成に失敗しました: ' + e.message, 'error');
+      console.error(e);
+    } finally {
+      showLoading(false);
+    }
+  }, 30);
+}
+
+function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
+  // Track running state per staff as we sweep day 1 -> nDays.
+  const state = {};
+  STAFF.forEach(s => {
+    state[s.no] = { workStreak: 0, nightStreak: 0, deptCounts: {}, nightCount: 0, totalWork: 0 };
+    DEPARTMENTS.forEach(d => { state[s.no].deptCounts[d.code] = 0; });
+  });
+
+  function codeOf(val) { return val ? val[0] : ''; }
+  function isWorkCode(val) { return val !== '' && val !== '公' && val !== '有'; }
+  function isNightCode(val) { return val === '准' || val === '深'; }
+
+  let filledCount = 0;
+  let shortageCount = 0;
+
+  for (let d = 1; d <= nDays; d++) {
+    // First, lock in PTO -> 公 for anyone who hasn't already got a cell value today.
+    STAFF.forEach(staff => {
+      const pto = shifts.__pto[staff.no] && shifts.__pto[staff.no][d];
+      const existing = shifts[staff.no][d];
+      if (pto && !existing) {
+        shifts[staff.no][d] = '公';
+      }
+    });
+
+    const wd = new Date(year, month - 1, d).getDay();
+    const isWeekend = wd === 0 || wd === 6;
+    const isHolidayToday = isJapaneseHoliday(year, month, d);
+    const isWeekendOrHoliday = isWeekend || isHolidayToday;
+    function isOffDay(dd) {
+      if (dd < 1 || dd > nDays) return false;
+      const w = new Date(year, month - 1, dd).getDay();
+      return w === 0 || w === 6 || isJapaneseHoliday(year, month, dd);
+    }
+    const tomorrowIsWeekendOrHoliday = isOffDay(d + 1);
+
+    // Today's targets: 救急 only applies on weekends/holidays (固定2名)。
+    // 准夜・深夜 apply every day, but the headcount differs: weekends/
+    // holidays use the fixed 2/2, weekdays use the user-editable monthly
+    // NIGHT_REQUIREMENTS (these vary month to month and can't be hardcoded).
+    const todayReq = isWeekendOrHoliday
+      ? { '救': WEEKEND_HOLIDAY_REQ['救'], '准': WEEKEND_HOLIDAY_REQ['准'], '深': WEEKEND_HOLIDAY_REQ['深'] }
+      : { '救': 0, '准': NIGHT_REQUIREMENTS.weekdayEvening, '深': NIGHT_REQUIREMENTS.weekdayLate };
+
+    // --- night shift (准/深) and 救急 assignment, every day, using
+    //     today's targets computed above.
+    //
+    //     Per-staff nightType constraints:
+    //       'none'         -> never assigned 准/深 (救急 still allowed)
+    //       'evening_only' -> only ever assigned 准 (never 深)
+    //       'late_only'    -> only ever assigned 深 (never 准)
+    //       'set_required' -> if assigned a night at all, must get BOTH
+    //                         准 today AND 深 tomorrow (only attempted when
+    //                         tomorrow also has a 深 requirement); handled
+    //                         in its own pass before the normal tiered fill
+    //                         so it doesn't get partially assigned.
+    //       'free'         -> no restriction (today's existing behavior)
+    //
+    //     Preference order otherwise unchanged: (1) someone NOT already on
+    //     a night-shift streak, falling back to (2) a 2nd consecutive
+    //     night only if short-staffed (3rd consecutive never allowed). ---
+    {
+      // Pass 0: try to satisfy 准 demand today using set_required staff,
+      // which simultaneously commits their 深 tomorrow (only possible when
+      // tomorrow also has a 深 requirement > 0 to draw down).
+      const tomorrowReq = tomorrowIsWeekendOrHoliday
+        ? WEEKEND_HOLIDAY_REQ['深']
+        : (d + 1 <= nDays ? NIGHT_REQUIREMENTS.weekdayLate : 0);
+      if (tomorrowReq > 0) {
+        const alreadyEvening = STAFF.filter(s => shifts[s.no][d] === '准').length;
+        let needEvening = todayReq['准'] - alreadyEvening;
+        if (needEvening > 0) {
+          let setCandidates = STAFF.filter(s =>
+            !shifts[s.no][d] && !shifts[s.no][d + 1] && !s.depTime &&
+            s.nightType === 'set_required' &&
+            state[s.no].workStreak < 4 && state[s.no].nightStreak === 0
+          );
+          setCandidates.sort((a, b) => state[a.no].nightCount - state[b.no].nightCount);
+          for (let i = 0; i < setCandidates.length && needEvening > 0; i++) {
+            shifts[setCandidates[i].no][d] = '准';
+            shifts[setCandidates[i].no][d + 1] = '深';
+            filledCount += 2;
+            needEvening--;
+          }
+        }
+      }
+
+      ['救', '准', '深'].forEach(code => {
+        const already = STAFF.filter(s => shifts[s.no][d] === code).length;
+        let need = todayReq[code] - already;
+        if (need <= 0) return;
+        const isNightShiftCode = code === '准' || code === '深';
+
+        const nightTypeAllows = s => {
+          if (!isNightShiftCode) return true; // 救急 unaffected by night-type
+          if (s.nightType === 'none' || s.nightType === 'set_required') return false; // set_required handled in pass 0 only
+          if (s.nightType === 'evening_only') return code === '准';
+          if (s.nightType === 'late_only') return code === '深';
+          return true; // 'free' or unset
+        };
+        const baseEligible = s => !shifts[s.no][d] && !s.depTime && state[s.no].workStreak < 4 && nightTypeAllows(s);
+        const nightSort = (a, b) => {
+          const nightDiff = state[a.no].nightCount - state[b.no].nightCount;
+          if (nightDiff !== 0) return nightDiff;
+          return state[a.no].totalWork - state[b.no].totalWork;
+        };
+
+        // Tier 1: fresh (no night-shift streak running) -- always tried first.
+        let tier1 = STAFF.filter(s => baseEligible(s) && (!isNightShiftCode || state[s.no].nightStreak === 0));
+        tier1.sort(nightSort);
+        for (let i = 0; i < tier1.length && need > 0; i++) {
+          shifts[tier1[i].no][d] = code;
+          filledCount++;
+          need--;
+        }
+
+        // Tier 2 (night codes only): short-staffed, so allow extending
+        // someone's streak to a 2nd consecutive night (still capped at 2).
+        // set_required staff are excluded here too -- their 2nd night must
+        // come from pass 0's deliberate pairing, not an ad-hoc extension.
+        if (need > 0 && isNightShiftCode) {
+          let tier2 = STAFF.filter(s => baseEligible(s) && state[s.no].nightStreak === 1);
+          tier2.sort(nightSort);
+          for (let i = 0; i < tier2.length && need > 0; i++) {
+            shifts[tier2[i].no][d] = code;
+            filledCount++;
+            need--;
+          }
+        }
+        if (need > 0) shortageCount++;
+      });
+    }
+
+    // Figure out which staff are still unfilled for today AFTER the PTO + night/救急 pass.
+    const unfilled = STAFF.filter(s => !shifts[s.no][d]);
+
+    // Determine today's required headcount per department (weekday only,
+    // matching the existing 必要人数(平日) convention used elsewhere;
+    // weekends/holidays don't staff regular departments in this model).
+    if (!isWeekendOrHoliday) {
+      DEPARTMENTS.forEach(dept => {
+        const alreadyAssigned = STAFF.filter(s => codeOf(shifts[s.no][d]) === dept.code).length;
+        let need = dept.required - alreadyAssigned;
+        if (need <= 0) return;
+
+        // Build a candidate pool: unfilled staff who can cover this department,
+        // aren't already night-resting, haven't hit the 4-day work streak cap.
+        // Part-timers ARE eligible for regular departments (only night/救急 excluded).
+        let candidates = unfilled.filter(s => {
+          if (shifts[s.no][d]) return false; // got assigned earlier in this same day's loop
+          if (state[s.no].nightStreak > 0) return false; // resting the day after any night shift
+          if (state[s.no].workStreak >= 4) return false;
+          const capable = capableCodes(s);
+          return capable.includes(dept.code);
+        });
+        // Prefer whoever has worked the FEWEST total days this month so far
+        // (overall fairness), then whoever has worked this specific
+        // department the least (so no one gets stuck always covering the
+        // same low-quota department while others rotate).
+        candidates.sort((a, b) => {
+          const totalDiff = state[a.no].totalWork - state[b.no].totalWork;
+          if (totalDiff !== 0) return totalDiff;
+          return state[a.no].deptCounts[dept.code] - state[b.no].deptCounts[dept.code];
+        });
+
+        for (let i = 0; i < candidates.length && need > 0; i++) {
+          const s = candidates[i];
+          const code = s.depTime ? `${dept.code}(${s.depTime})` : dept.code;
+          shifts[s.no][d] = code;
+          filledCount++;
+          need--;
+        }
+        if (need > 0) shortageCount++; // couldn't fully staff this dept today
+      });
+    }
+
+    // Anyone still unfilled today becomes 公 (safe default; never violates
+    // the 4-day streak or night-rest rules since 公 is rest).
+    STAFF.forEach(s => {
+      if (!shifts[s.no][d]) {
+        shifts[s.no][d] = '公';
+        filledCount++;
+      }
+    });
+
+    // Update running state for tomorrow's pass based on today's final values.
+    STAFF.forEach(s => {
+      const val = shifts[s.no][d];
+      const code = codeOf(val);
+      if (isWorkCode(val)) {
+        state[s.no].workStreak++;
+        state[s.no].totalWork++;
+        if (DEPARTMENTS.some(dp => dp.code === code)) state[s.no].deptCounts[code]++;
+        if (isNightCode(val)) state[s.no].nightCount++;
+      } else {
+        state[s.no].workStreak = 0;
+      }
+      state[s.no].nightStreak = isNightCode(val) ? state[s.no].nightStreak + 1 : 0;
+    });
+  }
+
+  return { filledCount, shortageCount };
+}
+
+switchMode('shift');
+
+</script>
+
+</body>
+</html>
