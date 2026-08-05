@@ -807,6 +807,39 @@
     outline: 3px solid #b3651f;
     outline-offset: -3px;
   }
+  .autosave-indicator {
+    font-size: 11px;
+    color: #cfe0ee;
+    white-space: nowrap;
+  }
+  .danger-zone-btn {
+    width: 100%;
+    padding: 9px;
+    border: 1px solid #f0c4c0;
+    background: #fff;
+    color: #a83232;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-top: 18px;
+  }
+  .danger-zone-btn:hover { background: #fdf3f2; }
+  .pto-deadline-box {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px;
+    background: #fff;
+    margin-bottom: 10px;
+  }
+  .pto-deadline-box .night-req-row input[type="date"] {
+    width: auto;
+    padding: 5px 8px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 13px;
+  }
+  .dashboard-card.deadline-warn { background: #fdf3f2; border-color: #e7b3ae; }
+  .dashboard-card.deadline-warn .num { color: #a83232; }
 </style>
 </head>
 <body>
@@ -824,6 +857,7 @@
     <input type="number" id="yearInput" value="2026" min="2020" max="2100">年
     <input type="number" id="monthInput" value="6" min="1" max="12">月
     <button class="month-nav-btn" id="nextMonthBtn" title="次の月" aria-label="次の月">▶</button>
+    <span class="autosave-indicator" id="autosaveIndicator"></span>
   </div>
 </header>
 
@@ -2230,6 +2264,13 @@ let NIGHT_REQUIREMENTS = {
 };
 const WEEKEND_HOLIDAY_REQ = { '救': 2, '准': 2, '深': 2 };
 
+// PTO_DEADLINE is an actual calendar date ('YYYY-MM-DD') by which staff
+// must submit their 休み希望. Unlike everything else in this tool it is a
+// real date (not just a day-of-month), since the deadline itself is
+// usually set relative to today, independent of which month is being
+// scheduled.
+let PTO_DEADLINE = null;
+
 const NON_DEPT_CODES = ['救','准','深','公','有'];
 const NON_DEPT_COLORS = { '救':'#EF9A9A','准':'#F4B183','深':'#9DC3E6','公':'#D9D9D9','有':'#FFF2CC','代':'#CFD8DC' };
 function deptCodes() { return DEPARTMENTS.map(d => d.code); }
@@ -2271,6 +2312,88 @@ const shifts = {};
 STAFF.forEach(s => shifts[s.no] = {});
 shifts.__pto = {};
 STAFF.forEach(s => shifts.__pto[s.no] = {});
+
+// ============================================================
+// 自動保存: このツールはサーバーを持たないため、入力内容はブラウザの
+// localStorageに保存する。タブを閉じたりリロードしても、次に開いた
+// ときに続きから再開できる（他社の看護師シフトアプリでも「バックアップ」
+// 「自動保存」は評価の高い機能のため導入）。
+// ============================================================
+const AUTOSAVE_KEY = 'shiftTool_autosave_v1';
+let autosaveTimer = null;
+
+function saveState() {
+  try {
+    const [year, month] = getYearMonth();
+    const payload = {
+      STAFF, DEPARTMENTS, COMMITTEES, EVENTS, NIGHT_REQUIREMENTS, PTO_DEADLINE,
+      shifts, nextEventId, nextCommitteeId, year, month,
+      savedAt: new Date().toISOString(),
+    };
+    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(payload));
+    showAutosaveIndicator(payload.savedAt);
+  } catch (e) {
+    console.error('autosave failed', e);
+  }
+}
+
+// Debounced save so a burst of edits (autofill writes ~1500 cells) results
+// in one localStorage write rather than one per cell.
+function scheduleSave() {
+  if (autosaveTimer) clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(() => { autosaveTimer = null; saveState(); }, 400);
+}
+
+function showAutosaveIndicator(isoTime) {
+  const el = document.getElementById('autosaveIndicator');
+  if (!el) return;
+  const t = new Date(isoTime);
+  const hh = String(t.getHours()).padStart(2, '0');
+  const mm = String(t.getMinutes()).padStart(2, '0');
+  el.textContent = `✓ 自動保存 ${hh}:${mm}`;
+}
+
+function loadState() {
+  let raw;
+  try {
+    raw = localStorage.getItem(AUTOSAVE_KEY);
+  } catch (e) {
+    return false;
+  }
+  if (!raw) return false;
+  try {
+    const saved = JSON.parse(raw);
+    if (saved.STAFF) STAFF = saved.STAFF;
+    if (saved.DEPARTMENTS) DEPARTMENTS = saved.DEPARTMENTS;
+    if (saved.COMMITTEES) COMMITTEES = saved.COMMITTEES;
+    if (saved.EVENTS) EVENTS = saved.EVENTS;
+    if (saved.NIGHT_REQUIREMENTS) Object.assign(NIGHT_REQUIREMENTS, saved.NIGHT_REQUIREMENTS);
+    if (saved.PTO_DEADLINE !== undefined) PTO_DEADLINE = saved.PTO_DEADLINE;
+    if (typeof saved.nextEventId === 'number') nextEventId = saved.nextEventId;
+    if (typeof saved.nextCommitteeId === 'number') nextCommitteeId = saved.nextCommitteeId;
+    if (saved.shifts) {
+      Object.keys(shifts).forEach(k => delete shifts[k]);
+      Object.assign(shifts, saved.shifts);
+      if (!shifts.__pto) shifts.__pto = {};
+    }
+    if (saved.year) document.getElementById('yearInput').value = saved.year;
+    if (saved.month) document.getElementById('monthInput').value = saved.month;
+    if (saved.savedAt) {
+      // deferred until the header DOM (autosaveIndicator) exists
+      setTimeout(() => showAutosaveIndicator(saved.savedAt), 0);
+    }
+    return true;
+  } catch (e) {
+    console.error('failed to restore autosave', e);
+    return false;
+  }
+}
+
+function resetAllData() {
+  if (!confirm('保存されている入力内容（シフト・スタッフ・科・委員会・予定など）をすべて削除し、ページを再読み込みします。よろしいですか？')) return;
+  try { localStorage.removeItem(AUTOSAVE_KEY); } catch (e) {}
+  location.reload();
+}
 
 function switchMode(mode) {
   currentMode = mode;
@@ -2510,6 +2633,18 @@ function renderDashboard() {
     ? `<div class="dashboard-chip-list">${staffArr.map(s => `<button class="dashboard-chip chip-warn" data-jump="${s.no}">${s.name}</button>`).join('')}</div>`
     : '<div class="dashboard-empty">該当するスタッフはいません。</div>';
 
+  let deadlineCard = '';
+  if (PTO_DEADLINE) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const due = new Date(PTO_DEADLINE + 'T00:00:00');
+    const daysLeft = Math.round((due - today) / 86400000);
+    const label = daysLeft > 0 ? `あと${daysLeft}日` : daysLeft === 0 ? '本日締切' : `${-daysLeft}日超過`;
+    deadlineCard = `<div class="dashboard-card${daysLeft <= 3 ? ' deadline-warn' : ''}">
+      <div class="num" style="font-size:17px;">${label}</div>
+      <div class="lbl">休み希望の締切<br>(${PTO_DEADLINE})</div>
+    </div>`;
+  }
+
   main.innerHTML = `
     ${viewToggleHtml()}
     <div class="person-header"><h2>${year}年${month}月 の入力状況</h2></div>
@@ -2519,6 +2654,7 @@ function renderDashboard() {
       <div class="dashboard-card${zeroStaff.length ? ' warn' : ''}"><div class="num">${zeroStaff.length}</div><div class="lbl">未入力</div></div>
       <div class="dashboard-card"><div class="num">${incompleteStaff.length}</div><div class="lbl">入力途中</div></div>
       <div class="dashboard-card"><div class="num">${fullCount}</div><div class="lbl">全日入力済み</div></div>
+      ${deadlineCard}
     </div>
     <div class="dashboard-section">
       <h3>まだ入力がないスタッフ</h3>
@@ -2687,6 +2823,7 @@ function handleSwapClick(staffNo, day) {
 }
 
 function renderMain() {
+  scheduleSave();
   const main = document.getElementById('mainArea');
   if (mainView === 'grid') {
     renderGridView();
@@ -3100,6 +3237,7 @@ function saveStaffEdit() {
     shifts.__pto[newNo] = {};
   }
   closeStaffEdit();
+  saveState();
   renderSidebarStaffManagement();
   showToast(`${name} さんを保存しました`);
 }
@@ -3111,6 +3249,7 @@ function deleteStaff(staffNo) {
   delete shifts[staffNo];
   delete shifts.__pto[staffNo];
   if (currentStaffIdx === staffNo) currentStaffIdx = null;
+  saveState();
   renderSidebarStaffManagement();
   showToast(`${staff.name} さんを削除しました`);
 }
@@ -3144,17 +3283,36 @@ function renderSidebarDeptManagement() {
     <h2 style="margin-top:18px;">科一覧（${DEPARTMENTS.length}科）</h2>
     <button class="mgmt-add-btn" id="deptAddBtn">＋ 科を追加</button>
     <div class="mgmt-list" id="deptMgmtList"></div>
+    <h2 style="margin-top:18px;">休み希望の提出締切</h2>
+    <div class="pto-deadline-box">
+      <div class="night-req-row">
+        <label>締切日</label>
+        <input type="date" id="ptoDeadlineInput" value="${PTO_DEADLINE || ''}">
+      </div>
+      <p class="night-req-note">締切日を設定すると、シフト入力画面の入力状況に残り日数が表示されます。</p>
+      <button class="btn primary" id="ptoDeadlineSaveBtn" style="width:100%;">保存する</button>
+    </div>
     <h2 style="margin-top:18px;">委員会一覧（${COMMITTEES.length}件）</h2>
     <button class="mgmt-add-btn" id="committeeAddBtn">＋ 委員会を追加</button>
     <div class="mgmt-list" id="committeeMgmtList"></div>
+    <button class="danger-zone-btn" id="resetDataBtn">保存データをすべて消去する</button>
   `;
   sidebar.appendChild(wrap);
 
   document.getElementById('nightReqSaveBtn').onclick = () => {
     NIGHT_REQUIREMENTS.weekdayEvening = parseInt(document.getElementById('weekdayEveningReq').value, 10) || 0;
     NIGHT_REQUIREMENTS.weekdayLate = parseInt(document.getElementById('weekdayLateReq').value, 10) || 0;
+    saveState();
     showToast('夜勤必要人数を保存しました');
   };
+
+  document.getElementById('ptoDeadlineSaveBtn').onclick = () => {
+    PTO_DEADLINE = document.getElementById('ptoDeadlineInput').value || null;
+    saveState();
+    showToast(PTO_DEADLINE ? `休み希望の締切を ${PTO_DEADLINE} に設定しました` : '締切を解除しました');
+  };
+
+  document.getElementById('resetDataBtn').onclick = resetAllData;
 
   const list = document.getElementById('deptMgmtList');
   DEPARTMENTS.forEach(d => {
@@ -3257,6 +3415,7 @@ function saveDeptEdit() {
     DEPARTMENTS.push({ code, name, color, required });
   }
   closeDeptEdit();
+  saveState();
   renderSidebarDeptManagement();
   showToast(`${name} を保存しました`);
 }
@@ -3268,6 +3427,7 @@ function deleteDept(code) {
   if (usedBy.length) msg += `\n注意: ${usedBy.length}名のスタッフがこの科を担当に設定しています（削除後は手動で設定を見直してください）。`;
   if (!confirm(msg + '\nよろしいですか？')) return;
   DEPARTMENTS = DEPARTMENTS.filter(d => d.code !== code);
+  saveState();
   renderSidebarDeptManagement();
   showToast(`${dept.name} を削除しました`);
 }
@@ -3305,6 +3465,7 @@ function saveCommitteeEdit() {
     COMMITTEES.push({ id: nextCommitteeId++, name, color });
   }
   closeCommitteeEdit();
+  saveState();
   renderSidebarDeptManagement();
   showToast(`${name} を保存しました`);
 }
@@ -3317,6 +3478,7 @@ function deleteCommittee(id) {
   if (!confirm(msg + '\nよろしいですか？')) return;
   COMMITTEES = COMMITTEES.filter(c => c.id !== id);
   STAFF.forEach(s => { if (s.committees) s.committees = s.committees.filter(cid => cid !== id); });
+  saveState();
   renderSidebarDeptManagement();
   showToast(`${committee.name} を削除しました`);
 }
@@ -3422,6 +3584,7 @@ function saveEventEdit() {
     EVENTS.push({ id: nextEventId++, day, title, color });
   }
   closeEventEdit();
+  saveState();
   renderSidebarEventManagement();
   showToast(`${month}/${day} の予定を保存しました`);
 }
@@ -3430,6 +3593,7 @@ function deleteEvent(id) {
   const ev = EVENTS.find(e => e.id === id);
   if (!confirm(`「${ev.title}」を削除します。よろしいですか？`)) return;
   EVENTS = EVENTS.filter(e => e.id !== id);
+  saveState();
   renderSidebarEventManagement();
   showToast('予定を削除しました');
 }
@@ -3724,7 +3888,9 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
   return { filledCount, shortageCount };
 }
 
+const restored = loadState();
 switchMode('shift');
+if (restored) showToast('前回の入力内容を復元しました');
 
 </script>
 
