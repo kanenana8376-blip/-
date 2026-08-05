@@ -1656,7 +1656,8 @@ function buildFullWorkbook(STAFF, shifts, year, month, CODE_COLORS, DEPARTMENTS,
       '「代」は師長代行です。師長が平日に不在の日は、副師長2人が交代で代行に入ります。',
       '「当」は管理当直（師長）で、その翌日は自動的に「明」（当直明け）になります。',
       '当直の日と明けの日はどちらも師長が日勤に入らないため、平日なら副師長が「代」に入ります。',
-      '「直」は管理日直です。土日祝は副師長が交代で日直に入り、救急外来(救)には入りません。',
+      '「直」は管理日直です。土日祝の副師長は救急外来(救)には入りません。',
+      '当直(当)・明け(明)・日直(直)は自動では入りません。日付のセルをクリックして手入力してください。',
       'パートのスタッフは、その人の退勤時刻（13/14/15/16/17時）付きの記号のみ選べます。',
     ]],
     ['② 担当外の科は赤く警告されます', [
@@ -4100,7 +4101,7 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
   // Track running state per staff as we sweep day 1 -> nDays.
   const state = {};
   STAFF.forEach(s => {
-    state[s.no] = { workStreak: 0, nightStreak: 0, deptCounts: {}, nightCount: 0, totalWork: 0, actingCount: 0, dutyCount: 0 };
+    state[s.no] = { workStreak: 0, nightStreak: 0, deptCounts: {}, nightCount: 0, totalWork: 0, actingCount: 0 };
     DEPARTMENTS.forEach(d => { state[s.no].deptCounts[d.code] = 0; });
   });
 
@@ -4191,31 +4192,6 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
           shortageCount++; // 代行に入れる副師長がいない日
         }
       }
-    } else {
-      // 土日祝の副師長は管理日直(直)に入る。救急外来(救)の担当にはならない
-      // ので、下の救急の割り当てからも副師長は除外している。日直は1日
-      // 1人で、その月の日直回数が少ない副師長を選んで交代で回す。
-      const dutyAlready = STAFF.some(s => shifts[s.no][d] === '直');
-      if (!dutyAlready) {
-        const deputies = STAFF.filter(s =>
-          isDeputy(s) &&
-          !shifts[s.no][d] && !isLocked(s.no, d) &&
-          state[s.no].nightStreak === 0 &&
-          state[s.no].workStreak < 4
-        );
-        deputies.sort((a, b) => {
-          const dutyDiff = state[a.no].dutyCount - state[b.no].dutyCount;
-          if (dutyDiff !== 0) return dutyDiff;
-          return state[a.no].totalWork - state[b.no].totalWork;
-        });
-        if (deputies.length) {
-          shifts[deputies[0].no][d] = '直';
-          state[deputies[0].no].dutyCount++;
-          filledCount++;
-        } else {
-          shortageCount++; // 日直に入れる副師長がいない日
-        }
-      }
     }
 
     // --- night shift (准/深) and 救急 assignment, every day, using
@@ -4279,7 +4255,8 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
         // パート(depTime)も土日祝は原則休みのため自動配置しない（イレギュラー
         // 出勤は手入力で「日」「救」を入れる運用）。
         // 副師長は土日祝は管理日直(直)に入るため、救急外来(救)には入れない
-        // （准夜・深夜には従来どおり入る）。
+        // （准夜・深夜には従来どおり入る）。日直そのものは手入力で登録する
+        // ため、ここでは「救急に入れない」ことだけを担保している。
         const isEmergency = code === '救';
         const baseEligible = s => !shifts[s.no][d] && !isLocked(s.no, d) && !s.depTime && s.cat !== '師長' &&
           !(isEmergency && isDeputy(s)) &&
