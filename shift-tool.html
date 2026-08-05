@@ -1651,7 +1651,8 @@ function buildFullWorkbook(STAFF, shifts, year, month, CODE_COLORS, DEPARTMENTS,
   const guideSections = [
     ['① シフト入力の基本', [
       'このツールでスタッフを選び、日付をクリックして記号を入れていきます。',
-      '記号は内/化/循/小/皮/泌/耳/健/膠/救/准/深/公/有 の14種類です。',
+      '記号は内/化/循/小/皮/泌/耳/健/膠/日/救/准/深/公/有 の15種類です。',
+      '「日」は日勤（科のブースに入らない日中の勤務）で、師長など担当科を持たない方に使います。',
       'パートのスタッフは、その人の退勤時刻（13/14/15/16/17時）付きの記号のみ選べます。',
     ]],
     ['② 担当外の科は赤く警告されます', [
@@ -1667,7 +1668,7 @@ function buildFullWorkbook(STAFF, shifts, year, month, CODE_COLORS, DEPARTMENTS,
     ]],
     ['⑤ ⑤夜勤バランスシートで偏り・ルール違反をチェック', [
       '・最大連続夜勤が3日以上 → ⚠連続夜勤（赤）',
-      '・最大連続出勤が5日以上 → ⚠連続出勤過多（赤）',
+      '・最大連続出勤が5日以上 → ⚠連続出勤過多（赤）※師長は平日日勤のため対象外',
       '・夜勤の翌日に出勤 → ⚠夜勤明け勤務（赤）',
       '・休み希望が月6回以上 → ⚠休み希望超過（赤）',
       '・夜勤合計が他の常勤者平均より3回以上多い/少ない → ⚠偏りあり（黄）',
@@ -1780,8 +1781,8 @@ function buildFullWorkbook(STAFF, shifts, year, month, CODE_COLORS, DEPARTMENTS,
     deptCountRowOf[code] = countRow;
     countRow++;
   });
-  ['救','准','深','公','有'].forEach(code => {
-    const label = { '救': '救急', '准': '准夜', '深': '深夜', '公': '公休', '有': '有給' }[code];
+  ['日','救','准','深','公','有'].forEach(code => {
+    const label = { '日': '日勤', '救': '救急', '准': '准夜', '深': '深夜', '公': '公休', '有': '有給' }[code];
     shift.set(`A${countRow}`, label, { style: reg.style({ size: 9, bold: true, fill: (CODE_COLORS[code] || '').replace('#','') }) });
     dayColLetters.forEach(col => {
       shift.formula(`${col}${countRow}`, `COUNTIF(${col}${FIRST_DATA_ROW}:${col}${LAST_DATA_ROW},"${code}")`, { style: sNormalBoldCenter });
@@ -1795,7 +1796,7 @@ function buildFullWorkbook(STAFF, shifts, year, month, CODE_COLORS, DEPARTMENTS,
     const wd = weekdayLetterJP(year, month, d);
     const isOffDay = wd === '土' || wd === '日' || isJapaneseHoliday(year, month, d);
     const text = isOffDay
-      ? `救${WEEKEND_EMERGENCY_REQ}/准${NIGHT_REQUIREMENTS.weekendEvening}/深${NIGHT_REQUIREMENTS.weekendLate}`
+      ? `日勤(救)${NIGHT_REQUIREMENTS.weekendDay}/准${NIGHT_REQUIREMENTS.weekendEvening}/深${NIGHT_REQUIREMENTS.weekendLate}`
       : `計18/准${NIGHT_REQUIREMENTS.weekdayEvening}/深${NIGHT_REQUIREMENTS.weekdayLate}`;
     shift.set(`${col}${reqRow}`, text, { style: reg.style({ size: 8, halign: 'center' }) });
   }
@@ -2003,9 +2004,12 @@ function buildFullWorkbook(STAFF, shifts, year, month, CODE_COLORS, DEPARTMENTS,
     const maxNightStreak = parseInt(NB.cells[`F${r}`].v, 10) || 0;
     const maxWorkStreak = parseInt(NB.cells[`I${r}`].v, 10) || 0;
     const nightFollowedByWork = parseInt(NB.cells[`J${r}`].v, 10) || 0;
+    // 師長は原則、平日日勤・土日祝休みのため月〜金の連続5日が通常の形に
+    // なる。連続出勤の警告は夜勤を回るスタッフ向けの基準なので対象外にする。
+    const isDayShiftOnly = staff.cat === '師長';
     let verdict = 'OK', style = okStyle;
     if (maxNightStreak >= 3) { verdict = '⚠連続夜勤'; style = warnRedStyle; }
-    else if (maxWorkStreak >= 5) { verdict = '⚠連続出勤過多'; style = warnRedStyle; }
+    else if (maxWorkStreak >= 5 && !isDayShiftOnly) { verdict = '⚠連続出勤過多'; style = warnRedStyle; }
     else if (nightFollowedByWork > 0) { verdict = '⚠夜勤明け勤務'; style = warnRedStyle; }
     else if (ptoDays > 5) { verdict = '⚠休み希望超過'; style = warnRedStyle; }
     else if (total > 0 && typeof diff === 'number' && Math.abs(diff) >= 3) { verdict = '⚠偏りあり'; style = warnYelStyle; }
@@ -2365,19 +2369,18 @@ let DEPARTMENTS = [
 let NIGHT_REQUIREMENTS = {
   weekdayEvening: 1, // 平日の准夜
   weekdayLate: 1,    // 平日の深夜
+  weekendDay: 2,     // 土日祝の日勤（救急外来担当）
   weekendEvening: 2, // 土日祝の准夜
   weekendLate: 2,    // 土日祝の深夜
 };
 
-// 土日祝の救急は常に2名で固定（平日は0名）。准夜・深夜と違って月ごとに
-// 変わらない運用のため、設定項目にはしていない。
-const WEEKEND_EMERGENCY_REQ = 2;
-
 // 土日祝の必要人数を記号ごとに引けるようにしたもの。設定を変えるたびに
 // 最新の値を返す必要があるため、定数ではなく関数にしている。
+// 土日祝の日勤は救急外来の担当なので、記号は「救」を使う（日勤専用の
+// 別枠は設けず、この1枠で運用する）。
 function weekendReq() {
   return {
-    '救': WEEKEND_EMERGENCY_REQ,
+    '救': NIGHT_REQUIREMENTS.weekendDay,
     '准': NIGHT_REQUIREMENTS.weekendEvening,
     '深': NIGHT_REQUIREMENTS.weekendLate,
   };
@@ -2390,8 +2393,11 @@ function weekendReq() {
 // scheduled.
 let PTO_DEADLINE = null;
 
-const NON_DEPT_CODES = ['救','准','深','公','有'];
-const NON_DEPT_COLORS = { '救':'#EF9A9A','准':'#F4B183','深':'#9DC3E6','公':'#D9D9D9','有':'#FFF2CC','代':'#CFD8DC' };
+// 「日」= 日勤。科のブースに入らない日中の勤務を表す（師長など、原則
+// 日勤のみでブース担当を持たない人に使う）。科ではないので担当外の
+// 赤い警告の対象にもならない。
+const NON_DEPT_CODES = ['日','救','准','深','公','有'];
+const NON_DEPT_COLORS = { '日':'#C6E0B4','救':'#EF9A9A','准':'#F4B183','深':'#9DC3E6','公':'#D9D9D9','有':'#FFF2CC','代':'#CFD8DC' };
 function deptCodes() { return DEPARTMENTS.map(d => d.code); }
 function codeColors() {
   const m = Object.assign({}, NON_DEPT_COLORS);
@@ -2874,7 +2880,7 @@ function renderGridView() {
     summaryRows += `<tr class="grid-summary-row"><td class="name-col">${esc(dept.name)}(${esc(dept.code)})</td><td class="cat-col" title="必要人数(平日)">必要${dept.required}名</td>${cells}</tr>`;
   });
   const wReq = weekendReq();
-  [['准', '准夜', NIGHT_REQUIREMENTS.weekdayEvening], ['深', '深夜', NIGHT_REQUIREMENTS.weekdayLate]].forEach(([code, label, weekdayReq]) => {
+  [['救', '日勤(救急)', 0], ['准', '准夜', NIGHT_REQUIREMENTS.weekdayEvening], ['深', '深夜', NIGHT_REQUIREMENTS.weekdayLate]].forEach(([code, label, weekdayReq]) => {
     let cells = '';
     for (let d = 1; d <= nDays; d++) {
       const offDay = isOffDay(d);
@@ -2971,10 +2977,18 @@ function handleSwapClick(staffNo, day) {
 //   ・休み希望の日   ・固定（ロック）した日
 // 「未入力の日だけ埋める」を選べば、既存の入力も一切壊さない。
 // ============================================================
+// 記号選択の候補を作る。パートは科の記号に退勤時刻が付く。土日祝は原則
+// 休みだが、イレギュラーで出勤する人もいるため「日」「救」も手入力で
+// 選べるようにしてある（自動生成では割り当てない）。
+function partTimerCodes(staff) {
+  if (staff.depTime) {
+    return deptCodes().map(c => `${c}(${staff.depTime})`).concat(['日', '救', '公', '有']);
+  }
+  return deptCodes().concat(NON_DEPT_CODES);
+}
+
 function weekPatternOptions(staff, selected) {
-  const codes = staff.depTime
-    ? deptCodes().map(c => `${c}(${staff.depTime})`).concat(['公', '有'])
-    : deptCodes().concat(NON_DEPT_CODES);
+  const codes = partTimerCodes(staff);
   const none = `<option value=""${!selected ? ' selected' : ''}>―</option>`;
   return none + codes.map(c => `<option value="${c}"${c === selected ? ' selected' : ''}>${c}</option>`).join('');
 }
@@ -3181,13 +3195,8 @@ function openPicker(staff, day) {
 
   const capable = capableCodes(staff);
   const isViceManager = staff.cat && staff.cat.includes('副師長');
-  let codes;
-  if (staff.depTime) {
-    codes = deptCodes().map(c => `${c}(${staff.depTime})`).concat(['公', '有']);
-  } else {
-    codes = deptCodes().concat(NON_DEPT_CODES);
-    if (isViceManager) codes = codes.concat(['代']);
-  }
+  let codes = partTimerCodes(staff);
+  if (!staff.depTime && isViceManager) codes = codes.concat(['代']);
 
   function renderShiftGrid() {
     grid.innerHTML = '';
@@ -3607,7 +3616,7 @@ function renderSidebarDeptManagement() {
 
   const wrap = document.createElement('div');
   wrap.innerHTML = `
-    <h2>夜勤必要人数</h2>
+    <h2>日勤・夜勤の必要人数</h2>
     <div class="night-req-box">
       <div class="night-req-row">
         <label>平日の准夜</label>
@@ -3619,6 +3628,10 @@ function renderSidebarDeptManagement() {
       </div>
       <div class="night-req-divider">土日・祝日</div>
       <div class="night-req-row">
+        <label>土日祝の日勤</label>
+        <input type="number" id="weekendDayReq" min="0" value="${NIGHT_REQUIREMENTS.weekendDay}">
+      </div>
+      <div class="night-req-row">
         <label>土日祝の准夜</label>
         <input type="number" id="weekendEveningReq" min="0" value="${NIGHT_REQUIREMENTS.weekendEvening}">
       </div>
@@ -3626,7 +3639,7 @@ function renderSidebarDeptManagement() {
         <label>土日祝の深夜</label>
         <input type="number" id="weekendLateReq" min="0" value="${NIGHT_REQUIREMENTS.weekendLate}">
       </div>
-      <p class="night-req-note">准夜・深夜の必要人数は月によって変わるため、ここで毎月設定してください（土日祝は准夜2名・深夜2名が初期値）。救急は土日・祝日のみ2名で固定です（平日は0名）。</p>
+      <p class="night-req-note">必要人数は月によって変わるため、ここで毎月設定してください。土日祝の日勤は救急外来の担当で、シフト表では「救」の記号になります（平日の日勤は各科の配置で決まるため、ここでは設定しません）。パートは土日祝には自動配置されません。</p>
       <button class="btn primary" id="nightReqSaveBtn" style="width:100%;">保存する</button>
     </div>
     <h2 style="margin-top:18px;">科一覧（${DEPARTMENTS.length}科）</h2>
@@ -3652,11 +3665,12 @@ function renderSidebarDeptManagement() {
     const readReq = id => Math.max(0, parseInt(document.getElementById(id).value, 10) || 0);
     NIGHT_REQUIREMENTS.weekdayEvening = readReq('weekdayEveningReq');
     NIGHT_REQUIREMENTS.weekdayLate = readReq('weekdayLateReq');
+    NIGHT_REQUIREMENTS.weekendDay = readReq('weekendDayReq');
     NIGHT_REQUIREMENTS.weekendEvening = readReq('weekendEveningReq');
     NIGHT_REQUIREMENTS.weekendLate = readReq('weekendLateReq');
     saveState();
     renderMain(); // 必要人数の行と不足チェックをすぐ反映する
-    showToast(`夜勤必要人数を保存しました（平日 准${NIGHT_REQUIREMENTS.weekdayEvening}/深${NIGHT_REQUIREMENTS.weekdayLate}、土日祝 准${NIGHT_REQUIREMENTS.weekendEvening}/深${NIGHT_REQUIREMENTS.weekendLate}）`);
+    showToast(`必要人数を保存しました（平日 准${NIGHT_REQUIREMENTS.weekdayEvening}/深${NIGHT_REQUIREMENTS.weekdayLate}、土日祝 日勤${NIGHT_REQUIREMENTS.weekendDay}/准${NIGHT_REQUIREMENTS.weekendEvening}/深${NIGHT_REQUIREMENTS.weekendLate}）`);
   };
 
   document.getElementById('ptoDeadlineSaveBtn').onclick = () => {
@@ -4081,7 +4095,7 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
     // 毎日必要だが人数が違う。平日・土日祝のどちらも設定タブで月ごとに
     // 変更できる（月によって必要人数が変わるため固定値にはしない）。
     const todayReq = isWeekendOrHoliday
-      ? { '救': WEEKEND_EMERGENCY_REQ, '准': NIGHT_REQUIREMENTS.weekendEvening, '深': NIGHT_REQUIREMENTS.weekendLate }
+      ? { '救': NIGHT_REQUIREMENTS.weekendDay, '准': NIGHT_REQUIREMENTS.weekendEvening, '深': NIGHT_REQUIREMENTS.weekendLate }
       : { '救': 0, '准': NIGHT_REQUIREMENTS.weekdayEvening, '深': NIGHT_REQUIREMENTS.weekdayLate };
 
     // --- night shift (准/深) and 救急 assignment, every day, using
@@ -4141,7 +4155,10 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
           if (s.nightType === 'late_only') return code === '深';
           return true; // 'free' or unset
         };
-        const baseEligible = s => !shifts[s.no][d] && !isLocked(s.no, d) && !s.depTime && state[s.no].workStreak < 4 && nightTypeAllows(s);
+        // 師長は原則日勤のみでブースにも夜勤にも入らないため対象外。
+        // パート(depTime)も土日祝は原則休みのため自動配置しない（イレギュラー
+        // 出勤は手入力で「日」「救」を入れる運用）。
+        const baseEligible = s => !shifts[s.no][d] && !isLocked(s.no, d) && !s.depTime && s.cat !== '師長' && state[s.no].workStreak < 4 && nightTypeAllows(s);
         const nightSort = (a, b) => {
           const nightDiff = state[a.no].nightCount - state[b.no].nightCount;
           if (nightDiff !== 0) return nightDiff;
@@ -4215,6 +4232,18 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
           need--;
         }
         if (need > 0) shortageCount++; // couldn't fully staff this dept today
+      });
+    }
+
+    // 師長は原則、平日は日勤(日)。担当科を持たずブースに入らないため、
+    // 各科の割り当てからは漏れてしまい、そのままだと平日まで「公」に
+    // なってしまう。土日祝は日勤を置かず「公」のままにする。
+    if (!isWeekendOrHoliday) {
+      STAFF.forEach(s => {
+        if (s.cat === '師長' && !shifts[s.no][d] && !isLocked(s.no, d)) {
+          shifts[s.no][d] = '日';
+          filledCount++;
+        }
       });
     }
 
