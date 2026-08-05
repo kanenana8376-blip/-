@@ -3011,8 +3011,8 @@ function weekPatternHtml(staff) {
     <div class="week-pattern-box">
       <h3>🗓 曜日パターン（スマートシフト作成）</h3>
       <div class="wp-hint">
-        「毎週この曜日はこの科」という基本の勤務をここに登録し、下のボタンで対象月にまとめて反映できます。
-        休み希望の日と🔒固定した日は上書きされません。
+        「毎週この曜日はこの科」という基本の勤務をここに登録しておくと、<b>「残りの日を自動で埋める」を押したときに自動で反映されます</b>（空欄の日だけ／休み希望と🔒固定の日はそのまま）。
+        下のボタンを使えば、この人だけ今すぐ反映することもできます。
       </div>
       <div class="week-pattern-grid">
         ${WEEKDAYS_JP.map((w, i) => `
@@ -4087,7 +4087,8 @@ function runAutoGenerate() {
       const result = autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays);
       renderStaffList();
       renderMain();
-      showToast(`自動生成しました（${result.filledCount}件を入力、${result.shortageCount}件は人数不足のまま残っています）`);
+      const patternNote = result.patternStaffCount ? `曜日パターン${result.patternStaffCount}人分を反映し、` : '';
+      showToast(`自動生成しました（${patternNote}${result.filledCount}件を入力、${result.shortageCount}件は人数不足のまま残っています）`);
     } catch (e) {
       showToast('自動生成に失敗しました: ' + e.message, 'error');
       console.error(e);
@@ -4111,6 +4112,28 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
 
   let filledCount = 0;
   let shortageCount = 0;
+  let patternStaffCount = 0;
+
+  // --- Pass 0: 曜日パターン（スマートシフト作成） ---
+  // 「毎週この曜日はこの科」を登録している人は、日ごとの割り当てを始める
+  // 前にその型を先に敷いておく。曜日基準なので、月ごとに始まる曜日や
+  // 日数が変わっても自動的にズレが補正される。
+  // 空欄の日だけを埋めるので、手入力・休み希望・🔒固定はどれも壊さない。
+  STAFF.forEach(staff => {
+    const pattern = staff.weekPattern;
+    if (!pattern || !Object.keys(pattern).length) return;
+    let applied = 0;
+    for (let d = 1; d <= nDays; d++) {
+      const code = pattern[new Date(year, month - 1, d).getDay()];
+      if (!code) continue;
+      if (shifts[staff.no][d]) continue;   // 入力済みは上書きしない
+      if (isLocked(staff.no, d)) continue;
+      if (shifts.__pto[staff.no] && shifts.__pto[staff.no][d]) continue; // 休み希望
+      shifts[staff.no][d] = code;
+      applied++;
+    }
+    if (applied) { filledCount += applied; patternStaffCount++; }
+  });
 
   for (let d = 1; d <= nDays; d++) {
     // First, lock in PTO -> 公 for anyone who hasn't already got a cell value today.
@@ -4362,7 +4385,7 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
     });
   }
 
-  return { filledCount, shortageCount };
+  return { filledCount, shortageCount, patternStaffCount };
 }
 
 const restored = loadState();
