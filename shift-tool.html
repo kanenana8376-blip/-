@@ -443,6 +443,14 @@
     line-height: 1.5;
     margin: 4px 0 10px;
   }
+  .night-req-divider {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #c0392b;
+    border-top: 1px solid var(--line);
+    padding-top: 7px;
+    margin-top: 3px;
+  }
   .mode-tabs {
     display: flex;
     border-bottom: 1px solid var(--line);
@@ -1781,12 +1789,14 @@ function buildFullWorkbook(STAFF, shifts, year, month, CODE_COLORS, DEPARTMENTS,
     countRow++;
   });
   const reqRow = countRow;
-  shift.set(`A${reqRow}`, '必要人数(平日)', { style: reg.style({ size: 9, bold: true }) });
+  shift.set(`A${reqRow}`, '必要人数(平日/土日祝)', { style: reg.style({ size: 9, bold: true }) });
   for (let d = 1; d <= nDays; d++) {
     const col = dayColLetters[d - 1];
     const wd = weekdayLetterJP(year, month, d);
     const isOffDay = wd === '土' || wd === '日' || isJapaneseHoliday(year, month, d);
-    const text = isOffDay ? '救2/准2/深2' : `計18/准${NIGHT_REQUIREMENTS.weekdayEvening}/深${NIGHT_REQUIREMENTS.weekdayLate}`;
+    const text = isOffDay
+      ? `救${NIGHT_REQUIREMENTS.weekendEmergency}/准${NIGHT_REQUIREMENTS.weekendEvening}/深${NIGHT_REQUIREMENTS.weekendLate}`
+      : `計18/准${NIGHT_REQUIREMENTS.weekdayEvening}/深${NIGHT_REQUIREMENTS.weekdayLate}`;
     shift.set(`${col}${reqRow}`, text, { style: reg.style({ size: 8, halign: 'center' }) });
   }
   countRow = reqRow + 2;
@@ -2349,13 +2359,26 @@ let DEPARTMENTS = [
 ];
 
 // NIGHT_REQUIREMENTS holds the per-month night-shift staffing targets.
-// 平日 (weekday) counts are editable each month since they vary; 土日祝
-// (weekend/holiday) counts are fixed per the agreed rule (救2/准2/深2).
+// 平日・土日祝のどちらも月ごとに編集できる。土日祝は従来「救2/准2/深2」の
+// 固定運用だったため、その値を初期値にしてある（設定を変えなければ今まで
+// どおりの動きになる）。
 let NIGHT_REQUIREMENTS = {
-  weekdayEvening: 1, // 平日の准夜
-  weekdayLate: 1,    // 平日の深夜
+  weekdayEvening: 1,   // 平日の准夜
+  weekdayLate: 1,      // 平日の深夜
+  weekendEmergency: 2, // 土日祝の救急
+  weekendEvening: 2,   // 土日祝の准夜
+  weekendLate: 2,      // 土日祝の深夜
 };
-const WEEKEND_HOLIDAY_REQ = { '救': 2, '准': 2, '深': 2 };
+
+// 土日祝の必要人数を記号ごとに引けるようにしたもの。設定を変えるたびに
+// 最新の値を返す必要があるため、定数ではなく関数にしている。
+function weekendReq() {
+  return {
+    '救': NIGHT_REQUIREMENTS.weekendEmergency,
+    '准': NIGHT_REQUIREMENTS.weekendEvening,
+    '深': NIGHT_REQUIREMENTS.weekendLate,
+  };
+}
 
 // PTO_DEADLINE is an actual calendar date ('YYYY-MM-DD') by which staff
 // must submit their 休み希望. Unlike everything else in this tool it is a
@@ -2847,15 +2870,16 @@ function renderGridView() {
     }
     summaryRows += `<tr class="grid-summary-row"><td class="name-col">${esc(dept.name)}(${esc(dept.code)})</td><td class="cat-col" title="必要人数(平日)">必要${dept.required}名</td>${cells}</tr>`;
   });
+  const wReq = weekendReq();
   [['准', '准夜', NIGHT_REQUIREMENTS.weekdayEvening], ['深', '深夜', NIGHT_REQUIREMENTS.weekdayLate]].forEach(([code, label, weekdayReq]) => {
     let cells = '';
     for (let d = 1; d <= nDays; d++) {
       const offDay = isOffDay(d);
-      const need = offDay ? WEEKEND_HOLIDAY_REQ[code] : weekdayReq;
+      const need = offDay ? wReq[code] : weekdayReq;
       const actual = STAFF.filter(s => effectiveShiftValue(shifts, s.no, d) === code).length;
       cells += shortageCell(actual, need, false);
     }
-    summaryRows += `<tr class="grid-summary-row"><td class="name-col">${label}</td><td class="cat-col" title="必要人数(平日/土日祝)">${weekdayReq}/${WEEKEND_HOLIDAY_REQ[code]}名</td>${cells}</tr>`;
+    summaryRows += `<tr class="grid-summary-row"><td class="name-col">${label}</td><td class="cat-col" title="必要人数(平日/土日祝)">${weekdayReq}/${wReq[code]}名</td>${cells}</tr>`;
   });
 
   main.innerHTML = `
@@ -3590,7 +3614,20 @@ function renderSidebarDeptManagement() {
         <label>平日の深夜</label>
         <input type="number" id="weekdayLateReq" min="0" value="${NIGHT_REQUIREMENTS.weekdayLate}">
       </div>
-      <p class="night-req-note">土日・祝日は固定で救急2名・准夜2名・深夜2名です（平日は救急なし）。平日の准夜・深夜は月によって変わるため、ここで毎月設定してください。</p>
+      <div class="night-req-divider">土日・祝日</div>
+      <div class="night-req-row">
+        <label>土日祝の准夜</label>
+        <input type="number" id="weekendEveningReq" min="0" value="${NIGHT_REQUIREMENTS.weekendEvening}">
+      </div>
+      <div class="night-req-row">
+        <label>土日祝の深夜</label>
+        <input type="number" id="weekendLateReq" min="0" value="${NIGHT_REQUIREMENTS.weekendLate}">
+      </div>
+      <div class="night-req-row">
+        <label>土日祝の救急</label>
+        <input type="number" id="weekendEmergencyReq" min="0" value="${NIGHT_REQUIREMENTS.weekendEmergency}">
+      </div>
+      <p class="night-req-note">准夜・深夜・救急の必要人数は月によって変わるため、ここで毎月設定してください（救急は土日・祝日のみで、平日は0名固定です）。土日祝は救急2名・准夜2名・深夜2名が初期値です。</p>
       <button class="btn primary" id="nightReqSaveBtn" style="width:100%;">保存する</button>
     </div>
     <h2 style="margin-top:18px;">科一覧（${DEPARTMENTS.length}科）</h2>
@@ -3613,10 +3650,15 @@ function renderSidebarDeptManagement() {
   sidebar.appendChild(wrap);
 
   document.getElementById('nightReqSaveBtn').onclick = () => {
-    NIGHT_REQUIREMENTS.weekdayEvening = parseInt(document.getElementById('weekdayEveningReq').value, 10) || 0;
-    NIGHT_REQUIREMENTS.weekdayLate = parseInt(document.getElementById('weekdayLateReq').value, 10) || 0;
+    const readReq = id => Math.max(0, parseInt(document.getElementById(id).value, 10) || 0);
+    NIGHT_REQUIREMENTS.weekdayEvening = readReq('weekdayEveningReq');
+    NIGHT_REQUIREMENTS.weekdayLate = readReq('weekdayLateReq');
+    NIGHT_REQUIREMENTS.weekendEvening = readReq('weekendEveningReq');
+    NIGHT_REQUIREMENTS.weekendLate = readReq('weekendLateReq');
+    NIGHT_REQUIREMENTS.weekendEmergency = readReq('weekendEmergencyReq');
     saveState();
-    showToast('夜勤必要人数を保存しました');
+    renderMain(); // 必要人数の行と不足チェックをすぐ反映する
+    showToast(`夜勤必要人数を保存しました（平日 准${NIGHT_REQUIREMENTS.weekdayEvening}/深${NIGHT_REQUIREMENTS.weekdayLate}、土日祝 救${NIGHT_REQUIREMENTS.weekendEmergency}/准${NIGHT_REQUIREMENTS.weekendEvening}/深${NIGHT_REQUIREMENTS.weekendLate}）`);
   };
 
   document.getElementById('ptoDeadlineSaveBtn').onclick = () => {
@@ -4037,12 +4079,11 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
     }
     const tomorrowIsWeekendOrHoliday = isOffDay(d + 1);
 
-    // Today's targets: 救急 only applies on weekends/holidays (固定2名)。
-    // 准夜・深夜 apply every day, but the headcount differs: weekends/
-    // holidays use the fixed 2/2, weekdays use the user-editable monthly
-    // NIGHT_REQUIREMENTS (these vary month to month and can't be hardcoded).
+    // Today's targets: 救急 only applies on weekends/holidays。准夜・深夜は
+    // 毎日必要だが人数が違う。平日・土日祝のどちらも設定タブで月ごとに
+    // 変更できる（月によって必要人数が変わるため固定値にはしない）。
     const todayReq = isWeekendOrHoliday
-      ? { '救': WEEKEND_HOLIDAY_REQ['救'], '准': WEEKEND_HOLIDAY_REQ['准'], '深': WEEKEND_HOLIDAY_REQ['深'] }
+      ? { '救': NIGHT_REQUIREMENTS.weekendEmergency, '准': NIGHT_REQUIREMENTS.weekendEvening, '深': NIGHT_REQUIREMENTS.weekendLate }
       : { '救': 0, '准': NIGHT_REQUIREMENTS.weekdayEvening, '深': NIGHT_REQUIREMENTS.weekdayLate };
 
     // --- night shift (准/深) and 救急 assignment, every day, using
@@ -4067,7 +4108,7 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
       // which simultaneously commits their 深 tomorrow (only possible when
       // tomorrow also has a 深 requirement > 0 to draw down).
       const tomorrowReq = tomorrowIsWeekendOrHoliday
-        ? WEEKEND_HOLIDAY_REQ['深']
+        ? NIGHT_REQUIREMENTS.weekendLate
         : (d + 1 <= nDays ? NIGHT_REQUIREMENTS.weekdayLate : 0);
       if (tomorrowReq > 0) {
         const alreadyEvening = STAFF.filter(s => shifts[s.no][d] === '准').length;
