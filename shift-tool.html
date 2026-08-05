@@ -1655,6 +1655,7 @@ function buildFullWorkbook(STAFF, shifts, year, month, CODE_COLORS, DEPARTMENTS,
       '「日」は日勤（科のブースに入らない日中の勤務）で、師長など担当科を持たない方に使います。',
       '「代」は師長代行です。師長が平日に不在の日は、副師長2人が交代で代行に入ります。',
       '「当」は管理当直（師長）で、その翌日は自動的に「明」（当直明け）になります。',
+      '当直の日と明けの日はどちらも師長が日勤に入らないため、平日なら副師長が「代」に入ります。',
       'パートのスタッフは、その人の退勤時刻（13/14/15/16/17時）付きの記号のみ選べます。',
     ]],
     ['② 担当外の科は赤く警告されます', [
@@ -4163,9 +4164,10 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
       }
     }
     if (!isWeekendOrHoliday) {
-      // 当直当日(当)は日中も師長がいるので代行は不要。当直明け(明)は
-      // 日勤に入らないため、休みの日と同じく代行を立てる。
-      const kanchoOnDuty = kancho && ['日', '当'].includes(shifts[kancho.no][d]);
+      // 代行が要るかどうかは「師長がその日の日勤(日)に入っているか」で
+      // 判断する。管理当直(当)の日も当直明け(明)の日も師長は日勤に入ら
+      // ないため、どちらも副師長が代行に入る。
+      const kanchoOnDuty = kancho && shifts[kancho.no][d] === '日';
       const actingAlready = STAFF.some(s => shifts[s.no][d] === '代');
       if (kancho && !kanchoOnDuty && !actingAlready) {
         const deputies = STAFF.filter(s =>
