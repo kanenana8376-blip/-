@@ -1651,8 +1651,9 @@ function buildFullWorkbook(STAFF, shifts, year, month, CODE_COLORS, DEPARTMENTS,
   const guideSections = [
     ['① シフト入力の基本', [
       'このツールでスタッフを選び、日付をクリックして記号を入れていきます。',
-      '記号は内/化/循/小/皮/泌/耳/健/膠/日/救/准/深/公/有 の15種類です。',
+      '記号は内/化/循/小/皮/泌/耳/健/膠/日/代/救/准/深/公/有 の16種類です。',
       '「日」は日勤（科のブースに入らない日中の勤務）で、師長など担当科を持たない方に使います。',
+      '「代」は師長代行です。師長が平日に不在の日は、副師長2人が交代で代行に入ります。',
       'パートのスタッフは、その人の退勤時刻（13/14/15/16/17時）付きの記号のみ選べます。',
     ]],
     ['② 担当外の科は赤く警告されます', [
@@ -1781,8 +1782,8 @@ function buildFullWorkbook(STAFF, shifts, year, month, CODE_COLORS, DEPARTMENTS,
     deptCountRowOf[code] = countRow;
     countRow++;
   });
-  ['日','救','准','深','公','有'].forEach(code => {
-    const label = { '日': '日勤', '救': '救急', '准': '准夜', '深': '深夜', '公': '公休', '有': '有給' }[code];
+  ['日','代','救','准','深','公','有'].forEach(code => {
+    const label = { '日': '日勤', '代': '師長代行', '救': '救急', '准': '准夜', '深': '深夜', '公': '公休', '有': '有給' }[code];
     shift.set(`A${countRow}`, label, { style: reg.style({ size: 9, bold: true, fill: (CODE_COLORS[code] || '').replace('#','') }) });
     dayColLetters.forEach(col => {
       shift.formula(`${col}${countRow}`, `COUNTIF(${col}${FIRST_DATA_ROW}:${col}${LAST_DATA_ROW},"${code}")`, { style: sNormalBoldCenter });
@@ -3761,7 +3762,7 @@ function saveDeptEdit() {
 
   if (!code || code.length !== 1) { showToast('記号は1文字で入力してください', 'error'); return; }
   if (!name) { showToast('科の名前を入力してください', 'error'); return; }
-  if (NON_DEPT_CODES.includes(code)) {
+  if (NON_DEPT_CODES.concat(['代']).includes(code)) {
     showToast(`「${code}」は救急・夜勤・公休などで使用済みのため使えません`, 'error');
     return;
   }
@@ -4059,7 +4060,7 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
   // Track running state per staff as we sweep day 1 -> nDays.
   const state = {};
   STAFF.forEach(s => {
-    state[s.no] = { workStreak: 0, nightStreak: 0, deptCounts: {}, nightCount: 0, totalWork: 0 };
+    state[s.no] = { workStreak: 0, nightStreak: 0, deptCounts: {}, nightCount: 0, totalWork: 0, actingCount: 0 };
     DEPARTMENTS.forEach(d => { state[s.no].deptCounts[d.code] = 0; });
   });
 
@@ -4097,6 +4098,49 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
     const todayReq = isWeekendOrHoliday
       ? { '救': NIGHT_REQUIREMENTS.weekendDay, '准': NIGHT_REQUIREMENTS.weekendEvening, '深': NIGHT_REQUIREMENTS.weekendLate }
       : { '救': 0, '准': NIGHT_REQUIREMENTS.weekdayEvening, '深': NIGHT_REQUIREMENTS.weekdayLate };
+
+    // --- 師長の日勤(日)と、不在時の師長代行(代) ---
+    //
+    // 師長は原則、平日は日勤。担当科を持たずブースに入らないため各科の
+    // 割り当てからは漏れてしまい、放っておくと平日まで「公」になる。
+    // 土日祝は日勤を置かず「公」のままにする。
+    //
+    // 師長が平日に不在（休み希望・有給・手入力で休みにした日など）の
+    // ときは、副師長のどちらかが師長代行として「代」に入る。副師長は
+    // 2人いるので、その月の代行回数が少ない方を選び、同数なら出勤日数が
+    // 少ない方を選ぶことで、2人の間で自然に交代していく。
+    //
+    // このパスを夜勤・各科の割り当てより前に置いているのは、代行に入る
+    // べき副師長が先に夜勤やブースで埋まってしまうのを防ぐため。
+    if (!isWeekendOrHoliday) {
+      const kancho = STAFF.find(s => s.cat === '師長');
+      if (kancho && !shifts[kancho.no][d] && !isLocked(kancho.no, d)) {
+        shifts[kancho.no][d] = '日';
+        filledCount++;
+      }
+      const kanchoOnDuty = kancho && shifts[kancho.no][d] === '日';
+      const actingAlready = STAFF.some(s => shifts[s.no][d] === '代');
+      if (kancho && !kanchoOnDuty && !actingAlready) {
+        const deputies = STAFF.filter(s =>
+          s.cat && s.cat.includes('副師長') &&
+          !shifts[s.no][d] && !isLocked(s.no, d) &&
+          state[s.no].nightStreak === 0 &&   // 夜勤明けは休ませる
+          state[s.no].workStreak < 4         // 連続出勤の上限は代行にも適用
+        );
+        deputies.sort((a, b) => {
+          const actDiff = state[a.no].actingCount - state[b.no].actingCount;
+          if (actDiff !== 0) return actDiff;
+          return state[a.no].totalWork - state[b.no].totalWork;
+        });
+        if (deputies.length) {
+          shifts[deputies[0].no][d] = '代';
+          state[deputies[0].no].actingCount++;
+          filledCount++;
+        } else {
+          shortageCount++; // 代行に入れる副師長がいない日
+        }
+      }
+    }
 
     // --- night shift (准/深) and 救急 assignment, every day, using
     //     today's targets computed above.
@@ -4232,18 +4276,6 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
           need--;
         }
         if (need > 0) shortageCount++; // couldn't fully staff this dept today
-      });
-    }
-
-    // 師長は原則、平日は日勤(日)。担当科を持たずブースに入らないため、
-    // 各科の割り当てからは漏れてしまい、そのままだと平日まで「公」に
-    // なってしまう。土日祝は日勤を置かず「公」のままにする。
-    if (!isWeekendOrHoliday) {
-      STAFF.forEach(s => {
-        if (s.cat === '師長' && !shifts[s.no][d] && !isLocked(s.no, d)) {
-          shifts[s.no][d] = '日';
-          filledCount++;
-        }
       });
     }
 
