@@ -1651,9 +1651,10 @@ function buildFullWorkbook(STAFF, shifts, year, month, CODE_COLORS, DEPARTMENTS,
   const guideSections = [
     ['① シフト入力の基本', [
       'このツールでスタッフを選び、日付をクリックして記号を入れていきます。',
-      '記号は内/化/循/小/皮/泌/耳/健/膠/日/代/救/准/深/公/有 の16種類です。',
+      '記号は内/化/循/小/皮/泌/耳/健/膠/日/代/当/明/救/准/深/公/有 の18種類です。',
       '「日」は日勤（科のブースに入らない日中の勤務）で、師長など担当科を持たない方に使います。',
       '「代」は師長代行です。師長が平日に不在の日は、副師長2人が交代で代行に入ります。',
+      '「当」は管理当直（師長）で、その翌日は自動的に「明」（当直明け）になります。',
       'パートのスタッフは、その人の退勤時刻（13/14/15/16/17時）付きの記号のみ選べます。',
     ]],
     ['② 担当外の科は赤く警告されます', [
@@ -1782,8 +1783,8 @@ function buildFullWorkbook(STAFF, shifts, year, month, CODE_COLORS, DEPARTMENTS,
     deptCountRowOf[code] = countRow;
     countRow++;
   });
-  ['日','代','救','准','深','公','有'].forEach(code => {
-    const label = { '日': '日勤', '代': '師長代行', '救': '救急', '准': '准夜', '深': '深夜', '公': '公休', '有': '有給' }[code];
+  ['日','代','当','明','救','准','深','公','有'].forEach(code => {
+    const label = { '日': '日勤', '代': '師長代行', '当': '管理当直', '明': '当直明け', '救': '救急', '准': '准夜', '深': '深夜', '公': '公休', '有': '有給' }[code];
     shift.set(`A${countRow}`, label, { style: reg.style({ size: 9, bold: true, fill: (CODE_COLORS[code] || '').replace('#','') }) });
     dayColLetters.forEach(col => {
       shift.formula(`${col}${countRow}`, `COUNTIF(${col}${FIRST_DATA_ROW}:${col}${LAST_DATA_ROW},"${code}")`, { style: sNormalBoldCenter });
@@ -2398,7 +2399,10 @@ let PTO_DEADLINE = null;
 // 日勤のみでブース担当を持たない人に使う）。科ではないので担当外の
 // 赤い警告の対象にもならない。
 const NON_DEPT_CODES = ['日','救','准','深','公','有'];
-const NON_DEPT_COLORS = { '日':'#C6E0B4','救':'#EF9A9A','准':'#F4B183','深':'#9DC3E6','公':'#D9D9D9','有':'#FFF2CC','代':'#CFD8DC' };
+const NON_DEPT_COLORS = { '日':'#C6E0B4','救':'#EF9A9A','准':'#F4B183','深':'#9DC3E6','公':'#D9D9D9','有':'#FFF2CC','代':'#CFD8DC','当':'#B4A7D6','明':'#E2DCF0' };
+// 管理当直(当)・当直明け(明)は師長、師長代行(代)は副師長だけが使う記号。
+// 科の記号として登録されないよう予約もしている。
+const MANAGER_CODES = { '師長': ['当', '明'] };
 function deptCodes() { return DEPARTMENTS.map(d => d.code); }
 function codeColors() {
   const m = Object.assign({}, NON_DEPT_COLORS);
@@ -2985,7 +2989,10 @@ function partTimerCodes(staff) {
   if (staff.depTime) {
     return deptCodes().map(c => `${c}(${staff.depTime})`).concat(['日', '救', '公', '有']);
   }
-  return deptCodes().concat(NON_DEPT_CODES);
+  let codes = deptCodes().concat(NON_DEPT_CODES);
+  if (MANAGER_CODES[staff.cat]) codes = codes.concat(MANAGER_CODES[staff.cat]);
+  if (staff.cat && staff.cat.includes('副師長')) codes = codes.concat(['代']);
+  return codes;
 }
 
 function weekPatternOptions(staff, selected) {
@@ -3184,6 +3191,33 @@ function renderMain() {
   };
 }
 
+// 管理当直(当)を入れたら翌日は必ず当直明け(明)になる。逆に当直を取り
+// 消したら、その当直のために置かれた翌日の「明」も一緒に片づける。
+// 月末に当直を入れた場合、翌日は翌月なのでこのツールでは扱えない
+// （その旨をトーストで知らせる）。
+function applyOnCallPairing(staff, day, previous, next) {
+  if (previous === next) return;
+  const [year, month] = getYearMonth();
+  const nDays = daysInMonth(year, month);
+  const tomorrow = day + 1;
+
+  if (previous === '当' && shifts[staff.no][tomorrow] === '明' && !isLocked(staff.no, tomorrow)) {
+    delete shifts[staff.no][tomorrow];
+  }
+  if (next === '当') {
+    if (tomorrow > nDays) {
+      showToast(`${day}日は月末のため、翌日の「明」は翌月のシフトで入力してください`, 'error');
+      return;
+    }
+    if (isLocked(staff.no, tomorrow)) {
+      showToast(`翌${tomorrow}日は🔒固定されているため「明」を入れられませんでした`, 'error');
+      return;
+    }
+    shifts[staff.no][tomorrow] = '明';
+    showToast(`${day}日を管理当直にし、翌${tomorrow}日を「明」にしました`);
+  }
+}
+
 function openPicker(staff, day) {
   const overlay = document.getElementById('pickerOverlay');
   const grid = document.getElementById('pickerGrid');
@@ -3197,7 +3231,6 @@ function openPicker(staff, day) {
   const capable = capableCodes(staff);
   const isViceManager = staff.cat && staff.cat.includes('副師長');
   let codes = partTimerCodes(staff);
-  if (!staff.depTime && isViceManager) codes = codes.concat(['代']);
 
   function renderShiftGrid() {
     grid.innerHTML = '';
@@ -3209,7 +3242,9 @@ function openPicker(staff, day) {
       opt.style.background = (codeColors()[base] || '#fff') + '55';
       opt.textContent = code;
       opt.onclick = () => {
+        const previous = shifts[staff.no][day];
         shifts[staff.no][day] = code;
+        applyOnCallPairing(staff, day, previous, code);
         overlay.classList.remove('open');
         renderStaffList();
         renderMain();
@@ -3226,7 +3261,9 @@ function openPicker(staff, day) {
       clearBtn.style.display = '';
       clearBtn.textContent = '空欄にする';
       clearBtn.onclick = () => {
+        const previous = shifts[staff.no][day];
         delete shifts[staff.no][day];
+        applyOnCallPairing(staff, day, previous, '');
         overlay.classList.remove('open');
         renderStaffList();
         renderMain();
@@ -3762,7 +3799,7 @@ function saveDeptEdit() {
 
   if (!code || code.length !== 1) { showToast('記号は1文字で入力してください', 'error'); return; }
   if (!name) { showToast('科の名前を入力してください', 'error'); return; }
-  if (NON_DEPT_CODES.concat(['代']).includes(code)) {
+  if (NON_DEPT_CODES.concat(['代', '当', '明']).includes(code)) {
     showToast(`「${code}」は救急・夜勤・公休などで使用済みのため使えません`, 'error');
     return;
   }
@@ -4112,13 +4149,23 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
     //
     // このパスを夜勤・各科の割り当てより前に置いているのは、代行に入る
     // べき副師長が先に夜勤やブースで埋まってしまうのを防ぐため。
-    if (!isWeekendOrHoliday) {
-      const kancho = STAFF.find(s => s.cat === '師長');
-      if (kancho && !shifts[kancho.no][d] && !isLocked(kancho.no, d)) {
+    const kancho = STAFF.find(s => s.cat === '師長');
+    if (kancho) {
+      // 管理当直(当)の翌日は必ず明け(明)。土日祝であっても当直明けは
+      // 当直明けなので、曜日に関係なく先に埋める。
+      const kanchoPrev = d > 1 ? shifts[kancho.no][d - 1] : '';
+      if (kanchoPrev === '当' && !shifts[kancho.no][d] && !isLocked(kancho.no, d)) {
+        shifts[kancho.no][d] = '明';
+        filledCount++;
+      } else if (!isWeekendOrHoliday && !shifts[kancho.no][d] && !isLocked(kancho.no, d)) {
         shifts[kancho.no][d] = '日';
         filledCount++;
       }
-      const kanchoOnDuty = kancho && shifts[kancho.no][d] === '日';
+    }
+    if (!isWeekendOrHoliday) {
+      // 当直当日(当)は日中も師長がいるので代行は不要。当直明け(明)は
+      // 日勤に入らないため、休みの日と同じく代行を立てる。
+      const kanchoOnDuty = kancho && ['日', '当'].includes(shifts[kancho.no][d]);
       const actingAlready = STAFF.some(s => shifts[s.no][d] === '代');
       if (kancho && !kanchoOnDuty && !actingAlready) {
         const deputies = STAFF.filter(s =>
