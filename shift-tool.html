@@ -840,6 +840,88 @@
   }
   .dashboard-card.deadline-warn { background: #fdf3f2; border-color: #e7b3ae; }
   .dashboard-card.deadline-warn .num { color: #a83232; }
+  .lock-badge {
+    position: absolute;
+    bottom: 3px;
+    right: 5px;
+    font-size: 10px;
+  }
+  .day-cell.locked { border-color: #8a6d1f; box-shadow: 0 0 0 1px #8a6d1f inset; }
+  .grid-table td.shift-cell.locked-cell { box-shadow: 0 0 0 2px #8a6d1f inset; }
+  .absence-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 320px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+  }
+  .absence-cand {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+  }
+  .absence-cand:hover { border-color: var(--navy); background: #f2f7fb; }
+  .absence-cand .cand-name { font-size: 13px; font-weight: 700; }
+  .absence-cand .cand-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .absence-cand .cand-score {
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #dcedc8;
+    color: #33691e;
+    white-space: nowrap;
+  }
+  .absence-cand .cand-score.sub { background: #fdf0c8; color: #8a6d1f; }
+  .week-pattern-box {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+    padding: 14px 16px;
+    margin-bottom: 18px;
+  }
+  .week-pattern-box h3 {
+    font-size: 13px;
+    margin: 0 0 4px;
+  }
+  .week-pattern-box .wp-hint {
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+  .week-pattern-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .week-pattern-grid label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    text-align: center;
+    display: block;
+    margin-bottom: 3px;
+  }
+  .week-pattern-grid label.sun { color: #c0392b; }
+  .week-pattern-grid label.sat { color: #2566a8; }
+  .week-pattern-grid select {
+    width: 100%;
+    padding: 5px 2px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: inherit;
+  }
 </style>
 </head>
 <body>
@@ -896,6 +978,8 @@
       <button class="picker-clear" id="ptoClearBtn">休み希望を取り消す</button>
     </div>
     <button class="picker-clear" id="pickerClear">空欄にする</button>
+    <button class="picker-clear" id="pickerLockBtn">🔒 この日を固定する</button>
+    <button class="picker-clear" id="pickerAbsenceBtn">🔁 欠勤 → 代わりの人を探す</button>
     <button class="picker-close" id="pickerCancel">キャンセル</button>
   </div>
 </div>
@@ -974,6 +1058,15 @@
     </div>
     <button class="btn primary" id="deptSaveBtn" style="width:100%; margin-top:10px;">保存する</button>
     <button class="picker-close" id="deptEditCancel">キャンセル</button>
+  </div>
+</div>
+
+<div class="picker-overlay" id="absenceOverlay">
+  <div class="picker-box" style="width:420px;">
+    <h3 id="absenceTitle">代わりの人を探す</h3>
+    <div class="picker-sub" id="absenceSub"></div>
+    <div class="absence-list" id="absenceList"></div>
+    <button class="picker-close" id="absenceCancel">キャンセル</button>
   </div>
 </div>
 
@@ -2308,10 +2401,19 @@ let swapMode = false;
 let swapSelection = null; // { staffNo, day } | null
 // shifts[staffNo] = { 1: '内(13)', 2: '公', ... }
 // shifts.__pto[staffNo] = { 5: true, 10: true, ... }  (PTO request days)
+// shifts.__locked[staffNo] = { 5: true, ... }  (ZEST風の「職員ロック・日時固定」。
+//   ロックした日は曜日パターンの一括展開・自動生成・欠勤振り替えのいずれでも
+//   上書きされない。管理者が「この人のこの日は絶対に動かさない」と決めた枠)
 const shifts = {};
 STAFF.forEach(s => shifts[s.no] = {});
 shifts.__pto = {};
 STAFF.forEach(s => shifts.__pto[s.no] = {});
+shifts.__locked = {};
+STAFF.forEach(s => shifts.__locked[s.no] = {});
+
+function isLocked(staffNo, day) {
+  return !!(shifts.__locked && shifts.__locked[staffNo] && shifts.__locked[staffNo][day]);
+}
 
 // ============================================================
 // 自動保存: このツールはサーバーを持たないため、入力内容はブラウザの
@@ -2375,6 +2477,12 @@ function loadState() {
       Object.keys(shifts).forEach(k => delete shifts[k]);
       Object.assign(shifts, saved.shifts);
       if (!shifts.__pto) shifts.__pto = {};
+      if (!shifts.__locked) shifts.__locked = {};
+      STAFF.forEach(s => {
+        if (!shifts[s.no]) shifts[s.no] = {};
+        if (!shifts.__pto[s.no]) shifts.__pto[s.no] = {};
+        if (!shifts.__locked[s.no]) shifts.__locked[s.no] = {};
+      });
     }
     if (saved.year) document.getElementById('yearInput').value = saved.year;
     if (saved.month) document.getElementById('monthInput').value = saved.month;
@@ -2716,7 +2824,8 @@ function renderGridView() {
       const isOutOfScope = base && depts.includes(base) && !capable.includes(base);
       const bg = val ? (colors[base] || '#fff') : '#fff';
       const isSelected = swapMode && swapSelection && swapSelection.staffNo === staff.no && swapSelection.day === d;
-      cells += `<td class="shift-cell${isOffDay(d) ? ' weekend-col' : ''}${isOutOfScope ? ' warn-cell' : ''}${isSelected ? ' swap-selected' : ''}" data-staff="${staff.no}" data-day="${d}" style="${val ? `background:${bg}55;` : ''}">${esc(val)}${isOutOfScope ? '△' : ''}</td>`;
+      const lockedCell = isLocked(staff.no, d);
+      cells += `<td class="shift-cell${isOffDay(d) ? ' weekend-col' : ''}${isOutOfScope ? ' warn-cell' : ''}${isSelected ? ' swap-selected' : ''}${lockedCell ? ' locked-cell' : ''}" data-staff="${staff.no}" data-day="${d}"${lockedCell ? ' title="固定（一括操作で上書きされません）"' : ''} style="${val ? `background:${bg}55;` : ''}">${esc(val)}${isOutOfScope ? '△' : ''}</td>`;
     }
     bodyRows += `<tr><td class="name-col">${esc(staff.name)}</td><td class="cat-col">${esc(staff.cat)}</td>${cells}</tr>`;
   });
@@ -2791,6 +2900,10 @@ function renderGridView() {
 }
 
 function handleSwapClick(staffNo, day) {
+  if (isLocked(staffNo, day)) {
+    showToast('このセルは🔒固定されているため交換できません（固定を解除してください）', 'error');
+    return;
+  }
   if (!swapSelection) {
     swapSelection = { staffNo, day };
     renderMain();
@@ -2820,6 +2933,94 @@ function handleSwapClick(staffNo, day) {
   renderStaffList();
   renderMain();
   showToast(`${staffA.name}さんの${a.day}日と${staffB.name}さんの${b.day}日のシフトを交換しました`);
+}
+
+// ============================================================
+// ZEST風「スマートシフト作成」: スタッフごとに「月は内視鏡、火は化学
+// 療法室…」という週単位の基本パターンを登録しておき、それを対象月の
+// 全日に一括展開する。月ごとに始まる曜日や日数が変わっても曜日基準で
+// 割り当てるため自動的にズレが補正される。
+// 展開時に守るもの（＝上書きしないもの）:
+//   ・休み希望の日   ・固定（ロック）した日
+// 「未入力の日だけ埋める」を選べば、既存の入力も一切壊さない。
+// ============================================================
+function weekPatternOptions(staff, selected) {
+  const codes = staff.depTime
+    ? deptCodes().map(c => `${c}(${staff.depTime})`).concat(['公', '有'])
+    : deptCodes().concat(NON_DEPT_CODES);
+  const none = `<option value=""${!selected ? ' selected' : ''}>―</option>`;
+  return none + codes.map(c => `<option value="${c}"${c === selected ? ' selected' : ''}>${c}</option>`).join('');
+}
+
+function weekPatternHtml(staff) {
+  const pattern = staff.weekPattern || {};
+  return `
+    <div class="week-pattern-box">
+      <h3>🗓 曜日パターン（スマートシフト作成）</h3>
+      <div class="wp-hint">
+        「毎週この曜日はこの科」という基本の勤務をここに登録し、下のボタンで対象月にまとめて反映できます。
+        休み希望の日と🔒固定した日は上書きされません。
+      </div>
+      <div class="week-pattern-grid">
+        ${WEEKDAYS_JP.map((w, i) => `
+          <div>
+            <label class="${i === 0 ? 'sun' : i === 6 ? 'sat' : ''}">${w}</label>
+            <select data-wp="${i}">${weekPatternOptions(staff, pattern[i] || '')}</select>
+          </div>
+        `).join('')}
+      </div>
+      <div class="toolbar" style="margin-top:0;">
+        <button class="btn" id="wpApplyEmptyBtn">未入力の日だけ反映</button>
+        <button class="btn primary" id="wpApplyAllBtn">この月にまとめて反映</button>
+        <button class="btn" id="wpClearBtn">パターンを消す</button>
+      </div>
+    </div>
+  `;
+}
+
+function wireWeekPattern(staff) {
+  const box = document.querySelector('.week-pattern-box');
+  if (!box) return;
+
+  function readPattern() {
+    const pattern = {};
+    box.querySelectorAll('select[data-wp]').forEach(sel => {
+      if (sel.value) pattern[parseInt(sel.dataset.wp, 10)] = sel.value;
+    });
+    return pattern;
+  }
+
+  box.querySelectorAll('select[data-wp]').forEach(sel => {
+    sel.onchange = () => { staff.weekPattern = readPattern(); scheduleSave(); };
+  });
+
+  function apply(onlyEmpty) {
+    const pattern = readPattern();
+    staff.weekPattern = pattern;
+    if (!Object.keys(pattern).length) { showToast('曜日パターンが設定されていません', 'error'); return; }
+    const [year, month] = getYearMonth();
+    const nDays = daysInMonth(year, month);
+    let applied = 0, skipped = 0;
+    for (let d = 1; d <= nDays; d++) {
+      const code = pattern[new Date(year, month - 1, d).getDay()];
+      if (!code) continue;
+      if (isLocked(staff.no, d) || (shifts.__pto[staff.no] && shifts.__pto[staff.no][d])) { skipped++; continue; }
+      if (onlyEmpty && shifts[staff.no][d]) continue;
+      shifts[staff.no][d] = code;
+      applied++;
+    }
+    renderStaffList();
+    renderMain();
+    showToast(`${staff.name}さんに曜日パターンを${applied}日分反映しました${skipped ? `（休み希望・固定の${skipped}日は変更なし）` : ''}`);
+  }
+
+  document.getElementById('wpApplyAllBtn').onclick = () => apply(false);
+  document.getElementById('wpApplyEmptyBtn').onclick = () => apply(true);
+  document.getElementById('wpClearBtn').onclick = () => {
+    staff.weekPattern = {};
+    renderMain();
+    showToast('曜日パターンを消しました（入力済みのシフトはそのままです）');
+  };
 }
 
 function renderMain() {
@@ -2871,6 +3072,7 @@ function renderMain() {
       <div class="summary-card"><div class="num">${counts.有給}</div><div class="lbl">有給</div></div>
       <div class="summary-card" style="${ptoCount > 5 ? 'background:#FFC7CE;' : ''}"><div class="num">${ptoCount}</div><div class="lbl">休み希望(月5まで)</div></div>
     </div>
+    ${weekPatternHtml(staff)}
     <div class="weekday-header">
       ${WEEKDAYS_JP.map((w, i) => `<div class="${i === 0 ? 'sun' : i === 6 ? 'sat' : ''}">${w}</div>`).join('')}
     </div>
@@ -2900,11 +3102,12 @@ function renderMain() {
     const eventStyle = dayEvents.length ? `border-top: 3px solid ${dayEvents[0].color};` : '';
     const eventTitleAttr = dayEvents.length ? ` title="${esc(dayEvents.map(e => e.title).join('・'))}"` : '';
     html += `
-      <div class="day-cell${isWeekendOrHoliday ? ' weekend' : ''}${isOutOfScope ? ' has-warn' : ''}" data-day="${d}" style="${val ? `background:${bg}33;` : ''}${eventStyle}" ${isHoliday ? `title="${esc(hName)}"` : ''}>
+      <div class="day-cell${isWeekendOrHoliday ? ' weekend' : ''}${isOutOfScope ? ' has-warn' : ''}${isLocked(staff.no, d) ? ' locked' : ''}" data-day="${d}" style="${val ? `background:${bg}33;` : ''}${eventStyle}" ${isHoliday ? `title="${esc(hName)}"` : ''}>
         ${isOutOfScope ? '<span class="warn-icon">△</span>' : ''}
         ${isPto ? '<span class="pto-badge">希望休</span>' : ''}
         <span class="d-num">${d}</span>${isHoliday ? `<span class="holiday-dot" title="${esc(hName)}"></span>` : ''}
         <div class="d-val">${val}</div>
+        ${isLocked(staff.no, d) ? '<span class="lock-badge" title="固定（一括操作で上書きされません）">🔒</span>' : ''}
         ${dayEvents.length ? `<div class="d-event"${eventTitleAttr}>📌 ${esc(dayEvents.map(e => e.title).join('・'))}</div>` : ''}
       </div>
     `;
@@ -2922,6 +3125,7 @@ function renderMain() {
   `;
   main.innerHTML = html;
   wireViewToggle();
+  wireWeekPattern(staff);
 
   main.querySelectorAll('.day-cell[data-day]').forEach(cell => {
     cell.onclick = () => openPicker(staff, parseInt(cell.dataset.day));
@@ -2931,6 +3135,7 @@ function renderMain() {
     if (confirm(`${staff.name}さんの入力内容（シフトと休み希望）をすべて削除します。よろしいですか？`)) {
       shifts[staff.no] = {};
       shifts.__pto[staff.no] = {};
+      shifts.__locked[staff.no] = {};
       renderStaffList();
       renderMain();
     }
@@ -3014,9 +3219,115 @@ function openPicker(staff, day) {
     renderStaffList();
     renderMain();
   };
+
+  const lockBtn = document.getElementById('pickerLockBtn');
+  const locked = isLocked(staff.no, day);
+  lockBtn.textContent = locked ? '🔓 この日の固定を解除する' : '🔒 この日を固定する';
+  lockBtn.onclick = () => {
+    if (locked) delete shifts.__locked[staff.no][day];
+    else shifts.__locked[staff.no][day] = true;
+    overlay.classList.remove('open');
+    renderStaffList();
+    renderMain();
+    showToast(locked ? `${staff.name}さんの${day}日の固定を解除しました` : `${staff.name}さんの${day}日を固定しました（一括操作で上書きされません）`);
+  };
+
+  const absenceBtn = document.getElementById('pickerAbsenceBtn');
+  const currentVal = shifts[staff.no][day];
+  absenceBtn.style.display = currentVal ? '' : 'none';
+  absenceBtn.onclick = () => {
+    overlay.classList.remove('open');
+    openAbsenceReplacement(staff, day);
+  };
+
   document.getElementById('pickerCancel').onclick = () => overlay.classList.remove('open');
 
   overlay.classList.add('open');
+}
+
+// ============================================================
+// ZEST風「急な欠勤の振り替え」: ある人がその日に入れなくなったとき、
+// 代われるスタッフを自動で探して候補として出す。候補を選ぶと、その人に
+// シフトを移し、欠勤した人はその日を「公」にする。
+// 候補の条件（満たさない人は候補に出さない）:
+//   ・その科を担当できる（主担当◎ / サブ担当○）※夜勤・救急は担当不問
+//   ・その日が空いている（未入力 or 公）かつ休み希望を出していない
+//   ・その日が固定（ロック）されていない
+//   ・前日が夜勤（准/深）でない（夜勤明けの勤務を作らない）
+//   ・パートは夜勤・救急には入れない
+// 表示順は「その月の出勤日数が少ない人」優先＝負担が軽い人から。
+// ============================================================
+let absenceContext = null; // { staffNo, day }
+
+function openAbsenceReplacement(staff, day) {
+  absenceContext = { staffNo: staff.no, day };
+  const [year, month] = getYearMonth();
+  const nDays = daysInMonth(year, month);
+  const val = shifts[staff.no][day];
+  const base = val ? val[0] : '';
+  const isNightOrEmergency = ['准', '深', '救'].includes(val);
+
+  document.getElementById('absenceTitle').textContent = `${staff.name} さんの代わりを探す`;
+  document.getElementById('absenceSub').textContent = `${month}月${day}日（${WEEKDAYS_JP[new Date(year, month - 1, day).getDay()]}）の「${val}」を代われる人`;
+
+  const candidates = STAFF.filter(s => {
+    if (s.no === staff.no) return false;
+    if (isLocked(s.no, day)) return false;
+    if (shifts.__pto[s.no] && shifts.__pto[s.no][day]) return false;
+    const theirVal = shifts[s.no][day];
+    if (theirVal && theirVal !== '公') return false; // already working that day
+    const prevVal = day > 1 ? shifts[s.no][day - 1] : '';
+    if (prevVal === '准' || prevVal === '深') return false; // post-night rest
+    if (isNightOrEmergency) {
+      if (s.depTime) return false; // part-timers never take night/emergency
+      if (s.nightType === 'none') return false;
+      if (val === '准' && s.nightType === 'late_only') return false;
+      if (val === '深' && s.nightType === 'evening_only') return false;
+      return true;
+    }
+    return capableCodes(s).includes(base);
+  }).map(s => {
+    let workDays = 0;
+    for (let d = 1; d <= nDays; d++) {
+      const v = shifts[s.no][d];
+      if (v && v !== '公' && v !== '有') workDays++;
+    }
+    const isMain = s.main.includes(`(${base})`);
+    return { staff: s, workDays, isMain };
+  }).sort((a, b) => {
+    if (a.isMain !== b.isMain) return a.isMain ? -1 : 1; // 主担当を優先
+    return a.workDays - b.workDays;                      // 次に出勤が少ない人
+  });
+
+  const list = document.getElementById('absenceList');
+  list.innerHTML = '';
+  if (!candidates.length) {
+    list.innerHTML = '<div class="dashboard-empty">条件を満たす代わりの人が見つかりませんでした。担当設定や休み希望を見直してください。</div>';
+  } else {
+    candidates.forEach(({ staff: cand, workDays, isMain }) => {
+      const btn = document.createElement('button');
+      btn.className = 'absence-cand';
+      btn.innerHTML = `
+        <span>
+          <div class="cand-name">${esc(cand.name)}</div>
+          <div class="cand-sub">${esc(cand.cat)}${cand.depTime ? ' ・' + cand.depTime + '時まで' : ''} ・今月${workDays}日勤務</div>
+        </span>
+        <span class="cand-score${isMain ? '' : ' sub'}">${isNightOrEmergency ? '夜勤可' : isMain ? '◎主担当' : '○サブ担当'}</span>
+      `;
+      btn.onclick = () => {
+        const moved = shifts[staff.no][day];
+        shifts[cand.no][day] = cand.depTime && deptCodes().includes(base) ? `${base}(${cand.depTime})` : moved;
+        shifts[staff.no][day] = '公';
+        document.getElementById('absenceOverlay').classList.remove('open');
+        renderStaffList();
+        renderMain();
+        showToast(`${day}日の「${moved}」を ${staff.name}さん → ${cand.name}さん に振り替えました`);
+      };
+      list.appendChild(btn);
+    });
+  }
+
+  document.getElementById('absenceOverlay').classList.add('open');
 }
 
 function showToast(msg, type) {
@@ -3084,7 +3395,7 @@ async function loadExistingFile(file) {
     const nDays = daysInMonth(year, month);
 
     // reset state
-    STAFF.forEach(s => { shifts[s.no] = {}; shifts.__pto[s.no] = {}; });
+    STAFF.forEach(s => { shifts[s.no] = {}; shifts.__pto[s.no] = {}; shifts.__locked[s.no] = {}; });
 
     // ②シフト表 data rows start at row 5, columns C(3) onward = day 1..nDays
     STAFF.forEach((staff, i) => {
@@ -3235,6 +3546,7 @@ function saveStaffEdit() {
     STAFF.push({ no: newNo, name, cat, main, sub1, sub2, depTime, nightType, committees });
     shifts[newNo] = {};
     shifts.__pto[newNo] = {};
+    shifts.__locked[newNo] = {};
   }
   closeStaffEdit();
   saveState();
@@ -3248,6 +3560,7 @@ function deleteStaff(staffNo) {
   STAFF = STAFF.filter(s => s.no !== staffNo);
   delete shifts[staffNo];
   delete shifts.__pto[staffNo];
+  delete shifts.__locked[staffNo];
   if (currentStaffIdx === staffNo) currentStaffIdx = null;
   saveState();
   renderSidebarStaffManagement();
@@ -3639,6 +3952,10 @@ document.getElementById('deptSaveBtn').onclick = saveDeptEdit;
 document.getElementById('deptEditOverlay').addEventListener('click', (e) => {
   if (e.target.id === 'deptEditOverlay') closeDeptEdit();
 });
+document.getElementById('absenceCancel').onclick = () => document.getElementById('absenceOverlay').classList.remove('open');
+document.getElementById('absenceOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'absenceOverlay') e.target.classList.remove('open');
+});
 document.getElementById('committeeEditCancel').onclick = closeCommitteeEdit;
 document.getElementById('committeeSaveBtn').onclick = saveCommitteeEdit;
 document.getElementById('committeeEditOverlay').addEventListener('click', (e) => {
@@ -3758,6 +4075,7 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
         if (needEvening > 0) {
           let setCandidates = STAFF.filter(s =>
             !shifts[s.no][d] && !shifts[s.no][d + 1] && !s.depTime &&
+            !isLocked(s.no, d) && !isLocked(s.no, d + 1) &&
             s.nightType === 'set_required' &&
             state[s.no].workStreak < 4 && state[s.no].nightStreak === 0
           );
@@ -3784,7 +4102,7 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
           if (s.nightType === 'late_only') return code === '深';
           return true; // 'free' or unset
         };
-        const baseEligible = s => !shifts[s.no][d] && !s.depTime && state[s.no].workStreak < 4 && nightTypeAllows(s);
+        const baseEligible = s => !shifts[s.no][d] && !isLocked(s.no, d) && !s.depTime && state[s.no].workStreak < 4 && nightTypeAllows(s);
         const nightSort = (a, b) => {
           const nightDiff = state[a.no].nightCount - state[b.no].nightCount;
           if (nightDiff !== 0) return nightDiff;
@@ -3834,6 +4152,7 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
         // Part-timers ARE eligible for regular departments (only night/救急 excluded).
         let candidates = unfilled.filter(s => {
           if (shifts[s.no][d]) return false; // got assigned earlier in this same day's loop
+          if (isLocked(s.no, d)) return false; // 固定した枠は自動生成でも触らない
           if (state[s.no].nightStreak > 0) return false; // resting the day after any night shift
           if (state[s.no].workStreak >= 4) return false;
           const capable = capableCodes(s);
@@ -3863,7 +4182,7 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
     // Anyone still unfilled today becomes 公 (safe default; never violates
     // the 4-day streak or night-rest rules since 公 is rest).
     STAFF.forEach(s => {
-      if (!shifts[s.no][d]) {
+      if (!shifts[s.no][d] && !isLocked(s.no, d)) {
         shifts[s.no][d] = '公';
         filledCount++;
       }
