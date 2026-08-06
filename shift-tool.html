@@ -1039,6 +1039,14 @@
       </select>
     </div>
     <div class="form-row">
+      <label>有給の年間付与日数</label>
+      <input type="number" id="editPaidLeaveGranted" min="0" value="20">
+    </div>
+    <div class="form-row">
+      <label>今月より前に使った有給（日）</label>
+      <input type="number" id="editPaidLeaveUsedBefore" min="0" value="0">
+    </div>
+    <div class="form-row">
       <label>所属委員会（複数選択可）</label>
       <div class="committee-checks" id="editCommittees"></div>
     </div>
@@ -1606,6 +1614,7 @@ function buildFullWorkbook(STAFF, shifts, year, month, CODE_COLORS, DEPARTMENTS,
   const reg = new StyleRegistry();
   const dxfs = [];
   const nDays = lastDayOfMonth(year, month);
+  const offTargetForExport = offDayCountOfMonth(year, month); // 公休の目標日数=その月の土日祝
   const FIRST_DAY_COL_NUM = 3; // C
   const dayColLetters = [];
   for (let d = 0; d < nDays; d++) dayColLetters.push(colLetterFromIndex(FIRST_DAY_COL_NUM + d));
@@ -1678,6 +1687,8 @@ function buildFullWorkbook(STAFF, shifts, year, month, CODE_COLORS, DEPARTMENTS,
       '・最大連続出勤が5日以上 → ⚠連続出勤過多（赤）※師長は平日日勤のため対象外',
       '・夜勤の翌日に出勤 → ⚠夜勤明け勤務（赤）',
       '・休み希望が月6回以上 → ⚠休み希望超過（赤）',
+      '・有給が年間の残日数を超えた → ⚠有給超過（赤）',
+      '・公休がその月の土日祝の日数と違う → ⚠公休数ちがい（黄）',
       '・夜勤合計が他の常勤者平均より3回以上多い/少ない → ⚠偏りあり（黄）',
     ]],
     ['⑥ ⑧委員会一覧・⑨予定シートについて', [
@@ -1946,10 +1957,11 @@ function buildFullWorkbook(STAFF, shifts, year, month, CODE_COLORS, DEPARTMENTS,
   NB.set('A2', '准夜=准 / 深夜=深 を対象。最大連続夜勤・最終夜勤からの間隔・平均との差で偏りを確認できます。', { style: sSubtitle });
   NB.merge('A2:L2');
   const nbHeaders = ['氏名', '区分', '准夜回数', '深夜回数', '夜勤合計', '最大連続夜勤(日)',
-    '最終夜勤からの間隔(日)', '月平均との差', '最大連続出勤(日)', '夜勤明け勤務', '休み希望(月)', '判定'];
+    '最終夜勤からの間隔(日)', '月平均との差', '最大連続出勤(日)', '夜勤明け勤務', '休み希望(月)',
+    `公休(目標${offTargetForExport}日)`, '有給(今月)', '有給(年間残)', '判定'];
   nbHeaders.forEach((h, i) => NB.set(`${colLetter(i + 1)}4`, h, { style: reg.style({ bold: true, color: WHITE, fill: NAVY, halign: 'center', valign: 'center', wrap: true, size: 9 }) }));
   NB.rowHeight(4, 30);
-  const nbWidths = { A: 12, B: 10, C: 9, D: 9, E: 9, F: 13, G: 16, H: 12, I: 13, J: 11, K: 11, L: 10 };
+  const nbWidths = { A: 12, B: 10, C: 9, D: 9, E: 9, F: 13, G: 16, H: 12, I: 13, J: 11, K: 11, L: 13, M: 11, N: 12, O: 14 };
   Object.entries(nbWidths).forEach(([c, w]) => NB.colWidth(c, w));
 
   const SHIFT_REF = "'②シフト表(oplus風)'";
@@ -2014,13 +2026,30 @@ function buildFullWorkbook(STAFF, shifts, year, month, CODE_COLORS, DEPARTMENTS,
     // 師長は原則、平日日勤・土日祝休みのため月〜金の連続5日が通常の形に
     // なる。連続出勤の警告は夜勤を回るスタッフ向けの基準なので対象外にする。
     const isDayShiftOnly = staff.cat === '師長';
+    // 公休は土日祝の日数と一致させる。有給は年間付与から前月までの使用分と
+    // 今月分を引いた残りを出す（マイナスは使いすぎ）。
+    let offDays = 0, paidThisMonth = 0;
+    for (let d = 1; d <= nDays; d++) {
+      const v = shifts[staff.no][d];
+      if (v === '公') offDays++;
+      if (v === '有') paidThisMonth++;
+    }
+    const paidLeft = paidLeaveGranted(staff) - paidLeaveUsedBefore(staff) - paidThisMonth;
+    const filledAny = Object.values(shifts[staff.no]).filter(v => v).length > 0;
+    const offMismatch = filledAny && offDays !== offTargetForExport;
+    NB.set(`L${r}`, offDays, { style: offMismatch ? warnYelStyle : sNormalCenter });
+    NB.set(`M${r}`, paidThisMonth, { style: sNormalCenter });
+    NB.set(`N${r}`, paidLeft, { style: paidLeft < 0 ? warnRedStyle : sNormalCenter });
+
     let verdict = 'OK', style = okStyle;
     if (maxNightStreak >= 3) { verdict = '⚠連続夜勤'; style = warnRedStyle; }
     else if (maxWorkStreak >= 5 && !isDayShiftOnly) { verdict = '⚠連続出勤過多'; style = warnRedStyle; }
     else if (nightFollowedByWork > 0) { verdict = '⚠夜勤明け勤務'; style = warnRedStyle; }
+    else if (paidLeft < 0) { verdict = '⚠有給超過'; style = warnRedStyle; }
     else if (ptoDays > 5) { verdict = '⚠休み希望超過'; style = warnRedStyle; }
+    else if (offMismatch) { verdict = '⚠公休数ちがい'; style = warnYelStyle; }
     else if (total > 0 && typeof diff === 'number' && Math.abs(diff) >= 3) { verdict = '⚠偏りあり'; style = warnYelStyle; }
-    NB.set(`L${r}`, verdict, { style });
+    NB.set(`O${r}`, verdict, { style });
   });
   NB.freeze(4, 2);
   sheets.push(NB);
@@ -2418,6 +2447,38 @@ function codeColors() {
 }
 const WEEKDAYS_JP = ['日','月','火','水','木','金','土'];
 
+// 公務員の勤務なので、1ヶ月の公休の日数はその月の土日祝の日数と一致する。
+// 月ごとに土日祝の数が変わる（8〜11日程度）ため、固定値ではなく都度数える。
+function offDayCountOfMonth(year, month) {
+  const nDays = daysInMonth(year, month);
+  let n = 0;
+  for (let d = 1; d <= nDays; d++) {
+    const w = new Date(year, month - 1, d).getDay();
+    if (w === 0 || w === 6 || isJapaneseHoliday(year, month, d)) n++;
+  }
+  return n;
+}
+
+// 有給は年間20日が既定。スタッフごとに付与日数と「今月より前に使った
+// 日数」を持たせ、今月の有給と合算して残日数を出す。月をまたいで使う
+// ツールなので、前月までの実績は手入力で引き継ぐ。
+const DEFAULT_PAID_LEAVE = 20;
+function paidLeaveGranted(staff) {
+  return typeof staff.paidLeaveGranted === 'number' ? staff.paidLeaveGranted : DEFAULT_PAID_LEAVE;
+}
+function paidLeaveUsedBefore(staff) {
+  return typeof staff.paidLeaveUsedBefore === 'number' ? staff.paidLeaveUsedBefore : 0;
+}
+function paidLeaveThisMonth(staffNo, year, month) {
+  const nDays = daysInMonth(year, month);
+  let n = 0;
+  for (let d = 1; d <= nDays; d++) if (shifts[staffNo] && shifts[staffNo][d] === '有') n++;
+  return n;
+}
+function paidLeaveRemaining(staff, year, month) {
+  return paidLeaveGranted(staff) - paidLeaveUsedBefore(staff) - paidLeaveThisMonth(staff.no, year, month);
+}
+
 let currentStaffIdx = null;
 let currentMode = 'shift'; // 'shift' | 'staff' | 'dept'
 let mainView = 'person'; // 'person' | 'grid' (grid = 全員一覧表示)
@@ -2774,6 +2835,9 @@ function renderDashboard() {
   const incompleteStaff = [];
   let fullCount = 0;
   const ptoOverStaff = [];
+  const offMismatchStaff = [];
+  const leaveOverStaff = [];
+  const offTarget = offDayCountOfMonth(year, month);
   STAFF.forEach(s => {
     const filledCount = Object.values(shifts[s.no]).filter(v => v).length;
     const ptoCount = Object.keys(shifts.__pto[s.no] || {}).length;
@@ -2781,6 +2845,12 @@ function renderDashboard() {
     else if (filledCount < nDays) incompleteStaff.push(s);
     else fullCount++;
     if (ptoCount > 5) ptoOverStaff.push(s);
+    // 公休が土日祝の日数と合っているか（入力が終わっている人だけ見る）
+    if (filledCount > 0) {
+      const offCount = Object.values(shifts[s.no]).filter(v => v === '公').length;
+      if (offCount !== offTarget) offMismatchStaff.push({ staff: s, offCount });
+    }
+    if (paidLeaveRemaining(s, year, month) < 0) leaveOverStaff.push(s);
   });
 
   const chipList = (staffArr) => staffArr.length
@@ -2819,6 +2889,18 @@ function renderDashboard() {
       <h3>⚠ 休み希望が月6回以上のスタッフ</h3>
       <div class="hint">エクセル出力の⑤夜勤バランスシートで「休み希望超過」として警告される対象です。</div>
       ${chipList(ptoOverStaff)}
+    </div>
+    <div class="dashboard-section">
+      <h3>⚠ 公休の日数が${offTarget}日になっていないスタッフ</h3>
+      <div class="hint">公務員の勤務のため、公休はその月の土日祝の日数（今月は${offTarget}日）と同じにします。括弧内が現在の公休日数です。</div>
+      ${offMismatchStaff.length
+        ? `<div class="dashboard-chip-list">${offMismatchStaff.map(({ staff: s, offCount }) => `<button class="dashboard-chip chip-warn" data-jump="${s.no}">${esc(s.name)}（${offCount}日）</button>`).join('')}</div>`
+        : '<div class="dashboard-empty">該当するスタッフはいません。</div>'}
+    </div>
+    <div class="dashboard-section">
+      <h3>⚠ 有給の年間残日数を超えているスタッフ</h3>
+      <div class="hint">有給は年間${DEFAULT_PAID_LEAVE}日が既定です。付与日数と前月までの使用日数は「スタッフ」タブの編集画面で変更できます。</div>
+      ${chipList(leaveOverStaff)}
     </div>
   `;
   main.querySelectorAll('[data-jump]').forEach(btn => {
@@ -3108,6 +3190,8 @@ function renderMain() {
     else counts.出勤++;
   }
   const ptoCount = Object.keys(dayPto).length;
+  const offTarget = offDayCountOfMonth(year, month);
+  const leaveLeft = paidLeaveRemaining(staff, year, month);
 
   let html = `
     ${viewToggleHtml()}
@@ -3125,8 +3209,8 @@ function renderMain() {
     <div class="summary-row">
       <div class="summary-card"><div class="num">${counts.出勤}</div><div class="lbl">出勤</div></div>
       <div class="summary-card"><div class="num">${counts.夜勤}</div><div class="lbl">夜勤(准/深)</div></div>
-      <div class="summary-card"><div class="num">${counts.公休}</div><div class="lbl">公休</div></div>
-      <div class="summary-card"><div class="num">${counts.有給}</div><div class="lbl">有給</div></div>
+      <div class="summary-card" style="${counts.公休 === offTarget ? '' : 'background:#FFF2CC;'}"><div class="num">${counts.公休}/${offTarget}</div><div class="lbl">公休（目標=土日祝${offTarget}日）</div></div>
+      <div class="summary-card" style="${leaveLeft < 0 ? 'background:#FFC7CE;' : ''}"><div class="num">${counts.有給}</div><div class="lbl">有給（年間残り${leaveLeft}日）</div></div>
       <div class="summary-card" style="${ptoCount > 5 ? 'background:#FFC7CE;' : ''}"><div class="num">${ptoCount}</div><div class="lbl">休み希望(月5まで)</div></div>
     </div>
     ${weekPatternHtml(staff)}
@@ -3591,6 +3675,8 @@ function openStaffEdit(staffNo) {
   document.getElementById('editSub2').innerHTML = deptSelectOptions(staff ? staff.sub2 : null);
   document.getElementById('editDepTime').value = staff && staff.depTime ? String(staff.depTime) : '';
   document.getElementById('editNightType').value = staff && staff.nightType ? staff.nightType : 'free';
+  document.getElementById('editPaidLeaveGranted').value = staff ? paidLeaveGranted(staff) : DEFAULT_PAID_LEAVE;
+  document.getElementById('editPaidLeaveUsedBefore').value = staff ? paidLeaveUsedBefore(staff) : 0;
 
   const staffCommittees = staff ? (staff.committees || []) : [];
   const checksBox = document.getElementById('editCommittees');
@@ -3618,14 +3704,18 @@ function saveStaffEdit() {
   const depTimeRaw = document.getElementById('editDepTime').value;
   const depTime = depTimeRaw ? parseInt(depTimeRaw, 10) : null;
   const nightType = document.getElementById('editNightType').value;
+  const paidLeaveGrantedVal = Math.max(0, parseInt(document.getElementById('editPaidLeaveGranted').value, 10) || 0);
+  const paidLeaveUsedBeforeVal = Math.max(0, parseInt(document.getElementById('editPaidLeaveUsedBefore').value, 10) || 0);
   const committees = Array.from(document.querySelectorAll('#editCommittees input[type="checkbox"]:checked')).map(el => parseInt(el.value, 10));
 
   if (editingStaffNo !== null) {
     const staff = STAFF.find(s => s.no === editingStaffNo);
-    Object.assign(staff, { name, cat, main, sub1, sub2, depTime, nightType, committees });
+    Object.assign(staff, { name, cat, main, sub1, sub2, depTime, nightType, committees,
+      paidLeaveGranted: paidLeaveGrantedVal, paidLeaveUsedBefore: paidLeaveUsedBeforeVal });
   } else {
     const newNo = STAFF.length ? Math.max(...STAFF.map(s => s.no)) + 1 : 1;
-    STAFF.push({ no: newNo, name, cat, main, sub1, sub2, depTime, nightType, committees });
+    STAFF.push({ no: newNo, name, cat, main, sub1, sub2, depTime, nightType, committees,
+      paidLeaveGranted: paidLeaveGrantedVal, paidLeaveUsedBefore: paidLeaveUsedBeforeVal });
     shifts[newNo] = {};
     shifts.__pto[newNo] = {};
     shifts.__locked[newNo] = {};
