@@ -1035,6 +1035,7 @@
         <option value="late_only">深夜勤のみ可（准夜勤は入らない）</option>
         <option value="single_only">単発のみ可（准夜・深夜とも可、連続夜勤にはしない）</option>
         <option value="set_required">准夜・深夜とも可、必ずセット（准夜→深夜）で入れる</option>
+        <option value="set_ok">セットも単発も可（准夜→深夜のセットを優先、単発・2夜連続も可）</option>
       </select>
     </div>
     <div class="form-row">
@@ -2575,6 +2576,7 @@ const NIGHT_TYPE_LABELS = {
   late_only: '深夜のみ',
   single_only: '夜勤は単発のみ',
   set_required: '夜勤セット必須',
+  set_ok: '夜勤セット・単発とも可',
 };
 function nightTypeLabel(nightType) {
   return NIGHT_TYPE_LABELS[nightType] || '';
@@ -4249,11 +4251,18 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
         if (needEvening > 0) {
           let setCandidates = STAFF.filter(s =>
             !shifts[s.no][d] && !shifts[s.no][d + 1] && !s.depTime &&
+            s.cat !== '師長' &&
             !isLocked(s.no, d) && !isLocked(s.no, d + 1) &&
-            s.nightType === 'set_required' &&
+            ['set_required', 'set_ok'].includes(s.nightType) &&
             state[s.no].workStreak < 4 && state[s.no].nightStreak === 0
           );
-          setCandidates.sort((a, b) => state[a.no].nightCount - state[b.no].nightCount);
+          // セット必須の人を先に組む。その人たちはセットでしか夜勤に入れず、
+          // ここで漏れると夜勤に一度も入れないため。set_ok の人は単発でも
+          // 入れるので後回しでよい。
+          setCandidates.sort((a, b) => {
+            if (a.nightType !== b.nightType) return a.nightType === 'set_required' ? -1 : 1;
+            return state[a.no].nightCount - state[b.no].nightCount;
+          });
           for (let i = 0; i < setCandidates.length && needEvening > 0; i++) {
             shifts[setCandidates[i].no][d] = '准';
             shifts[setCandidates[i].no][d + 1] = '深';
@@ -4271,7 +4280,9 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
 
         const nightTypeAllows = s => {
           if (!isNightShiftCode) return true; // 救急 unaffected by night-type
-          if (s.nightType === 'none' || s.nightType === 'set_required') return false; // set_required handled in pass 0 only
+          // set_required はパス0のセット組みでしか入れない。set_ok は
+          // セットを優先しつつ、ここでの単発にも入れる。
+          if (s.nightType === 'none' || s.nightType === 'set_required') return false;
           if (s.nightType === 'evening_only') return code === '准';
           if (s.nightType === 'late_only') return code === '深';
           return true; // 'free' or unset
