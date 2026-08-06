@@ -4245,6 +4245,17 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
       const tomorrowReq = tomorrowIsWeekendOrHoliday
         ? NIGHT_REQUIREMENTS.weekendLate
         : (d + 1 <= nDays ? NIGHT_REQUIREMENTS.weekdayLate : 0);
+
+      // セット組みは2晩をまとめて渡すため、何も歯止めがないとセットに
+      // 入れる人ばかりに夜勤が積み上がり、単発しかできない人に夜勤が
+      // 回らなくなる。夜勤に入れる人全体の最小回数を見て、そこから離れ
+      // すぎている人はセットに入れない。
+      const nightEligible = STAFF.filter(s =>
+        !s.depTime && s.cat !== '師長' && s.nightType !== 'none');
+      const minNightCount = nightEligible.length
+        ? Math.min(...nightEligible.map(s => state[s.no].nightCount))
+        : 0;
+
       if (tomorrowReq > 0) {
         const alreadyEvening = STAFF.filter(s => shifts[s.no][d] === '准').length;
         let needEvening = todayReq['准'] - alreadyEvening;
@@ -4254,6 +4265,7 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
             s.cat !== '師長' &&
             !isLocked(s.no, d) && !isLocked(s.no, d + 1) &&
             ['set_required', 'set_ok'].includes(s.nightType) &&
+            state[s.no].nightCount <= minNightCount &&
             state[s.no].workStreak < 4 && state[s.no].nightStreak === 0
           );
           // セット必須の人を先に組む。その人たちはセットでしか夜勤に入れず、
