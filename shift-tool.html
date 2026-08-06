@@ -1033,6 +1033,7 @@
         <option value="none">夜勤不可（准夜・深夜とも入らない）</option>
         <option value="evening_only">准夜勤のみ可（深夜勤は入らない）</option>
         <option value="late_only">深夜勤のみ可（准夜勤は入らない）</option>
+        <option value="single_only">単発のみ可（准夜・深夜とも可、連続夜勤にはしない）</option>
         <option value="set_required">准夜・深夜とも可、必ずセット（准夜→深夜）で入れる</option>
       </select>
     </div>
@@ -2572,6 +2573,7 @@ const NIGHT_TYPE_LABELS = {
   none: '夜勤不可',
   evening_only: '准夜のみ',
   late_only: '深夜のみ',
+  single_only: '夜勤は単発のみ',
   set_required: '夜勤セット必須',
 };
 function nightTypeLabel(nightType) {
@@ -4303,8 +4305,10 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
         // someone's streak to a 2nd consecutive night (still capped at 2).
         // set_required staff are excluded here too -- their 2nd night must
         // come from pass 0's deliberate pairing, not an ad-hoc extension.
+        // single_only staff are excluded because their whole point is that a
+        // night shift never runs into the next night (単発のみ).
         if (need > 0 && isNightShiftCode) {
-          let tier2 = STAFF.filter(s => baseEligible(s) && state[s.no].nightStreak === 1);
+          let tier2 = STAFF.filter(s => baseEligible(s) && state[s.no].nightStreak === 1 && s.nightType !== 'single_only');
           tier2.sort(nightSort);
           for (let i = 0; i < tier2.length && need > 0; i++) {
             shifts[tier2[i].no][d] = code;
