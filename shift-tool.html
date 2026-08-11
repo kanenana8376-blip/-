@@ -252,19 +252,40 @@
   }
   .picker-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
   }
   .picker-opt {
     border: 1px solid var(--line);
     border-radius: 8px;
-    padding: 10px 4px;
+    padding: 8px 4px 6px;
     text-align: center;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 700;
     cursor: pointer;
     background: #fafafa;
+    line-height: 1.25;
   }
+  .picker-opt .opt-name {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .picker-group-label {
+    grid-column: 1 / -1;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px solid var(--line);
+  }
+  .picker-group-label:first-child { margin-top: 0; padding-top: 0; border-top: none; }
   .picker-opt:hover { border-color: var(--navy); }
   .picker-opt.out-of-scope::after {
     content: "△";
@@ -442,6 +463,82 @@
     color: var(--muted);
     line-height: 1.5;
     margin: 4px 0 10px;
+  }
+  .form-hint {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+  .legend-box {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+    padding: 12px 14px;
+    margin-bottom: 14px;
+  }
+  .legend-box summary {
+    cursor: pointer;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--navy);
+    list-style: none;
+  }
+  .legend-box summary::-webkit-details-marker { display: none; }
+  .legend-box summary::before { content: "▸ "; }
+  .legend-box[open] summary::before { content: "▾ "; }
+  .legend-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 3px 8px 3px 4px;
+    font-size: 11.5px;
+    background: #fff;
+  }
+  .legend-item .lg-code {
+    display: inline-block;
+    min-width: 22px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 13px;
+    border-radius: 4px;
+    padding: 1px 0;
+  }
+  .legend-note {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 8px;
+    line-height: 1.6;
+  }
+  .first-run {
+    border: 1px solid #b8cfe0;
+    background: #eef5fa;
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 18px;
+  }
+  .first-run h3 { margin: 0 0 4px; font-size: 14px; color: var(--navy); }
+  .first-run p { margin: 0 0 12px; font-size: 12px; color: var(--muted); }
+  .first-run ol { margin: 0; padding-left: 20px; font-size: 12.5px; line-height: 1.9; }
+  .first-run ol b { color: var(--navy); }
+  .howto-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fffbe9;
+    border: 1px solid #e6d9a8;
+    border-radius: 8px;
+    padding: 9px 13px;
+    font-size: 12.5px;
+    margin-bottom: 12px;
   }
   .night-req-divider {
     font-size: 10.5px;
@@ -896,10 +993,16 @@
     padding: 14px 16px;
     margin-bottom: 18px;
   }
-  .week-pattern-box h3 {
-    font-size: 13px;
-    margin: 0 0 4px;
+  .week-pattern-box summary {
+    cursor: pointer;
+    font-size: 12.5px;
+    color: var(--muted);
+    list-style: none;
   }
+  .week-pattern-box summary::-webkit-details-marker { display: none; }
+  .week-pattern-box summary::before { content: "▸ "; }
+  .week-pattern-box[open] summary::before { content: "▾ "; }
+  .week-pattern-box summary b { color: var(--ink); }
   .week-pattern-box .wp-hint {
     font-size: 11.5px;
     color: var(--muted);
@@ -1001,7 +1104,15 @@
     </div>
     <div class="form-row">
       <label>区分</label>
-      <input type="text" id="editCat" placeholder="例: 一般常勤 / パート週3">
+      <select id="editCat">
+        <option value="師長">師長</option>
+        <option value="副師長">副師長</option>
+        <option value="一般常勤">一般常勤</option>
+        <option value="パート週5">パート週5</option>
+        <option value="パート週4">パート週4</option>
+        <option value="パート週3">パート週3</option>
+      </select>
+      <div class="form-hint">区分によって使える記号が変わります（師長=当・明／副師長=代・直）。</div>
     </div>
     <div class="form-row">
       <label>主担当</label>
@@ -2439,6 +2550,19 @@ const NON_DEPT_COLORS = { '日':'#C6E0B4','救':'#EF9A9A','准':'#F4B183','深':
 //   副師長 … 師長代行(代)・管理日直(直)
 const MANAGER_CODES = { '師長': ['当', '明'], '副師長': ['代', '直'] };
 function isDeputy(staff) { return !!(staff.cat && staff.cat.includes('副師長')); }
+
+// 記号は1文字なので、初めて使う人には意味が分からない。入力画面と凡例で
+// 必ず正式名称を並べて出せるよう、ここで一元的に引けるようにしておく。
+const CODE_FULL_NAMES = {
+  '日': '日勤', '代': '師長代行', '当': '管理当直', '明': '当直明け', '直': '管理日直',
+  '救': '救急外来', '准': '准夜勤', '深': '深夜勤', '公': '公休', '有': '有給',
+};
+function codeFullName(code) {
+  const base = code ? code[0] : '';
+  if (CODE_FULL_NAMES[base]) return CODE_FULL_NAMES[base];
+  const dept = DEPARTMENTS.find(d => d.code === base);
+  return dept ? dept.name : '';
+}
 function deptCodes() { return DEPARTMENTS.map(d => d.code); }
 function codeColors() {
   const m = Object.assign({}, NON_DEPT_COLORS);
@@ -2449,6 +2573,12 @@ const WEEKDAYS_JP = ['日','月','火','水','木','金','土'];
 
 // 公務員の勤務なので、1ヶ月の公休の日数はその月の土日祝の日数と一致する。
 // 月ごとに土日祝の数が変わる（8〜11日程度）ため、固定値ではなく都度数える。
+// 何か1件でもシフトが入っているか。初回は「残りの日を…」という言い方が
+// 通じないため、ボタンの文言を切り替えるのに使う。
+function anyShiftEntered() {
+  return STAFF.some(s => shifts[s.no] && Object.values(shifts[s.no]).some(v => v));
+}
+
 function offDayCountOfMonth(year, month) {
   const nDays = daysInMonth(year, month);
   let n = 0;
@@ -2504,6 +2634,9 @@ function committeesOf(staff) {
 // 休み希望フラグ）をまるごと入れ替える。
 let swapMode = false;
 let swapSelection = null; // { staffNo, day } | null
+// 折りたたみパネルの開閉。renderMain() で作り直すたびに閉じてしまうと、
+// 開いて作業している最中に勝手にたたまれるため、状態を持っておく。
+const panelOpen = { legend: true, weekPattern: false };
 // shifts[staffNo] = { 1: '内(13)', 2: '公', ... }
 // shifts.__pto[staffNo] = { 5: true, 10: true, ... }  (PTO request days)
 // shifts.__locked[staffNo] = { 5: true, ... }  (ZEST風の「職員ロック・日時固定」。
@@ -2745,7 +2878,7 @@ function renderSidebarShift() {
   }
   shiftDiv.innerHTML = `
     <div class="sidebar-actions">
-      <button class="mgmt-add-btn" id="autoGenerateBtn" style="margin-bottom:0;">⚙ 残りの日を自動で埋める</button>
+      <button class="mgmt-add-btn" id="autoGenerateBtn" style="margin-bottom:0;">⚙ ${anyShiftEntered() ? '残りの日を自動で埋める' : '自動で勤務表をつくる'}</button>
       <button class="btn-export" id="sidebarExportBtn">⬇ 勤務表をExcelでダウンロード（全員）</button>
     </div>
     <h2>スタッフ一覧</h2>
@@ -2880,28 +3013,46 @@ function renderDashboard() {
       <div class="dashboard-card"><div class="num">${fullCount}</div><div class="lbl">全日入力済み</div></div>
       ${deadlineCard}
     </div>
-    <div class="dashboard-section">
-      <h3>まだ入力がないスタッフ</h3>
-      <div class="hint">クリックするとそのスタッフのシフト入力画面に移動します。</div>
-      ${chipList(zeroStaff)}
-    </div>
-    <div class="dashboard-section">
-      <h3>⚠ 休み希望が月6回以上のスタッフ</h3>
-      <div class="hint">エクセル出力の⑤夜勤バランスシートで「休み希望超過」として警告される対象です。</div>
-      ${chipList(ptoOverStaff)}
-    </div>
-    <div class="dashboard-section">
-      <h3>⚠ 公休の日数が${offTarget}日になっていないスタッフ</h3>
-      <div class="hint">公務員の勤務のため、公休はその月の土日祝の日数（今月は${offTarget}日）と同じにします。括弧内が現在の公休日数です。</div>
-      ${offMismatchStaff.length
-        ? `<div class="dashboard-chip-list">${offMismatchStaff.map(({ staff: s, offCount }) => `<button class="dashboard-chip chip-warn" data-jump="${s.no}">${esc(s.name)}（${offCount}日）</button>`).join('')}</div>`
-        : '<div class="dashboard-empty">該当するスタッフはいません。</div>'}
-    </div>
-    <div class="dashboard-section">
-      <h3>⚠ 有給の年間残日数を超えているスタッフ</h3>
-      <div class="hint">有給は年間${DEFAULT_PAID_LEAVE}日が既定です。付与日数と前月までの使用日数は「スタッフ」タブの編集画面で変更できます。</div>
-      ${chipList(leaveOverStaff)}
-    </div>
+    ${zeroStaff.length === STAFF.length ? `
+      <div class="first-run">
+        <h3>はじめに ― 3ステップで勤務表ができます</h3>
+        <p>まだ何も入力されていません。次の順で進めてください。</p>
+        <ol>
+          <li>上の<b>対象月</b>が合っているか確認します。</li>
+          <li>スタッフの<b>休み希望</b>を入れます。左の一覧から名前を選び、日付をクリックして「休み希望」タブで登録します。</li>
+          <li>左上の<b>「${zeroStaff.length === STAFF.length ? '自動で勤務表をつくる' : '残りの日を自動で埋める'}」</b>を押すと、残りの日が自動で埋まります。あとは気になるところだけ直してください。</li>
+        </ol>
+      </div>
+    ` : `
+      <div class="dashboard-section">
+        <h3>まだ入力がないスタッフ</h3>
+        <div class="hint">クリックするとそのスタッフのシフト入力画面に移動します。</div>
+        ${chipList(zeroStaff)}
+      </div>
+    `}
+    ${ptoOverStaff.length ? `
+      <div class="dashboard-section">
+        <h3>⚠ 休み希望が月6回以上のスタッフ</h3>
+        <div class="hint">エクセル出力の⑤夜勤バランスシートで「休み希望超過」として警告される対象です。</div>
+        ${chipList(ptoOverStaff)}
+      </div>` : ''}
+    ${offMismatchStaff.length ? `
+      <div class="dashboard-section">
+        <h3>⚠ 公休の日数が${offTarget}日になっていないスタッフ</h3>
+        <div class="hint">公務員の勤務のため、公休はその月の土日祝の日数（今月は${offTarget}日）と同じにします。括弧内が現在の公休日数です。</div>
+        <div class="dashboard-chip-list">${offMismatchStaff.map(({ staff: s, offCount }) => `<button class="dashboard-chip chip-warn" data-jump="${s.no}">${esc(s.name)}（${offCount}日）</button>`).join('')}</div>
+      </div>` : ''}
+    ${leaveOverStaff.length ? `
+      <div class="dashboard-section">
+        <h3>⚠ 有給の年間残日数を超えているスタッフ</h3>
+        <div class="hint">有給は年間${DEFAULT_PAID_LEAVE}日が既定です。付与日数と前月までの使用日数は「スタッフ」タブの編集画面で変更できます。</div>
+        ${chipList(leaveOverStaff)}
+      </div>` : ''}
+    ${(!zeroStaff.length && !ptoOverStaff.length && !offMismatchStaff.length && !leaveOverStaff.length) ? `
+      <div class="dashboard-section">
+        <h3>✓ 気になる点は見つかりませんでした</h3>
+        <div class="hint">休み希望の回数・公休の日数・有給の残日数、いずれも問題ありません。左上のボタンからExcelに出力できます。</div>
+      </div>` : ''}
   `;
   main.querySelectorAll('[data-jump]').forEach(btn => {
     btn.onclick = () => jumpToStaff(parseInt(btn.dataset.jump, 10));
@@ -2993,6 +3144,7 @@ function renderGridView() {
     <div class="person-meta">
       セルをクリックすると記号を編集できます。表の下の行は各科・准夜・深夜の必要人数に対する過不足です（マイナス=不足・赤／プラス=過剰・黄）。📌予定の行は、その日に登録されている院内研修・会議などの予定です。
     </div>
+    ${legendHtml(null)}
     ${swapMode ? `<div class="swap-hint">🔄 交換モード: 入れ替えたいセルを2つクリックしてください${swapSelection ? '（1つ目を選択済み。2つ目をクリックすると入れ替わります）' : ''}</div>` : ''}
     <div class="toolbar" style="margin-top:0; margin-bottom:14px;">
       <button class="btn primary" id="gridDownloadBtn">勤務表をExcelでダウンロード（全員・全シート）</button>
@@ -3007,6 +3159,7 @@ function renderGridView() {
     </div>
   `;
   wireViewToggle();
+  wireCollapsiblePanels();
   main.querySelectorAll('td.shift-cell').forEach(td => {
     td.onclick = () => {
       const staffNo = parseInt(td.dataset.staff, 10);
@@ -3085,6 +3238,34 @@ function partTimerCodes(staff) {
   return codes;
 }
 
+// 記号の凡例。全員一覧と個人画面のどちらからでも開けるようにして、
+// 「この1文字は何か」をその場で確かめられるようにする。既定は開いた
+// 状態にし、慣れた人は畳んでおける。
+function legendHtml(staff) {
+  const colors = codeColors();
+  const chip = code => `
+    <span class="legend-item">
+      <span class="lg-code" style="background:${colors[code[0]] || '#fff'}66">${esc(code)}</span>
+      ${esc(codeFullName(code))}
+    </span>`;
+  const deptChips = DEPARTMENTS.map(d => chip(d.code)).join('');
+  const otherCodes = ['日', '救', '准', '深', '公', '有'];
+  const roleCodes = ['代', '当', '明', '直'];
+  return `
+    <details class="legend-box" data-panel="legend"${panelOpen.legend ? ' open' : ''}>
+      <summary>記号の意味（クリックで開閉）</summary>
+      <div class="legend-grid">${deptChips}</div>
+      <div class="legend-grid">${otherCodes.map(chip).join('')}</div>
+      <div class="legend-grid">${roleCodes.map(chip).join('')}</div>
+      <div class="legend-note">
+        「代」は副師長のみ、「当」「明」は師長のみ、「直」は副師長のみが使う記号です。<br>
+        パートの記号に付く数字は退勤時刻です（例: 内(13) = 内視鏡を13時まで）。<br>
+        △ = その人の主担当・サブ担当に入っていない科。入力はできますが赤く警告されます。
+      </div>
+    </details>
+  `;
+}
+
 function weekPatternOptions(staff, selected) {
   const codes = partTimerCodes(staff);
   const none = `<option value=""${!selected ? ' selected' : ''}>―</option>`;
@@ -3094,8 +3275,8 @@ function weekPatternOptions(staff, selected) {
 function weekPatternHtml(staff) {
   const pattern = staff.weekPattern || {};
   return `
-    <div class="week-pattern-box">
-      <h3>🗓 曜日パターン（スマートシフト作成）</h3>
+    <details class="week-pattern-box" data-panel="weekPattern"${panelOpen.weekPattern ? ' open' : ''}>
+      <summary><b>🗓 曜日パターン（スマートシフト作成）</b> ― 毎週決まった曜日の勤務がある人向け</summary>
       <div class="wp-hint">
         「毎週この曜日はこの科」という基本の勤務をここに登録しておくと、<b>「残りの日を自動で埋める」を押したときに自動で反映されます</b>（空欄の日だけ／休み希望と🔒固定の日はそのまま）。
         下のボタンを使えば、この人だけ今すぐ反映することもできます。
@@ -3110,10 +3291,10 @@ function weekPatternHtml(staff) {
       </div>
       <div class="toolbar" style="margin-top:0;">
         <button class="btn" id="wpApplyEmptyBtn">未入力の日だけ反映</button>
-        <button class="btn primary" id="wpApplyAllBtn">この月にまとめて反映</button>
+        <button class="btn" id="wpApplyAllBtn">この月にまとめて反映</button>
         <button class="btn" id="wpClearBtn">パターンを消す</button>
       </div>
-    </div>
+    </details>
   `;
 }
 
@@ -3160,6 +3341,13 @@ function wireWeekPattern(staff) {
     renderMain();
     showToast('曜日パターンを消しました（入力済みのシフトはそのままです）');
   };
+}
+
+// 開閉を記憶する。renderMain() の直後に呼ぶ。
+function wireCollapsiblePanels() {
+  document.querySelectorAll('details[data-panel]').forEach(d => {
+    d.addEventListener('toggle', () => { panelOpen[d.dataset.panel] = d.open; });
+  });
 }
 
 function renderMain() {
@@ -3213,7 +3401,9 @@ function renderMain() {
       <div class="summary-card" style="${leaveLeft < 0 ? 'background:#FFC7CE;' : ''}"><div class="num">${counts.有給}</div><div class="lbl">有給（年間残り${leaveLeft}日）</div></div>
       <div class="summary-card" style="${ptoCount > 5 ? 'background:#FFC7CE;' : ''}"><div class="num">${ptoCount}</div><div class="lbl">休み希望(月5まで)</div></div>
     </div>
+    ${legendHtml(staff)}
     ${weekPatternHtml(staff)}
+    <div class="howto-bar">📌 <b>日付をクリック</b>すると記号を選べます。休み希望もそこで登録できます。</div>
     <div class="weekday-header">
       ${WEEKDAYS_JP.map((w, i) => `<div class="${i === 0 ? 'sun' : i === 6 ? 'sat' : ''}">${w}</div>`).join('')}
     </div>
@@ -3259,13 +3449,12 @@ function renderMain() {
       <button class="btn" id="clearPersonBtn">この人の入力をすべて消す</button>
     </div>
     <div class="legend">
-      △ = 主担当・サブ担当に入っていない科（救急・准夜・深夜・公休・有給は対象外）<br>
-      希望休バッジ = 休み希望（②シフト表では自動的に「公」として出力されます）<br>
-      <b>使い方:</b> 日付のセルをクリックして記号を選びます。${staff.depTime ? `このスタッフは${staff.depTime}時までの勤務のため、科を選ぶと自動的に「科(${staff.depTime})」になります。` : ''}
+      希望休バッジ = 休み希望（②シフト表では自動的に「公」として出力されます）${staff.depTime ? `<br>このスタッフは${staff.depTime}時までの勤務のため、科を選ぶと自動的に「科(${staff.depTime})」になります。` : ''}
     </div>
   `;
   main.innerHTML = html;
   wireViewToggle();
+  wireCollapsiblePanels();
   wireWeekPattern(staff);
 
   main.querySelectorAll('.day-cell[data-day]').forEach(cell => {
@@ -3324,24 +3513,48 @@ function openPicker(staff, day) {
   const isViceManager = staff.cat && staff.cat.includes('副師長');
   let codes = partTimerCodes(staff);
 
+  // 記号は1文字だけだと初めての人には読めないので、必ず正式名称を添える。
+  // さらに「担当の科 / 担当外の科 / 夜勤・休みなど」に分けて並べることで、
+  // その人が普段使う記号が先頭に来るようにしている。
   function renderShiftGrid() {
     grid.innerHTML = '';
+    const depts = deptCodes();
+    const groups = [
+      { label: 'この人の担当科', items: [] },
+      { label: '夜勤・休みなど', items: [] },
+      { label: '担当外の科（△）', items: [] },
+    ];
     codes.forEach(code => {
       const base = code[0];
-      const outOfScope = deptCodes().includes(base) && !capable.includes(base);
-      const opt = document.createElement('div');
-      opt.className = 'picker-opt' + (outOfScope ? ' out-of-scope' : '');
-      opt.style.background = (codeColors()[base] || '#fff') + '55';
-      opt.textContent = code;
-      opt.onclick = () => {
-        const previous = shifts[staff.no][day];
-        shifts[staff.no][day] = code;
-        applyOnCallPairing(staff, day, previous, code);
-        overlay.classList.remove('open');
-        renderStaffList();
-        renderMain();
-      };
-      grid.appendChild(opt);
+      if (!depts.includes(base)) groups[1].items.push(code);
+      else if (capable.includes(base)) groups[0].items.push(code);
+      else groups[2].items.push(code);
+    });
+
+    groups.forEach(group => {
+      if (!group.items.length) return;
+      const label = document.createElement('div');
+      label.className = 'picker-group-label';
+      label.textContent = group.label;
+      grid.appendChild(label);
+      group.items.forEach(code => {
+        const base = code[0];
+        const outOfScope = depts.includes(base) && !capable.includes(base);
+        const opt = document.createElement('div');
+        opt.className = 'picker-opt' + (outOfScope ? ' out-of-scope' : '');
+        opt.style.background = (codeColors()[base] || '#fff') + '55';
+        opt.title = `${code}（${codeFullName(code)}）`;
+        opt.innerHTML = `${esc(code)}<span class="opt-name">${esc(codeFullName(code))}</span>`;
+        opt.onclick = () => {
+          const previous = shifts[staff.no][day];
+          shifts[staff.no][day] = code;
+          applyOnCallPairing(staff, day, previous, code);
+          overlay.classList.remove('open');
+          renderStaffList();
+          renderMain();
+        };
+        grid.appendChild(opt);
+      });
     });
   }
 
@@ -3669,7 +3882,14 @@ function openStaffEdit(staffNo) {
 
   document.getElementById('staffEditTitle').textContent = staff ? `${staff.name} さんを編集` : '新しいスタッフを追加';
   document.getElementById('editName').value = staff ? staff.name : '';
-  document.getElementById('editCat').value = staff ? staff.cat : '';
+  // 既存データに一覧にない区分が入っていることもあるので、その場合は
+  // 選択肢として足してから選ぶ（黙って別の区分に変わるのを防ぐ）。
+  const catSelect = document.getElementById('editCat');
+  const currentCat = staff ? staff.cat : '一般常勤';
+  if (currentCat && !Array.from(catSelect.options).some(o => o.value === currentCat)) {
+    catSelect.add(new Option(currentCat, currentCat));
+  }
+  catSelect.value = currentCat;
   document.getElementById('editMain').innerHTML = deptSelectOptions(staff ? staff.main : null);
   document.getElementById('editSub1').innerHTML = deptSelectOptions(staff ? staff.sub1 : null);
   document.getElementById('editSub2').innerHTML = deptSelectOptions(staff ? staff.sub2 : null);
@@ -3697,7 +3917,7 @@ function closeStaffEdit() {
 function saveStaffEdit() {
   const name = document.getElementById('editName').value.trim();
   if (!name) { showToast('氏名を入力してください', 'error'); return; }
-  const cat = document.getElementById('editCat').value.trim() || '未設定';
+  const cat = document.getElementById('editCat').value.trim() || '一般常勤';
   const main = document.getElementById('editMain').value;
   const sub1 = document.getElementById('editSub1').value;
   const sub2 = document.getElementById('editSub2').value;
