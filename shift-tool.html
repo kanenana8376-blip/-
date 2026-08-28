@@ -863,15 +863,30 @@
   .grid-table td.shortage-pos { background: #fdf0c8; color: #8a6d1f; }
   .grid-table td.shortage-ok { color: var(--muted); font-weight: 400; }
   @media print {
-    header, .sidebar, .view-toggle, .toolbar, .toast, .loading-overlay { display: none !important; }
+    header, .sidebar, .view-toggle, .toolbar, .toast, .loading-overlay,
+    .swap-hint, .howto-bar, .week-pattern-box, .first-run { display: none !important; }
+    /* 画面用の操作説明（「セルをクリックすると…」）は紙では意味がない */
+    .main > .person-meta { display: none !important; }
     body { background: #fff; }
     .layout { display: block; min-height: 0; }
     .main { padding: 6px; overflow: visible; }
-    .print-only-title { display: block; font-size: 16px; font-weight: 700; margin-bottom: 10px; }
+    .print-only-title { display: block; font-size: 16px; font-weight: 700; margin-bottom: 8px; }
     .grid-view-wrap { max-height: none; overflow: visible; border: none; }
-    .grid-table { font-size: 8.5px; }
-    .grid-table th, .grid-table td { padding: 2px 3px; position: static !important; }
-    @page { size: landscape; margin: 8mm; }
+    /* 表を紙幅いっぱいに広げる。既定だと右側に大きく余白が残る */
+    .grid-table { font-size: 8px; width: 100%; table-layout: auto; }
+    .grid-table th, .grid-table td { padding: 1.5px 2px; position: static !important; }
+    /* ページをまたぐときに行が切れないようにし、日付の見出しは各ページに出す */
+    .grid-table thead { display: table-header-group; }
+    .grid-table tr { page-break-inside: avoid; break-inside: avoid; }
+    /* 凡例は紙でも役に立つので残すが、たたまれていても中身を出す */
+    .legend-box { break-inside: avoid; margin-bottom: 8px; padding: 8px 10px; }
+    .legend-box > *:not(summary) { display: block !important; }
+    .legend-box summary { font-size: 11px; }
+    .legend-box summary::before { content: none; }
+    .legend-box summary .no-print { display: none; }
+    .legend-item { font-size: 9.5px; padding: 1px 6px 1px 3px; }
+    .legend-note { font-size: 9px; }
+    @page { size: A3 landscape; margin: 8mm; }
   }
   .d-event {
     margin-top: 3px;
@@ -3173,7 +3188,11 @@ function renderGridView() {
     };
   });
   document.getElementById('gridDownloadBtn').onclick = () => exportToExcel();
-  document.getElementById('gridPrintBtn').onclick = () => window.print();
+  document.getElementById('gridPrintBtn').onclick = () => {
+    // たたんだままだと凡例が印刷されないブラウザがあるので、開いてから印刷する
+    document.querySelectorAll('details.legend-box').forEach(d => { d.open = true; });
+    window.print();
+  };
   document.getElementById('swapToggleBtn').onclick = () => {
     swapMode = !swapMode;
     swapSelection = null;
@@ -3253,7 +3272,7 @@ function legendHtml(staff) {
   const roleCodes = ['代', '当', '明', '直'];
   return `
     <details class="legend-box" data-panel="legend"${panelOpen.legend ? ' open' : ''}>
-      <summary>記号の意味（クリックで開閉）</summary>
+      <summary>記号の意味<span class="no-print">（クリックで開閉）</span></summary>
       <div class="legend-grid">${deptChips}</div>
       <div class="legend-grid">${otherCodes.map(chip).join('')}</div>
       <div class="legend-grid">${roleCodes.map(chip).join('')}</div>
