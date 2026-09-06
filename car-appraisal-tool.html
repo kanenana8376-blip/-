@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>愛車買取相場シミュレーター</title>
+<style>
+  :root {
+    --navy: #1F4E79;
+    --navy-dark: #163a59;
+    --ink: #2c2c2a;
+    --muted: #6b6b68;
+    --line: #d8d6cd;
+    --bg: #f7f5f0;
+    --panel: #ffffff;
+    --accent: #c0392b;
+    --good: #1e7a46;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  header {
+    background: var(--navy);
+    color: #fff;
+    padding: 20px 28px;
+  }
+  header h1 {
+    font-size: 19px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: 0.02em;
+  }
+  header .sub {
+    font-size: 12.5px;
+    color: #cfe0ee;
+    margin-top: 4px;
+  }
+  .layout {
+    display: flex;
+    gap: 20px;
+    padding: 24px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px 22px;
+  }
+  .form-panel {
+    flex: 1 1 360px;
+    min-width: 320px;
+    max-width: 440px;
+  }
+  .result-panel {
+    flex: 2 1 440px;
+    min-width: 320px;
+  }
+  .panel h2 {
+    font-size: 14px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 16px;
+  }
+  .field {
+    margin-bottom: 14px;
+  }
+  .field label {
+    display: block;
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+  .field select,
+  .field input[type="number"] {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 13.5px;
+    font-family: inherit;
+    background: #fff;
+    color: var(--ink);
+  }
+  .field.checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .field.checkbox label {
+    margin: 0;
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .row2 {
+    display: flex;
+    gap: 12px;
+  }
+  .row2 > .field { flex: 1; }
+  button#calcBtn {
+    width: 100%;
+    padding: 12px;
+    background: var(--navy);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+  button#calcBtn:hover { background: var(--navy-dark); }
+  .empty-state {
+    color: var(--muted);
+    font-size: 13.5px;
+    text-align: center;
+    padding: 60px 10px;
+  }
+  .price-range {
+    text-align: center;
+    padding: 22px 10px 26px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 18px;
+  }
+  .price-range .label {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .price-range .value {
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--navy);
+  }
+  .price-range .value .unit {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--muted);
+    margin-left: 4px;
+  }
+  .breakdown h3, .advice h3 {
+    font-size: 13px;
+    color: var(--ink);
+    margin: 0 0 10px;
+  }
+  .breakdown table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+  .breakdown td {
+    padding: 7px 4px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .breakdown td:first-child { color: var(--muted); }
+  .breakdown td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+  .breakdown tr.total td {
+    border-bottom: none;
+    border-top: 2px solid var(--ink);
+    font-weight: 700;
+    padding-top: 10px;
+  }
+  .plus { color: var(--good); }
+  .minus { color: var(--accent); }
+  .advice ul {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 13px;
+    line-height: 1.9;
+    color: var(--ink);
+  }
+  .disclaimer {
+    margin: 0 24px 24px;
+    padding: 14px 16px;
+    background: #fbf3e6;
+    border: 1px solid #eadfc4;
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>愛車買取相場シミュレーター</h1>
+  <div class="sub">メーカー・車種・年式・走行距離などからおおよその売却額の目安を試算します</div>
+</header>
+
+<div class="layout">
+  <div class="panel form-panel">
+    <h2>車両情報</h2>
+
+    <div class="field">
+      <label for="makerSelect">メーカー</label>
+      <select id="makerSelect"></select>
+    </div>
+
+    <div class="field">
+      <label for="modelSelect">車種</label>
+      <select id="modelSelect"></select>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label for="year">初度登録年（西暦）</label>
+        <input type="number" id="year" placeholder="例: 2019">
+      </div>
+      <div class="field">
+        <label for="mileage">走行距離（km）</label>
+        <input type="number" id="mileage" placeholder="例: 45000">
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label for="repair">修復歴</label>
+        <select id="repair">
+          <option value="none">なし</option>
+          <option value="yes">あり</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="shaken">車検残り（ヶ月）</label>
+        <input type="number" id="shaken" value="0" min="0" max="36">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="color">ボディカラー</label>
+      <select id="color">
+        <option value="popular">人気色（白・黒・シルバー系）</option>
+        <option value="normal">その他の一般的な色</option>
+        <option value="unique">個性的な色（特殊カラー）</option>
+      </select>
+    </div>
+
+    <div class="field checkbox">
+      <input type="checkbox" id="smoke">
+      <label for="smoke">車内で喫煙していた（におい・ヤニ汚れあり）</label>
+    </div>
+
+    <button id="calcBtn">査定する</button>
+  </div>
+
+  <div class="panel result-panel">
+    <div id="emptyState" class="empty-state">
+      左のフォームに車両情報を入力して「査定する」を押してください。
+    </div>
+    <div id="resultBody" hidden>
+      <div class="price-range">
+        <div class="label">概算買取価格レンジ</div>
+        <div class="value"><span id="priceLow">0</span>〜<span id="priceHigh">0</span><span class="unit">万円</span></div>
+      </div>
+      <div class="breakdown">
+        <h3>試算の内訳</h3>
+        <table id="breakdownTable"></table>
+      </div>
+      <div class="advice">
+        <h3>査定額アップのポイント</h3>
+        <ul>
+          <li>売却前に洗車・車内清掃をしておくと印象が上がります。</li>
+          <li>車検証・整備記録簿・スペアキーなど付属品を揃えておきましょう。</li>
+          <li>複数の買取業者に見積もりを依頼して金額を比較するのがおすすめです。</li>
+          <li>走行距離は年間1万kmが目安。それより少ないと評価が上がりやすくなります。</li>
+          <li>修復歴がある場合でも、業者によって査定基準が異なるため一括査定での比較が有効です。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="disclaimer">
+  ※ このツールが算出する金額はあくまで簡易的な目安です。実際の買取価格は市場相場・車両の状態・地域・買取業者の在庫状況などによって変動します。正確な金額を知りたい場合は、複数の買取業者へ実車査定を依頼することをおすすめします。
+</div>
+
+<script>
+  const CAR_DB = {
+    "トヨタ": [
+      { name: "ヤリス", category: "コンパクト", price: 180 },
+      { name: "カローラ", category: "セダン", price: 210 },
+      { name: "プリウス", category: "コンパクト", price: 280 },
+      { name: "アクア", category: "コンパクト", price: 210 },
+      { name: "シエンタ", category: "ミニバン", price: 220 },
+      { name: "ノア", category: "ミニバン", price: 300 },
+      { name: "ヴォクシー", category: "ミニバン", price: 310 },
+      { name: "アルファード", category: "ミニバン", price: 550 },
+      { name: "ハリアー", category: "SUV", price: 320 },
+      { name: "RAV4", category: "SUV", price: 320 },
+      { name: "ランドクルーザー", category: "SUV", price: 550 },
+      { name: "カローラクロス", category: "SUV", price: 250 },
+      { name: "クラウン", category: "セダン", price: 480 },
+      { name: "86", category: "スポーツ", price: 300 }
+    ],
+    "ホンダ": [
+      { name: "フィット", category: "コンパクト", price: 180 },
+      { name: "フリード", category: "ミニバン", price: 230 },
+      { name: "ステップワゴン", category: "ミニバン", price: 300 },
+      { name: "ヴェゼル", category: "SUV", price: 260 },
+      { name: "CR-V", category: "SUV", price: 330 },
+      { name: "N-BOX", category: "軽自動車", price: 160 },
+      { name: "N-WGN", category: "軽自動車", price: 140 },
+      { name: "シビック", category: "セダン", price: 300 },
+      { name: "シビック タイプR", category: "スポーツ", price: 500 }
+    ],
+    "日産": [
+      { name: "ノート", category: "コンパクト", price: 200 },
+      { name: "セレナ", category: "ミニバン", price: 300 },
+      { name: "エクストレイル", category: "SUV", price: 300 },
+      { name: "キックス", category: "SUV", price: 250 },
+      { name: "スカイライン", category: "セダン", price: 400 },
+      { name: "フェアレディZ", category: "スポーツ", price: 550 },
+      { name: "デイズ", category: "軽自動車", price: 150 },
+      { name: "ルークス", category: "軽自動車", price: 170 }
+    ],
+    "スズキ": [
+      { name: "ワゴンR", category: "軽自動車", price: 140 },
+      { name: "スペーシア", category: "軽自動車", price: 160 },
+      { name: "ハスラー", category: "軽自動車", price: 150 },
+      { name: "ジムニー", category: "SUV", price: 180 },
+      { name: "スイフト", category: "コンパクト", price: 170 }
+    ],
+    "ダイハツ": [
+      { name: "タント", category: "軽自動車", price: 150 },
+      { name: "ムーヴ", category: "軽自動車", price: 140 },
+      { name: "ロッキー", category: "SUV", price: 200 }
+    ],
+    "マツダ": [
+      { name: "MAZDA2", category: "コンパクト", price: 190 },
+      { name: "CX-5", category: "SUV", price: 300 },
+      { name: "CX-30", category: "SUV", price: 260 },
+      { name: "ロードスター", category: "スポーツ", price: 280 }
+    ],
+    "スバル": [
+      { name: "インプレッサ", category: "セダン", price: 240 },
+      { name: "フォレスター", category: "SUV", price: 300 },
+      { name: "レヴォーグ", category: "セダン", price: 320 }
+    ],
+    "三菱": [
+      { name: "デリカD:5", category: "ミニバン", price: 350 },
+      { name: "アウトランダーPHEV", category: "SUV", price: 450 },
+      { name: "eKワゴン", category: "軽自動車", price: 150 }
+    ],
+    "レクサス": [
+      { name: "NX", category: "SUV", price: 500 },
+      { name: "RX", category: "SUV", price: 650 }
+    ],
+    "輸入車": [
+      { name: "BMW 3シリーズ", category: "輸入車", price: 550 },
+      { name: "メルセデスベンツ Cクラス", category: "輸入車", price: 550 },
+      { name: "アウディA4", category: "輸入車", price: 500 }
+    ]
+  };
+
+  const CATEGORY_INFO = {
+    "軽自動車": { rate: 0.90, floor: 0.20 },
+    "コンパクト": { rate: 0.86, floor: 0.12 },
+    "ミニバン": { rate: 0.88, floor: 0.15 },
+    "SUV": { rate: 0.90, floor: 0.20 },
+    "セダン": { rate: 0.83, floor: 0.10 },
+    "スポーツ": { rate: 0.90, floor: 0.25 },
+    "輸入車": { rate: 0.80, floor: 0.08 }
+  };
+
+  const makerSelect = document.getElementById("makerSelect");
+  const modelSelect = document.getElementById("modelSelect");
+  const yearInput = document.getElementById("year");
+
+  const currentYear = new Date().getFullYear();
+  yearInput.max = currentYear;
+
+  Object.keys(CAR_DB).forEach(maker => {
+    const opt = document.createElement("option");
+    opt.value = maker;
+    opt.textContent = maker;
+    makerSelect.appendChild(opt);
+  });
+
+  function populateModels() {
+    modelSelect.innerHTML = "";
+    const models = CAR_DB[makerSelect.value] || [];
+    models.forEach(m => {
+      const opt = document.createElement("option");
+      opt.value = m.name;
+      opt.textContent = `${m.name}（${m.category}）`;
+      modelSelect.appendChild(opt);
+    });
+  }
+  makerSelect.addEventListener("change", populateModels);
+  populateModels();
+
+  function fmt(n) {
+    return Math.round(n).toLocaleString("ja-JP");
+  }
+
+  function addRow(table, label, valueHtml, isTotal) {
+    const tr = document.createElement("tr");
+    if (isTotal) tr.className = "total";
+    const td1 = document.createElement("td");
+    td1.textContent = label;
+    const td2 = document.createElement("td");
+    td2.innerHTML = valueHtml;
+    tr.appendChild(td1);
+    tr.appendChild(td2);
+    table.appendChild(tr);
+  }
+
+  document.getElementById("calcBtn").addEventListener("click", () => {
+    const maker = makerSelect.value;
+    const modelName = modelSelect.value;
+    const model = (CAR_DB[maker] || []).find(m => m.name === modelName);
+    if (!model) return;
+
+    const year = parseInt(yearInput.value, 10);
+    const mileage = parseFloat(document.getElementById("mileage").value);
+    const repair = document.getElementById("repair").value;
+    const shaken = parseFloat(document.getElementById("shaken").value) || 0;
+    const color = document.getElementById("color").value;
+    const smoke = document.getElementById("smoke").checked;
+
+    if (!year || isNaN(mileage)) {
+      alert("初度登録年と走行距離を入力してください。");
+      return;
+    }
+
+    const age = Math.max(0, currentYear - year);
+    const info = CATEGORY_INFO[model.category];
+
+    // 1. 経年劣化
+    const ageFactor = Math.max(info.floor, Math.pow(info.rate, age));
+    const afterAge = model.price * ageFactor;
+
+    // 2. 走行距離
+    const expectedMileage = Math.max(age, 0.5) * 10000;
+    const diff = mileage - expectedMileage;
+    let mileageRatio = -(diff / 10000) * 0.04;
+    mileageRatio = Math.max(-0.35, Math.min(0.15, mileageRatio));
+    const afterMileage = afterAge * (1 + mileageRatio);
+
+    // 3. 修復歴
+    const repairFactor = repair === "yes" ? 0.65 : 1.0;
+    const afterRepair = afterMileage * repairFactor;
+
+    // 4. 車内喫煙
+    const smokeFactor = smoke ? 0.95 : 1.0;
+    const afterSmoke = afterRepair * smokeFactor;
+
+    // 5. ボディカラー
+    const colorFactor = color === "popular" ? 1.02 : color === "unique" ? 0.97 : 1.0;
+    const afterColor = afterSmoke * colorFactor;
+
+    // 6. 車検残り（万円換算で加算、上限あり）
+    const shakenBonus = Math.min(Math.max(shaken, 0), 24) * 0.5;
+
+    const finalValue = Math.max(5, afterColor + shakenBonus);
+    const low = finalValue * 0.9;
+    const high = finalValue * 1.1;
+
+    document.getElementById("priceLow").textContent = fmt(low);
+    document.getElementById("priceHigh").textContent = fmt(high);
+
+    const table = document.getElementById("breakdownTable");
+    table.innerHTML = "";
+    addRow(table, `新車価格の目安（${model.category}）`, `${fmt(model.price)} 万円`);
+    addRow(table, `経過年数 ${age}年による減価`, `${fmt(afterAge)} 万円`);
+    addRow(table, `走行距離による調整（${mileageRatio >= 0 ? "+" : ""}${(mileageRatio * 100).toFixed(1)}%）`,
+      `<span class="${mileageRatio >= 0 ? "plus" : "minus"}">${fmt(afterMileage)} 万円</span>`);
+    addRow(table, `修復歴：${repair === "yes" ? "あり" : "なし"}`, `${fmt(afterRepair)} 万円`);
+    addRow(table, `車内喫煙：${smoke ? "あり" : "なし"}`, `${fmt(afterSmoke)} 万円`);
+    addRow(table, `ボディカラー評価`, `${fmt(afterColor)} 万円`);
+    addRow(table, `車検残り ${shaken}ヶ月分の加算`, `<span class="plus">+${fmt(shakenBonus)} 万円</span>`);
+    addRow(table, "概算査定額（中央値）", `${fmt(finalValue)} 万円`, true);
+
+    document.getElementById("emptyState").hidden = true;
+    document.getElementById("resultBody").hidden = false;
+  });
+</script>
+</body>
+</html>
