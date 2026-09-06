@@ -176,6 +176,113 @@
     line-height: 1.9;
     color: var(--ink);
   }
+  .companies {
+    margin-bottom: 20px;
+  }
+  .company-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .company-card {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .company-card.best {
+    border-color: var(--navy);
+    background: #f2f6fa;
+  }
+  .company-main {
+    flex: 1;
+    min-width: 200px;
+  }
+  .company-name {
+    font-size: 13.5px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .company-type {
+    font-size: 10.5px;
+    font-weight: 400;
+    background: #eee;
+    color: var(--muted);
+    padding: 2px 7px;
+    border-radius: 10px;
+  }
+  .company-best-tag {
+    font-size: 10.5px;
+    font-weight: 700;
+    background: var(--navy);
+    color: #fff;
+    padding: 2px 7px;
+    border-radius: 10px;
+  }
+  .company-note {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .company-perk {
+    font-size: 12px;
+    color: var(--good);
+    margin-top: 3px;
+  }
+  .company-amount {
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--navy);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .company-amount .unit {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--muted);
+    margin-left: 2px;
+  }
+  button#printBtn {
+    width: 100%;
+    padding: 11px;
+    background: #fff;
+    color: var(--navy);
+    border: 1px solid var(--navy);
+    border-radius: 6px;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 18px;
+  }
+  button#printBtn:hover { background: #f2f6fa; }
+  .print-only { display: none; }
+  .quote-header {
+    font-size: 13px;
+    line-height: 1.9;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .quote-header .quote-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  @media print {
+    .no-print { display: none !important; }
+    .print-only { display: block; }
+    body { background: #fff; }
+    .layout { padding: 0; }
+    .panel { border: none; padding: 0; }
+    .form-panel { display: none; }
+    .result-panel { max-width: none; }
+  }
   .disclaimer {
     margin: 0 24px 24px;
     padding: 14px 16px;
@@ -209,6 +316,15 @@
       <select id="modelSelect"></select>
     </div>
 
+    <div class="field">
+      <label for="grade">グレード</label>
+      <select id="grade">
+        <option value="low">廉価グレード</option>
+        <option value="standard" selected>標準グレード</option>
+        <option value="high">上位グレード（本革・ナビ・先進安全装備など）</option>
+      </select>
+    </div>
+
     <div class="row2">
       <div class="field">
         <label for="year">初度登録年（西暦）</label>
@@ -235,12 +351,18 @@
     </div>
 
     <div class="field">
-      <label for="color">ボディカラー</label>
-      <select id="color">
-        <option value="popular">人気色（白・黒・シルバー系）</option>
-        <option value="normal">その他の一般的な色</option>
-        <option value="unique">個性的な色（特殊カラー）</option>
-      </select>
+      <label for="color1">ボディカラー（メイン）</label>
+      <select id="color1"></select>
+    </div>
+
+    <div class="field checkbox">
+      <input type="checkbox" id="twotone">
+      <label for="twotone">ツートンカラーである</label>
+    </div>
+
+    <div class="field" id="color2Field" hidden>
+      <label for="color2">ボディカラー（サブ／ルーフ）</label>
+      <select id="color2"></select>
     </div>
 
     <div class="field checkbox">
@@ -248,7 +370,7 @@
       <label for="smoke">車内で喫煙していた（におい・ヤニ汚れあり）</label>
     </div>
 
-    <button id="calcBtn">査定する</button>
+    <button id="calcBtn" class="no-print">査定する</button>
   </div>
 
   <div class="panel result-panel">
@@ -256,15 +378,20 @@
       左のフォームに車両情報を入力して「査定する」を押してください。
     </div>
     <div id="resultBody" hidden>
+      <div id="quoteHeader" class="quote-header print-only"></div>
       <div class="price-range">
-        <div class="label">概算買取価格レンジ</div>
+        <div class="label">概算買取価格レンジ（会社間の最安〜最高）</div>
         <div class="value"><span id="priceLow">0</span>〜<span id="priceHigh">0</span><span class="unit">万円</span></div>
       </div>
       <div class="breakdown">
-        <h3>試算の内訳</h3>
+        <h3>試算の内訳（色・グレード適用後の査定ベース額）</h3>
         <table id="breakdownTable"></table>
       </div>
-      <div class="advice">
+      <div class="companies">
+        <h3>会社別 査定見積もり比較</h3>
+        <div id="companyList" class="company-list"></div>
+      </div>
+      <div class="advice no-print">
         <h3>査定額アップのポイント</h3>
         <ul>
           <li>売却前に洗車・車内清掃をしておくと印象が上がります。</li>
@@ -274,25 +401,33 @@
           <li>修復歴がある場合でも、業者によって査定基準が異なるため一括査定での比較が有効です。</li>
         </ul>
       </div>
+      <button id="printBtn" class="no-print">この内容を見積書として印刷／PDF保存</button>
     </div>
   </div>
 </div>
 
-<div class="disclaimer">
+<div class="disclaimer no-print">
   ※ このツールが算出する金額はあくまで簡易的な目安です。実際の買取価格は市場相場・車両の状態・地域・買取業者の在庫状況などによって変動します。正確な金額を知りたい場合は、複数の買取業者へ実車査定を依頼することをおすすめします。
 </div>
 
 <script>
   const CAR_DB = {
     "トヨタ": [
+      { name: "パッソ", category: "コンパクト", price: 150 },
+      { name: "ヴィッツ", category: "コンパクト", price: 160 },
       { name: "ヤリス", category: "コンパクト", price: 180 },
       { name: "カローラ", category: "セダン", price: 210 },
+      { name: "マークX", category: "セダン", price: 280 },
       { name: "プリウス", category: "コンパクト", price: 280 },
+      { name: "プリウスPHV", category: "コンパクト", price: 330 },
       { name: "アクア", category: "コンパクト", price: 210 },
       { name: "シエンタ", category: "ミニバン", price: 220 },
       { name: "ノア", category: "ミニバン", price: 300 },
       { name: "ヴォクシー", category: "ミニバン", price: 310 },
       { name: "アルファード", category: "ミニバン", price: 550 },
+      { name: "ハイエース", category: "ミニバン", price: 380 },
+      { name: "ライズ", category: "SUV", price: 200 },
+      { name: "C-HR", category: "SUV", price: 250 },
       { name: "ハリアー", category: "SUV", price: 320 },
       { name: "RAV4", category: "SUV", price: 320 },
       { name: "ランドクルーザー", category: "SUV", price: 550 },
@@ -301,64 +436,165 @@
       { name: "86", category: "スポーツ", price: 300 }
     ],
     "ホンダ": [
-      { name: "フィット", category: "コンパクト", price: 180 },
-      { name: "フリード", category: "ミニバン", price: 230 },
-      { name: "ステップワゴン", category: "ミニバン", price: 300 },
-      { name: "ヴェゼル", category: "SUV", price: 260 },
-      { name: "CR-V", category: "SUV", price: 330 },
+      { name: "N-ONE", category: "軽自動車", price: 150 },
       { name: "N-BOX", category: "軽自動車", price: 160 },
       { name: "N-WGN", category: "軽自動車", price: 140 },
+      { name: "N-VAN", category: "軽自動車", price: 150 },
+      { name: "フィット", category: "コンパクト", price: 180 },
+      { name: "グレイス", category: "セダン", price: 200 },
+      { name: "インサイト", category: "セダン", price: 300 },
+      { name: "フリード", category: "ミニバン", price: 230 },
+      { name: "ステップワゴン", category: "ミニバン", price: 300 },
+      { name: "オデッセイ", category: "ミニバン", price: 380 },
+      { name: "ヴェゼル", category: "SUV", price: 260 },
+      { name: "CR-V", category: "SUV", price: 330 },
       { name: "シビック", category: "セダン", price: 300 },
       { name: "シビック タイプR", category: "スポーツ", price: 500 }
     ],
     "日産": [
+      { name: "デイズ", category: "軽自動車", price: 150 },
+      { name: "ルークス", category: "軽自動車", price: 170 },
       { name: "ノート", category: "コンパクト", price: 200 },
+      { name: "リーフ", category: "コンパクト", price: 330 },
+      { name: "ジューク", category: "SUV", price: 220 },
       { name: "セレナ", category: "ミニバン", price: 300 },
+      { name: "エルグランド", category: "ミニバン", price: 400 },
       { name: "エクストレイル", category: "SUV", price: 300 },
       { name: "キックス", category: "SUV", price: 250 },
+      { name: "アリア", category: "SUV", price: 500 },
       { name: "スカイライン", category: "セダン", price: 400 },
+      { name: "シルビア", category: "スポーツ", price: 300 },
       { name: "フェアレディZ", category: "スポーツ", price: 550 },
-      { name: "デイズ", category: "軽自動車", price: 150 },
-      { name: "ルークス", category: "軽自動車", price: 170 }
+      { name: "GT-R", category: "スポーツ", price: 1050 }
     ],
     "スズキ": [
+      { name: "アルト", category: "軽自動車", price: 120 },
       { name: "ワゴンR", category: "軽自動車", price: 140 },
       { name: "スペーシア", category: "軽自動車", price: 160 },
       { name: "ハスラー", category: "軽自動車", price: 150 },
+      { name: "エブリイ", category: "軽自動車", price: 150 },
       { name: "ジムニー", category: "SUV", price: 180 },
+      { name: "クロスビー", category: "SUV", price: 200 },
       { name: "スイフト", category: "コンパクト", price: 170 }
     ],
     "ダイハツ": [
+      { name: "ミライース", category: "軽自動車", price: 120 },
       { name: "タント", category: "軽自動車", price: 150 },
       { name: "ムーヴ", category: "軽自動車", price: 140 },
+      { name: "キャスト", category: "軽自動車", price: 150 },
       { name: "ロッキー", category: "SUV", price: 200 }
     ],
     "マツダ": [
       { name: "MAZDA2", category: "コンパクト", price: 190 },
+      { name: "アテンザ / MAZDA6", category: "セダン", price: 300 },
+      { name: "CX-3", category: "SUV", price: 220 },
       { name: "CX-5", category: "SUV", price: 300 },
       { name: "CX-30", category: "SUV", price: 260 },
+      { name: "CX-8", category: "SUV", price: 320 },
       { name: "ロードスター", category: "スポーツ", price: 280 }
     ],
     "スバル": [
       { name: "インプレッサ", category: "セダン", price: 240 },
+      { name: "レガシィ", category: "セダン", price: 320 },
+      { name: "XV / クロストレック", category: "SUV", price: 260 },
       { name: "フォレスター", category: "SUV", price: 300 },
-      { name: "レヴォーグ", category: "セダン", price: 320 }
+      { name: "レヴォーグ", category: "セダン", price: 320 },
+      { name: "BRZ", category: "スポーツ", price: 300 }
     ],
     "三菱": [
+      { name: "eKワゴン", category: "軽自動車", price: 150 },
+      { name: "ミラージュ", category: "コンパクト", price: 150 },
+      { name: "RVR", category: "SUV", price: 250 },
       { name: "デリカD:5", category: "ミニバン", price: 350 },
-      { name: "アウトランダーPHEV", category: "SUV", price: 450 },
-      { name: "eKワゴン", category: "軽自動車", price: 150 }
+      { name: "アウトランダーPHEV", category: "SUV", price: 450 }
     ],
     "レクサス": [
+      { name: "IS", category: "セダン", price: 400 },
+      { name: "ES", category: "セダン", price: 500 },
+      { name: "UX", category: "SUV", price: 350 },
       { name: "NX", category: "SUV", price: 500 },
-      { name: "RX", category: "SUV", price: 650 }
+      { name: "RX", category: "SUV", price: 650 },
+      { name: "LS", category: "セダン", price: 900 }
     ],
     "輸入車": [
+      { name: "フォルクスワーゲン ゴルフ", category: "輸入車", price: 350 },
+      { name: "MINI クーパー", category: "輸入車", price: 320 },
       { name: "BMW 3シリーズ", category: "輸入車", price: 550 },
       { name: "メルセデスベンツ Cクラス", category: "輸入車", price: 550 },
-      { name: "アウディA4", category: "輸入車", price: 500 }
+      { name: "アウディA4", category: "輸入車", price: 500 },
+      { name: "ボルボ XC60", category: "輸入車", price: 550 }
     ]
   };
+
+  const GRADE_INFO = {
+    "low": 0.92,
+    "standard": 1.00,
+    "high": 1.08
+  };
+
+  const COLOR_DB = [
+    { name: "パールホワイト", factor: 1.04 },
+    { name: "ホワイト", factor: 1.03 },
+    { name: "ブラック", factor: 1.03 },
+    { name: "シルバー", factor: 1.02 },
+    { name: "グレー", factor: 1.00 },
+    { name: "ダークブルー", factor: 0.99 },
+    { name: "ブルー", factor: 0.98 },
+    { name: "レッド", factor: 0.98 },
+    { name: "ブラウン", factor: 0.97 },
+    { name: "ベージュ", factor: 0.97 },
+    { name: "グリーン", factor: 0.95 },
+    { name: "イエロー", factor: 0.94 },
+    { name: "オレンジ", factor: 0.94 },
+    { name: "パープル", factor: 0.93 },
+    { name: "ピンク", factor: 0.93 }
+  ];
+
+  const POPULAR_COLOR_THRESHOLD = 1.02;
+
+  const COMPANIES = [
+    {
+      name: "ジャパン買取センター",
+      type: "国内・大手",
+      note: "幅広い車種を平均的な相場で査定。まず最初の目安に。",
+      categoryMultiplier: {},
+      flatMultiplier: 1.00,
+      perk: "査定成立でギフト券3,000円分プレゼント",
+      bonus: 0.3
+    },
+    {
+      name: "堅実オート買取",
+      type: "国内・慎重査定",
+      note: "走行距離やコンディションを厳しめにチェックする傾向。",
+      categoryMultiplier: {},
+      flatMultiplier: 0.93,
+      perk: "無料出張査定・最短当日振込に対応",
+      bonus: 0
+    },
+    {
+      name: "インポート＆スポーツ専門店",
+      type: "国内・専門店",
+      note: "輸入車・スポーツカーは高評価。軽・ミニバンは控えめ。",
+      categoryMultiplier: { "輸入車": 1.15, "スポーツ": 1.15, "軽自動車": 0.90, "ミニバン": 0.93 },
+      flatMultiplier: 1.00,
+      perk: "他社見積書の提示で査定額をさらに+2%",
+      bonus: 0
+    },
+    {
+      name: "グローバル輸出オート",
+      type: "海外輸出",
+      note: "SUV・ミニバン・軽自動車は海外需要が高く高評価。国産の輸入車は控えめ。",
+      categoryMultiplier: { "SUV": 1.15, "ミニバン": 1.12, "軽自動車": 1.05, "輸入車": 0.90, "セダン": 0.97 },
+      flatMultiplier: 1.00,
+      perk: "輸出成約で陸送費・書類手続き費用が無料",
+      bonus: 0.5
+    }
+  ];
+
+  function companyMultiplier(company, category) {
+    const catMult = company.categoryMultiplier[category] != null ? company.categoryMultiplier[category] : 1.0;
+    return catMult * company.flatMultiplier;
+  }
 
   const CATEGORY_INFO = {
     "軽自動車": { rate: 0.90, floor: 0.20 },
@@ -397,6 +633,27 @@
   makerSelect.addEventListener("change", populateModels);
   populateModels();
 
+  const color1Select = document.getElementById("color1");
+  const color2Select = document.getElementById("color2");
+  const color2Field = document.getElementById("color2Field");
+  const twotoneCheckbox = document.getElementById("twotone");
+
+  COLOR_DB.forEach(c => {
+    const opt1 = document.createElement("option");
+    opt1.value = c.name;
+    opt1.textContent = c.name;
+    color1Select.appendChild(opt1);
+    const opt2 = document.createElement("option");
+    opt2.value = c.name;
+    opt2.textContent = c.name;
+    color2Select.appendChild(opt2);
+  });
+  color2Select.value = "ブラック";
+
+  twotoneCheckbox.addEventListener("change", () => {
+    color2Field.hidden = !twotoneCheckbox.checked;
+  });
+
   function fmt(n) {
     return Math.round(n).toLocaleString("ja-JP");
   }
@@ -419,11 +676,14 @@
     const model = (CAR_DB[maker] || []).find(m => m.name === modelName);
     if (!model) return;
 
+    const grade = document.getElementById("grade").value;
     const year = parseInt(yearInput.value, 10);
     const mileage = parseFloat(document.getElementById("mileage").value);
     const repair = document.getElementById("repair").value;
     const shaken = parseFloat(document.getElementById("shaken").value) || 0;
-    const color = document.getElementById("color").value;
+    const color1 = COLOR_DB.find(c => c.name === color1Select.value);
+    const isTwotone = twotoneCheckbox.checked;
+    const color2 = isTwotone ? COLOR_DB.find(c => c.name === color2Select.value) : null;
     const smoke = document.getElementById("smoke").checked;
 
     if (!year || isNaN(mileage)) {
@@ -434,9 +694,12 @@
     const age = Math.max(0, currentYear - year);
     const info = CATEGORY_INFO[model.category];
 
+    // 0. グレード
+    const gradePrice = model.price * GRADE_INFO[grade];
+
     // 1. 経年劣化
     const ageFactor = Math.max(info.floor, Math.pow(info.rate, age));
-    const afterAge = model.price * ageFactor;
+    const afterAge = gradePrice * ageFactor;
 
     // 2. 走行距離
     const expectedMileage = Math.max(age, 0.5) * 10000;
@@ -453,34 +716,83 @@
     const smokeFactor = smoke ? 0.95 : 1.0;
     const afterSmoke = afterRepair * smokeFactor;
 
-    // 5. ボディカラー
-    const colorFactor = color === "popular" ? 1.02 : color === "unique" ? 0.97 : 1.0;
+    // 5. ボディカラー（ツートンは平均＋希少性による補正）
+    let colorFactor;
+    let colorLabel;
+    if (isTwotone) {
+      const avg = (color1.factor + color2.factor) / 2;
+      const bothPopular = color1.factor >= POPULAR_COLOR_THRESHOLD && color2.factor >= POPULAR_COLOR_THRESHOLD;
+      const twotonePenalty = bothPopular ? 0.99 : 0.97;
+      colorFactor = avg * twotonePenalty;
+      colorLabel = `${color1.name} × ${color2.name}（ツートン）`;
+    } else {
+      colorFactor = color1.factor;
+      colorLabel = color1.name;
+    }
     const afterColor = afterSmoke * colorFactor;
 
     // 6. 車検残り（万円換算で加算、上限あり）
     const shakenBonus = Math.min(Math.max(shaken, 0), 24) * 0.5;
 
-    const finalValue = Math.max(5, afterColor + shakenBonus);
-    const low = finalValue * 0.9;
-    const high = finalValue * 1.1;
-
-    document.getElementById("priceLow").textContent = fmt(low);
-    document.getElementById("priceHigh").textContent = fmt(high);
+    const appraisalBase = Math.max(5, afterColor) + shakenBonus;
 
     const table = document.getElementById("breakdownTable");
     table.innerHTML = "";
-    addRow(table, `新車価格の目安（${model.category}）`, `${fmt(model.price)} 万円`);
+    addRow(table, `新車価格の目安（${model.category}・${grade === "low" ? "廉価" : grade === "high" ? "上位" : "標準"}グレード）`, `${fmt(gradePrice)} 万円`);
     addRow(table, `経過年数 ${age}年による減価`, `${fmt(afterAge)} 万円`);
     addRow(table, `走行距離による調整（${mileageRatio >= 0 ? "+" : ""}${(mileageRatio * 100).toFixed(1)}%）`,
       `<span class="${mileageRatio >= 0 ? "plus" : "minus"}">${fmt(afterMileage)} 万円</span>`);
     addRow(table, `修復歴：${repair === "yes" ? "あり" : "なし"}`, `${fmt(afterRepair)} 万円`);
     addRow(table, `車内喫煙：${smoke ? "あり" : "なし"}`, `${fmt(afterSmoke)} 万円`);
-    addRow(table, `ボディカラー評価`, `${fmt(afterColor)} 万円`);
+    addRow(table, `ボディカラー評価（${colorLabel}）`, `${fmt(afterColor)} 万円`);
     addRow(table, `車検残り ${shaken}ヶ月分の加算`, `<span class="plus">+${fmt(shakenBonus)} 万円</span>`);
-    addRow(table, "概算査定額（中央値）", `${fmt(finalValue)} 万円`, true);
+    addRow(table, "査定ベース額（各社共通の出発点）", `${fmt(appraisalBase)} 万円`, true);
+
+    // 会社別の見積もり
+    const quotes = COMPANIES.map(company => {
+      const mult = companyMultiplier(company, model.category);
+      const amount = Math.max(5, appraisalBase * mult + company.bonus);
+      return { company, amount };
+    }).sort((a, b) => b.amount - a.amount);
+
+    document.getElementById("priceLow").textContent = fmt(quotes[quotes.length - 1].amount);
+    document.getElementById("priceHigh").textContent = fmt(quotes[0].amount);
+
+    const companyList = document.getElementById("companyList");
+    companyList.innerHTML = "";
+    quotes.forEach((q, i) => {
+      const card = document.createElement("div");
+      card.className = "company-card" + (i === 0 ? " best" : "");
+      card.innerHTML = `
+        <div class="company-main">
+          <div class="company-name">${q.company.name}
+            <span class="company-type">${q.company.type}</span>
+            ${i === 0 ? '<span class="company-best-tag">最高額</span>' : ""}
+          </div>
+          <div class="company-note">${q.company.note}</div>
+          <div class="company-perk">特典：${q.company.perk}</div>
+        </div>
+        <div class="company-amount">${fmt(q.amount)}<span class="unit"> 万円</span></div>
+      `;
+      companyList.appendChild(card);
+    });
+
+    // 印刷用ヘッダー
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
+    document.getElementById("quoteHeader").innerHTML = `
+      <div class="quote-title">概算見積書</div>
+      <div>発行日：${dateStr}</div>
+      <div>車両：${maker} ${modelName}（${grade === "low" ? "廉価" : grade === "high" ? "上位" : "標準"}グレード）／初度登録 ${year}年／走行距離 ${fmt(mileage)}km</div>
+      <div>修復歴：${repair === "yes" ? "あり" : "なし"}／ボディカラー：${colorLabel}／車検残り：${shaken}ヶ月</div>
+    `;
 
     document.getElementById("emptyState").hidden = true;
     document.getElementById("resultBody").hidden = false;
+  });
+
+  document.getElementById("printBtn").addEventListener("click", () => {
+    window.print();
   });
 </script>
 </body>
