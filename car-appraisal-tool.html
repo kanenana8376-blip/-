@@ -670,11 +670,11 @@
     table.appendChild(tr);
   }
 
-  document.getElementById("calcBtn").addEventListener("click", () => {
+  function runCalculation() {
     const maker = makerSelect.value;
     const modelName = modelSelect.value;
     const model = (CAR_DB[maker] || []).find(m => m.name === modelName);
-    if (!model) return;
+    if (!model) return false;
 
     const grade = document.getElementById("grade").value;
     const year = parseInt(yearInput.value, 10);
@@ -688,7 +688,7 @@
 
     if (!year || isNaN(mileage)) {
       alert("初度登録年と走行距離を入力してください。");
-      return;
+      return false;
     }
 
     const age = Math.max(0, currentYear - year);
@@ -789,10 +789,15 @@
 
     document.getElementById("emptyState").hidden = true;
     document.getElementById("resultBody").hidden = false;
-  });
+    return true;
+  }
+
+  document.getElementById("calcBtn").addEventListener("click", runCalculation);
 
   document.getElementById("printBtn").addEventListener("click", () => {
-    window.print();
+    if (runCalculation()) {
+      window.print();
+    }
   });
 </script>
 </body>
