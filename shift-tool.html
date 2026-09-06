@@ -3742,20 +3742,41 @@ function exportToExcel() {
   showLoading(true);
   // yield to the browser so the loading overlay actually paints before the
   // (synchronous, CPU-bound) workbook build blocks the main thread
-  setTimeout(() => {
+  setTimeout(async () => {
+    const fname = `外来看護師勤務表_${year}年${month}月.xlsx`;
     try {
       const bytes = buildFullWorkbook(STAFF, shifts, year, month, codeColors(), DEPARTMENTS, COMMITTEES, EVENTS);
       const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      const url = URL.createObjectURL(blob);
-      const fname = `外来看護師勤務表_${year}年${month}月.xlsx`;
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fname;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showToast(`${fname} をダウンロードしました（全10シート）`);
+
+      // Claude Artifacts sandboxes script-driven downloads, so inside the
+      // Artifacts viewer we must hand the file over via the `downloads`
+      // capability instead of clicking a plain <a download> link.
+      const canUseDownloadsCapability = window.claude && typeof window.claude.use === 'function';
+      const downloads = canUseDownloadsCapability ? await window.claude.use('downloads') : null;
+
+      if (downloads) {
+        try {
+          await downloads.save({ filename: fname, data: blob });
+          showToast(`${fname} を保存しました（全10シート）`);
+        } catch (err) {
+          if (err && err.code === 'declined') {
+            // user cancelled the save prompt; nothing to report
+          } else {
+            showToast('保存に失敗しました: ' + (err && err.message ? err.message : err), 'error');
+            console.error(err);
+          }
+        }
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fname;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast(`${fname} をダウンロードしました（全10シート）`);
+      }
     } catch (e) {
       showToast('ダウンロードに失敗しました: ' + e.message, 'error');
       console.error(e);
