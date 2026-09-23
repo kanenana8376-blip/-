@@ -240,6 +240,10 @@
     padding: 18px;
     width: 320px;
     max-width: 92vw;
+    /* スタッフ編集は項目が多く画面の低いノートPCでは入りきらないため、
+       中身が長いときはダイアログ内でスクロールできるようにする */
+    max-height: 92vh;
+    overflow-y: auto;
   }
   .picker-box h3 {
     font-size: 14px;
@@ -464,29 +468,36 @@
     line-height: 1.5;
     margin: 4px 0 10px;
   }
+  /* 曜日ごとの夜勤の可否。横7列だと「夜勤とも不可」が読めないので縦並び */
   .night-ng-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
-  .night-ng-grid > div { text-align: center; }
+  .night-ng-grid > div {
+    display: grid;
+    grid-template-columns: 2.6em 1fr;
+    align-items: center;
+    gap: 8px;
+  }
   .night-ng-grid span {
-    display: block;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     color: var(--muted);
-    margin-bottom: 3px;
+    text-align: center;
   }
   .night-ng-grid span.sun { color: #c0392b; }
   .night-ng-grid span.sat { color: #2566a8; }
   .night-ng-grid select {
     width: 100%;
-    padding: 5px 2px;
+    padding: 5px 6px;
     border: 1px solid var(--line);
     border-radius: 6px;
-    font-size: 10.5px;
+    font-size: 12px;
     font-family: inherit;
   }
+  /* 設定済みの曜日は一目で分かるようにする */
+  .night-ng-grid select:not([value=""]) { border-color: var(--navy); }
   .form-hint {
     font-size: 11px;
     color: var(--muted);
@@ -1191,7 +1202,7 @@
       <label>夜勤に入れない曜日</label>
       <div class="night-ng-grid" id="editNightNg">
           <div>
-            <span class="sun">日</span>
+            <span class="sun">日曜</span>
             <select data-ng="0">
               <option value="">―</option>
               <option value="junya">准夜だけ不可</option>
@@ -1200,7 +1211,7 @@
             </select>
           </div>
           <div>
-            <span class="">月</span>
+            <span class="">月曜</span>
             <select data-ng="1">
               <option value="">―</option>
               <option value="junya">准夜だけ不可</option>
@@ -1209,7 +1220,7 @@
             </select>
           </div>
           <div>
-            <span class="">火</span>
+            <span class="">火曜</span>
             <select data-ng="2">
               <option value="">―</option>
               <option value="junya">准夜だけ不可</option>
@@ -1218,7 +1229,7 @@
             </select>
           </div>
           <div>
-            <span class="">水</span>
+            <span class="">水曜</span>
             <select data-ng="3">
               <option value="">―</option>
               <option value="junya">准夜だけ不可</option>
@@ -1227,7 +1238,7 @@
             </select>
           </div>
           <div>
-            <span class="">木</span>
+            <span class="">木曜</span>
             <select data-ng="4">
               <option value="">―</option>
               <option value="junya">准夜だけ不可</option>
@@ -1236,7 +1247,7 @@
             </select>
           </div>
           <div>
-            <span class="">金</span>
+            <span class="">金曜</span>
             <select data-ng="5">
               <option value="">―</option>
               <option value="junya">准夜だけ不可</option>
@@ -1245,7 +1256,7 @@
             </select>
           </div>
           <div>
-            <span class="sat">土</span>
+            <span class="sat">土曜</span>
             <select data-ng="6">
               <option value="">―</option>
               <option value="junya">准夜だけ不可</option>
@@ -1253,8 +1264,6 @@
               <option value="both">夜勤とも不可</option>
             </select>
           </div>
-      </div>
-        `).join('')}
       </div>
       <div class="form-hint">「月曜と水曜は夜勤に入れない」のような個人の約束ごとを設定します。日曜を休みにしたい方は、<b>土曜を「准夜だけ不可」</b>にしてください（准夜勤は日曜の明け方までかかるためです）。</div>
     </div>
