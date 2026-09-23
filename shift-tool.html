@@ -3893,25 +3893,52 @@ function showToast(msg, type) {
   setTimeout(() => t.classList.remove('show'), 2600);
 }
 
+// ファイルの渡し方は開き方によって変わる。
+//   ・HTMLファイルを直接開いた場合 … 通常のリンクでダウンロードする
+//   ・Webページ（claude.ai）で開いた場合 … ページから直接の保存が禁じられて
+//     いるため、閲覧者に確認を出す仕組みを通して渡す
+// どちらで開かれても動くよう、使える方を選ぶ。
+async function saveGeneratedFile(blob, filename) {
+  try {
+    const downloads = window.claude && window.claude.use ? await window.claude.use('downloads') : null;
+    if (downloads) {
+      await downloads.save({ filename, data: blob });
+      return { ok: true, via: 'viewer' };
+    }
+  } catch (e) {
+    // 閲覧者が「保存しない」を選んだ場合など。リンク方式にも切り替えない
+    // （このページでは禁止されているため）ので、そのまま理由を返す。
+    return { ok: false, code: (e && e.code) || 'unavailable', message: (e && e.message) || '' };
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  return { ok: true, via: 'link' };
+}
+
 function exportToExcel() {
   const [year, month] = getYearMonth();
   showLoading(true);
   // yield to the browser so the loading overlay actually paints before the
   // (synchronous, CPU-bound) workbook build blocks the main thread
-  setTimeout(() => {
+  setTimeout(async () => {
     try {
       const bytes = buildFullWorkbook(STAFF, shifts, year, month, codeColors(), DEPARTMENTS, COMMITTEES, EVENTS);
       const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      const url = URL.createObjectURL(blob);
       const fname = `外来看護師勤務表_${year}年${month}月.xlsx`;
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fname;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showToast(`${fname} をダウンロードしました（全10シート）`);
+      const res = await saveGeneratedFile(blob, fname);
+      if (res.ok) {
+        showToast(`${fname} をダウンロードしました（全10シート）`);
+      } else if (res.code === 'declined') {
+        showToast('ダウンロードを取り消しました');
+      } else {
+        showToast('ダウンロードできませんでした。HTMLファイル版をお使いください', 'error');
+      }
     } catch (e) {
       showToast('ダウンロードに失敗しました: ' + e.message, 'error');
       console.error(e);
