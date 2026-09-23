@@ -468,36 +468,39 @@
     line-height: 1.5;
     margin: 4px 0 10px;
   }
-  /* 曜日ごとの夜勤の可否。横7列だと「夜勤とも不可」が読めないので縦並び */
+  /* 曜日ごとの夜勤の可否。ルールごとに曜日をまとめてチェックする */
   .night-ng-grid {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
   }
-  .night-ng-grid > div {
+  .night-ng-row {
     display: grid;
-    grid-template-columns: 2.6em 1fr;
+    grid-template-columns: 6.2em repeat(7, 1fr);
     align-items: center;
-    gap: 8px;
-  }
-  .night-ng-grid span {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--muted);
-    text-align: center;
-  }
-  .night-ng-grid span.sun { color: #c0392b; }
-  .night-ng-grid span.sat { color: #2566a8; }
-  .night-ng-grid select {
-    width: 100%;
-    padding: 5px 6px;
+    gap: 2px;
     border: 1px solid var(--line);
     border-radius: 6px;
-    font-size: 12px;
-    font-family: inherit;
+    padding: 5px 6px;
   }
-  /* 設定済みの曜日は一目で分かるようにする */
-  .night-ng-grid select:not([value=""]) { border-color: var(--navy); }
+  .night-ng-row .ng-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .night-ng-row label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--muted);
+    cursor: pointer;
+    gap: 1px;
+  }
+  .night-ng-row label.sun { color: #c0392b; }
+  .night-ng-row label.sat { color: #2566a8; }
+  .night-ng-row input { margin: 0; cursor: pointer; }
   .form-hint {
     font-size: 11px;
     color: var(--muted);
@@ -1201,71 +1204,38 @@
     <div class="form-row">
       <label>夜勤に入れない曜日</label>
       <div class="night-ng-grid" id="editNightNg">
-          <div>
-            <span class="sun">日曜</span>
-            <select data-ng="0">
-              <option value="">―</option>
-              <option value="junya">准夜だけ不可</option>
-              <option value="shinya">深夜だけ不可</option>
-              <option value="both">夜勤とも不可</option>
-            </select>
-          </div>
-          <div>
-            <span class="">月曜</span>
-            <select data-ng="1">
-              <option value="">―</option>
-              <option value="junya">准夜だけ不可</option>
-              <option value="shinya">深夜だけ不可</option>
-              <option value="both">夜勤とも不可</option>
-            </select>
-          </div>
-          <div>
-            <span class="">火曜</span>
-            <select data-ng="2">
-              <option value="">―</option>
-              <option value="junya">准夜だけ不可</option>
-              <option value="shinya">深夜だけ不可</option>
-              <option value="both">夜勤とも不可</option>
-            </select>
-          </div>
-          <div>
-            <span class="">水曜</span>
-            <select data-ng="3">
-              <option value="">―</option>
-              <option value="junya">准夜だけ不可</option>
-              <option value="shinya">深夜だけ不可</option>
-              <option value="both">夜勤とも不可</option>
-            </select>
-          </div>
-          <div>
-            <span class="">木曜</span>
-            <select data-ng="4">
-              <option value="">―</option>
-              <option value="junya">准夜だけ不可</option>
-              <option value="shinya">深夜だけ不可</option>
-              <option value="both">夜勤とも不可</option>
-            </select>
-          </div>
-          <div>
-            <span class="">金曜</span>
-            <select data-ng="5">
-              <option value="">―</option>
-              <option value="junya">准夜だけ不可</option>
-              <option value="shinya">深夜だけ不可</option>
-              <option value="both">夜勤とも不可</option>
-            </select>
-          </div>
-          <div>
-            <span class="sat">土曜</span>
-            <select data-ng="6">
-              <option value="">―</option>
-              <option value="junya">准夜だけ不可</option>
-              <option value="shinya">深夜だけ不可</option>
-              <option value="both">夜勤とも不可</option>
-            </select>
-          </div>
+        <div class="night-ng-row">
+          <span class="ng-label">夜勤とも不可</span>
+          <label class="sun"><input type="checkbox" data-ng-rule="both" data-ng-day="0">日</label>
+          <label class=""><input type="checkbox" data-ng-rule="both" data-ng-day="1">月</label>
+          <label class=""><input type="checkbox" data-ng-rule="both" data-ng-day="2">火</label>
+          <label class=""><input type="checkbox" data-ng-rule="both" data-ng-day="3">水</label>
+          <label class=""><input type="checkbox" data-ng-rule="both" data-ng-day="4">木</label>
+          <label class=""><input type="checkbox" data-ng-rule="both" data-ng-day="5">金</label>
+          <label class="sat"><input type="checkbox" data-ng-rule="both" data-ng-day="6">土</label>
+        </div>
+        <div class="night-ng-row">
+          <span class="ng-label">准夜だけ不可</span>
+          <label class="sun"><input type="checkbox" data-ng-rule="junya" data-ng-day="0">日</label>
+          <label class=""><input type="checkbox" data-ng-rule="junya" data-ng-day="1">月</label>
+          <label class=""><input type="checkbox" data-ng-rule="junya" data-ng-day="2">火</label>
+          <label class=""><input type="checkbox" data-ng-rule="junya" data-ng-day="3">水</label>
+          <label class=""><input type="checkbox" data-ng-rule="junya" data-ng-day="4">木</label>
+          <label class=""><input type="checkbox" data-ng-rule="junya" data-ng-day="5">金</label>
+          <label class="sat"><input type="checkbox" data-ng-rule="junya" data-ng-day="6">土</label>
+        </div>
+        <div class="night-ng-row">
+          <span class="ng-label">深夜だけ不可</span>
+          <label class="sun"><input type="checkbox" data-ng-rule="shinya" data-ng-day="0">日</label>
+          <label class=""><input type="checkbox" data-ng-rule="shinya" data-ng-day="1">月</label>
+          <label class=""><input type="checkbox" data-ng-rule="shinya" data-ng-day="2">火</label>
+          <label class=""><input type="checkbox" data-ng-rule="shinya" data-ng-day="3">水</label>
+          <label class=""><input type="checkbox" data-ng-rule="shinya" data-ng-day="4">木</label>
+          <label class=""><input type="checkbox" data-ng-rule="shinya" data-ng-day="5">金</label>
+          <label class="sat"><input type="checkbox" data-ng-rule="shinya" data-ng-day="6">土</label>
+        </div>
       </div>
-      <div class="form-hint">「月曜と水曜は夜勤に入れない」のような個人の約束ごとを設定します。日曜を休みにしたい方は、<b>土曜を「准夜だけ不可」</b>にしてください（准夜勤は日曜の明け方までかかるためです）。</div>
+      <div class="form-hint">「月曜と水曜は夜勤に入れない」のような個人の約束ごとを、曜日にチェックを付けて設定します。日曜を休みにしたい方は、<b>「准夜だけ不可」の土曜</b>にチェックを付けてください（准夜勤は日曜の明け方までかかるためです）。同じ曜日には1つのルールだけが付きます。</div>
     </div>
     <div class="form-row">
       <label>有給の年間付与日数</label>
@@ -4101,8 +4071,16 @@ function openStaffEdit(staffNo) {
   document.getElementById('editDepTime').value = staff && staff.depTime ? String(staff.depTime) : '';
   document.getElementById('editNightType').value = staff && staff.nightType ? staff.nightType : 'free';
   const ngRules = (staff && staff.nightNg) || {};
-  document.querySelectorAll('#editNightNg select[data-ng]').forEach(sel => {
-    sel.value = ngRules[sel.dataset.ng] || '';
+  document.querySelectorAll('#editNightNg input[data-ng-day]').forEach(box => {
+    box.checked = ngRules[box.dataset.ngDay] === box.dataset.ngRule;
+    // 1つの曜日に複数のルールは付かない（准夜不可かつ深夜不可＝夜勤とも不可）
+    // ので、ある曜日にチェックを入れたら同じ曜日の他のルールは外す。
+    box.onchange = () => {
+      if (!box.checked) return;
+      document.querySelectorAll(`#editNightNg input[data-ng-day="${box.dataset.ngDay}"]`).forEach(other => {
+        if (other !== box) other.checked = false;
+      });
+    };
   });
   document.getElementById('editPaidLeaveGranted').value = staff ? paidLeaveGranted(staff) : DEFAULT_PAID_LEAVE;
   document.getElementById('editPaidLeaveUsedBefore').value = staff ? paidLeaveUsedBefore(staff) : 0;
@@ -4134,8 +4112,8 @@ function saveStaffEdit() {
   const depTime = depTimeRaw ? parseInt(depTimeRaw, 10) : null;
   const nightType = document.getElementById('editNightType').value;
   const nightNg = {};
-  document.querySelectorAll('#editNightNg select[data-ng]').forEach(sel => {
-    if (sel.value) nightNg[parseInt(sel.dataset.ng, 10)] = sel.value;
+  document.querySelectorAll('#editNightNg input[data-ng-day]:checked').forEach(box => {
+    nightNg[parseInt(box.dataset.ngDay, 10)] = box.dataset.ngRule;
   });
   const paidLeaveGrantedVal = Math.max(0, parseInt(document.getElementById('editPaidLeaveGranted').value, 10) || 0);
   const paidLeaveUsedBeforeVal = Math.max(0, parseInt(document.getElementById('editPaidLeaveUsedBefore').value, 10) || 0);
