@@ -464,6 +464,29 @@
     line-height: 1.5;
     margin: 4px 0 10px;
   }
+  .night-ng-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+  }
+  .night-ng-grid > div { text-align: center; }
+  .night-ng-grid span {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .night-ng-grid span.sun { color: #c0392b; }
+  .night-ng-grid span.sat { color: #2566a8; }
+  .night-ng-grid select {
+    width: 100%;
+    padding: 5px 2px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 10.5px;
+    font-family: inherit;
+  }
   .form-hint {
     font-size: 11px;
     color: var(--muted);
@@ -1163,6 +1186,77 @@
         <option value="set_required">准夜・深夜とも可、必ずセット（准夜→深夜）で入れる</option>
         <option value="set_ok">セットも単発も可（准夜→深夜のセットを優先、単発・2夜連続も可）</option>
       </select>
+    </div>
+    <div class="form-row">
+      <label>夜勤に入れない曜日</label>
+      <div class="night-ng-grid" id="editNightNg">
+          <div>
+            <span class="sun">日</span>
+            <select data-ng="0">
+              <option value="">―</option>
+              <option value="junya">准夜だけ不可</option>
+              <option value="shinya">深夜だけ不可</option>
+              <option value="both">夜勤とも不可</option>
+            </select>
+          </div>
+          <div>
+            <span class="">月</span>
+            <select data-ng="1">
+              <option value="">―</option>
+              <option value="junya">准夜だけ不可</option>
+              <option value="shinya">深夜だけ不可</option>
+              <option value="both">夜勤とも不可</option>
+            </select>
+          </div>
+          <div>
+            <span class="">火</span>
+            <select data-ng="2">
+              <option value="">―</option>
+              <option value="junya">准夜だけ不可</option>
+              <option value="shinya">深夜だけ不可</option>
+              <option value="both">夜勤とも不可</option>
+            </select>
+          </div>
+          <div>
+            <span class="">水</span>
+            <select data-ng="3">
+              <option value="">―</option>
+              <option value="junya">准夜だけ不可</option>
+              <option value="shinya">深夜だけ不可</option>
+              <option value="both">夜勤とも不可</option>
+            </select>
+          </div>
+          <div>
+            <span class="">木</span>
+            <select data-ng="4">
+              <option value="">―</option>
+              <option value="junya">准夜だけ不可</option>
+              <option value="shinya">深夜だけ不可</option>
+              <option value="both">夜勤とも不可</option>
+            </select>
+          </div>
+          <div>
+            <span class="">金</span>
+            <select data-ng="5">
+              <option value="">―</option>
+              <option value="junya">准夜だけ不可</option>
+              <option value="shinya">深夜だけ不可</option>
+              <option value="both">夜勤とも不可</option>
+            </select>
+          </div>
+          <div>
+            <span class="sat">土</span>
+            <select data-ng="6">
+              <option value="">―</option>
+              <option value="junya">准夜だけ不可</option>
+              <option value="shinya">深夜だけ不可</option>
+              <option value="both">夜勤とも不可</option>
+            </select>
+          </div>
+      </div>
+        `).join('')}
+      </div>
+      <div class="form-hint">「月曜と水曜は夜勤に入れない」のような個人の約束ごとを設定します。日曜を休みにしたい方は、<b>土曜を「准夜だけ不可」</b>にしてください（准夜勤は日曜の明け方までかかるためです）。</div>
     </div>
     <div class="form-row">
       <label>有給の年間付与日数</label>
@@ -2671,7 +2765,47 @@ STAFF.forEach(s => shifts.__locked[s.no] = {});
 //   どちらも希望した休みが1日分の休みにならないので入れない。
 // 手入力は止めない（例外的に入れたい場合もあるため）が、約束ごとに反する
 // ときは気づけるように知らせる。
+// 曜日ごとの夜勤の約束ごと。人によって「月曜と水曜は夜勤に入れない」
+// 「土曜は准夜勤だけ入れない（日曜の明け方までかかり日曜が潰れるため）」
+// といった決まりがあるので、曜日 → 不可の種類 で持つ。
+//   staff.nightNg = { 1: 'both', 3: 'both', 6: 'junya' }  (0=日 … 6=土)
+//   'junya'=准夜だけ不可 / 'shinya'=深夜だけ不可 / 'both'=准夜・深夜とも不可
+const NIGHT_NG_LABELS = { junya: '准夜だけ不可', shinya: '深夜だけ不可', both: '夜勤とも不可' };
+
+function nightNgOnDay(staff, day, code) {
+  if (code !== '准' && code !== '深') return false;
+  const ng = staff.nightNg;
+  if (!ng) return false;
+  const [year, month] = getYearMonth();
+  const wd = new Date(year, month - 1, day).getDay();
+  const rule = ng[wd];
+  if (!rule) return false;
+  if (rule === 'both') return true;
+  return rule === (code === '准' ? 'junya' : 'shinya');
+}
+
+// スタッフ一覧に出す短い説明（「月・水は夜勤不可」など）
+function nightNgLabel(staff) {
+  const ng = staff.nightNg;
+  if (!ng) return '';
+  const groups = {};
+  Object.keys(ng).forEach(k => {
+    const rule = ng[k];
+    if (!rule) return;
+    (groups[rule] = groups[rule] || []).push(WEEKDAYS_JP[k]);
+  });
+  return Object.entries(groups)
+    .map(([rule, days]) => `${days.join('・')}は${rule === 'both' ? '夜勤' : rule === 'junya' ? '准夜' : '深夜'}不可`)
+    .join(' / ');
+}
+
 function warnIfNightBreaksPto(staff, day, code) {
+  if (nightNgOnDay(staff, day, code)) {
+    const [year, month] = getYearMonth();
+    const wd = WEEKDAYS_JP[new Date(year, month - 1, day).getDay()];
+    showToast(`${staff.name}さんは${wd}曜の${code === '准' ? '准夜勤' : '深夜勤'}に入れない約束です`, 'error');
+    return;
+  }
   if (code === '准' && hasPtoRequest(staff.no, day + 1)) {
     showToast(`${day + 1}日が休み希望のため、前日の${day}日に准夜勤は入れない約束です`, 'error');
   } else if (code === '深' && hasPtoRequest(staff.no, day - 1)) {
@@ -3027,7 +3161,7 @@ function renderDashboard() {
     // 休み希望の前後の夜勤（手入力や、シフト確定後に休み希望を足した場合に起きる）
     for (let d = 1; d <= nDays; d++) {
       const v = shifts[s.no][d];
-      if ((v === '准' || v === '深') && nightBlockedByPto(s.no, d, v)) {
+      if ((v === '准' || v === '深') && (nightBlockedByPto(s.no, d, v) || nightNgOnDay(s, d, v))) {
         ptoNightViolations.push({ staff: s, day: d, code: v });
       }
     }
@@ -3383,6 +3517,7 @@ function wireWeekPattern(staff) {
       if (!code) continue;
       if (isLocked(staff.no, d) || hasPtoRequest(staff.no, d)) { skipped++; continue; }
       if (nightBlockedByPto(staff.no, d, code)) { skipped++; continue; } // 休み希望の前後の夜勤制限
+      if (nightNgOnDay(staff, d, code)) { skipped++; continue; }         // 曜日ごとの夜勤の約束ごと
       if (onlyEmpty && shifts[staff.no][d]) continue;
       shifts[staff.no][d] = code;
       applied++;
@@ -3713,6 +3848,7 @@ function openAbsenceReplacement(staff, day) {
     if (isLocked(s.no, day)) return false;
     if (hasPtoRequest(s.no, day)) return false;
     if (nightBlockedByPto(s.no, day, val)) return false; // 休み希望の前後の夜勤制限
+    if (nightNgOnDay(s, day, val)) return false;         // 曜日ごとの夜勤の約束ごと
     const theirVal = shifts[s.no][day];
     if (theirVal && theirVal !== '公') return false; // already working that day
     const prevVal = day > 1 ? shifts[s.no][day - 1] : '';
@@ -3912,7 +4048,7 @@ function renderSidebarStaffManagement() {
     item.innerHTML = `
       <span>
         <div class="mgmt-main">${s.name}</div>
-        <div class="mgmt-sub">${s.cat}${s.depTime ? ' ・'+s.depTime+'時まで' : ''}${nightTypeLabel(s.nightType) ? ' ・'+nightTypeLabel(s.nightType) : ''}${committeeNames ? ' ・'+esc(committeeNames) : ''}</div>
+        <div class="mgmt-sub">${s.cat}${s.depTime ? ' ・'+s.depTime+'時まで' : ''}${nightTypeLabel(s.nightType) ? ' ・'+nightTypeLabel(s.nightType) : ''}${nightNgLabel(s) ? ' ・'+esc(nightNgLabel(s)) : ''}${committeeNames ? ' ・'+esc(committeeNames) : ''}</div>
       </span>
       <span class="mgmt-actions">
         <button data-act="edit">編集</button>
@@ -3955,6 +4091,10 @@ function openStaffEdit(staffNo) {
   document.getElementById('editSub2').innerHTML = deptSelectOptions(staff ? staff.sub2 : null);
   document.getElementById('editDepTime').value = staff && staff.depTime ? String(staff.depTime) : '';
   document.getElementById('editNightType').value = staff && staff.nightType ? staff.nightType : 'free';
+  const ngRules = (staff && staff.nightNg) || {};
+  document.querySelectorAll('#editNightNg select[data-ng]').forEach(sel => {
+    sel.value = ngRules[sel.dataset.ng] || '';
+  });
   document.getElementById('editPaidLeaveGranted').value = staff ? paidLeaveGranted(staff) : DEFAULT_PAID_LEAVE;
   document.getElementById('editPaidLeaveUsedBefore').value = staff ? paidLeaveUsedBefore(staff) : 0;
 
@@ -3984,17 +4124,21 @@ function saveStaffEdit() {
   const depTimeRaw = document.getElementById('editDepTime').value;
   const depTime = depTimeRaw ? parseInt(depTimeRaw, 10) : null;
   const nightType = document.getElementById('editNightType').value;
+  const nightNg = {};
+  document.querySelectorAll('#editNightNg select[data-ng]').forEach(sel => {
+    if (sel.value) nightNg[parseInt(sel.dataset.ng, 10)] = sel.value;
+  });
   const paidLeaveGrantedVal = Math.max(0, parseInt(document.getElementById('editPaidLeaveGranted').value, 10) || 0);
   const paidLeaveUsedBeforeVal = Math.max(0, parseInt(document.getElementById('editPaidLeaveUsedBefore').value, 10) || 0);
   const committees = Array.from(document.querySelectorAll('#editCommittees input[type="checkbox"]:checked')).map(el => parseInt(el.value, 10));
 
   if (editingStaffNo !== null) {
     const staff = STAFF.find(s => s.no === editingStaffNo);
-    Object.assign(staff, { name, cat, main, sub1, sub2, depTime, nightType, committees,
+    Object.assign(staff, { name, cat, main, sub1, sub2, depTime, nightType, nightNg, committees,
       paidLeaveGranted: paidLeaveGrantedVal, paidLeaveUsedBefore: paidLeaveUsedBeforeVal });
   } else {
     const newNo = STAFF.length ? Math.max(...STAFF.map(s => s.no)) + 1 : 1;
-    STAFF.push({ no: newNo, name, cat, main, sub1, sub2, depTime, nightType, committees,
+    STAFF.push({ no: newNo, name, cat, main, sub1, sub2, depTime, nightType, nightNg, committees,
       paidLeaveGranted: paidLeaveGrantedVal, paidLeaveUsedBefore: paidLeaveUsedBeforeVal });
     shifts[newNo] = {};
     shifts.__pto[newNo] = {};
@@ -4504,6 +4648,7 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
       if (isLocked(staff.no, d)) continue;
       if (hasPtoRequest(staff.no, d)) continue;                  // 休み希望の日
       if (nightBlockedByPto(staff.no, d, code)) continue;        // 休み希望の前後の夜勤制限
+      if (nightNgOnDay(staff, d, code)) continue;                // 曜日ごとの夜勤の約束ごと
       shifts[staff.no][d] = code;
       applied++;
     }
@@ -4637,6 +4782,7 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
             !isLocked(s.no, d) && !isLocked(s.no, d + 1) &&
             ['set_required', 'set_ok'].includes(s.nightType) &&
             !nightBlockedByPto(s.no, d, '准') && !nightBlockedByPto(s.no, d + 1, '深') &&
+            !nightNgOnDay(s, d, '准') && !nightNgOnDay(s, d + 1, '深') &&
             state[s.no].nightCount <= minNightCount &&
             state[s.no].workStreak < 4 && state[s.no].nightStreak === 0
           );
@@ -4681,6 +4827,7 @@ function autoFillSchedule(STAFF, shifts, DEPARTMENTS, year, month, nDays) {
         const baseEligible = s => !shifts[s.no][d] && !isLocked(s.no, d) && !s.depTime && s.cat !== '師長' &&
           !(isEmergency && isDeputy(s)) &&
           !nightBlockedByPto(s.no, d, code) &&
+          !nightNgOnDay(s, d, code) &&
           state[s.no].workStreak < 4 && nightTypeAllows(s);
         const nightSort = (a, b) => {
           const nightDiff = state[a.no].nightCount - state[b.no].nightCount;
