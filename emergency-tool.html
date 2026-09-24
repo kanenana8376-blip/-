@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>いま診てもらえる所</title>
+<style>
+  :root {
+    --navy: #1F4E79;
+    --ink: #2c2c2a;
+    --muted: #6b6b68;
+    --line: #d8d6cd;
+    --bg: #f7f5f0;
+    --panel: #ffffff;
+    --red: #c0392b;
+    --red-bg: #fdecea;
+    --green: #1e7b4a;
+    --green-bg: #e6f4ec;
+    --amber: #8a5a00;
+    --amber-bg: #fff4dc;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+  }
+  header {
+    background: var(--navy);
+    color: #fff;
+    padding: 14px 16px;
+  }
+  header h1 { font-size: 18px; margin: 0; }
+  header .sub { font-size: 12px; color: #cfe0ee; }
+  main { max-width: 720px; margin: 0 auto; padding: 12px 16px 40px; }
+
+  .proto {
+    background: var(--amber-bg);
+    color: var(--amber);
+    border: 1px solid #f0d9a8;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12.5px;
+    margin-bottom: 12px;
+  }
+
+  .urgent {
+    background: var(--red-bg);
+    border: 2px solid var(--red);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+  }
+  .urgent h2 { color: var(--red); font-size: 15px; margin: 0 0 6px; }
+  .urgent ul { margin: 0 0 10px; padding-left: 20px; font-size: 13.5px; }
+  .call-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .call {
+    flex: 1 1 140px;
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 8px;
+    padding: 10px 8px;
+    font-weight: 700;
+    font-size: 15px;
+    color: #fff;
+  }
+  .call small { display: block; font-weight: 400; font-size: 11px; opacity: .9; }
+  .call.c119 { background: var(--red); }
+  .call.c7119 { background: var(--navy); }
+  .call.c8000 { background: #2f7d8c; }
+  .urgent .more { font-size: 12.5px; margin-top: 8px; }
+  .urgent .more a { color: var(--navy); }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .panel h2 { font-size: 15px; margin: 0 0 10px; }
+  .field { margin-bottom: 12px; }
+  .field > label, .field > .lbl { display: block; font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  select, input[type="datetime-local"] {
+    width: 100%;
+    font-size: 16px;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: #fff;
+  }
+  .seg { display: flex; flex-wrap: wrap; gap: 6px; }
+  .seg label {
+    flex: 1 1 auto;
+    text-align: center;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 14px;
+    cursor: pointer;
+    background: #fff;
+  }
+  .seg input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .seg label:has(input:focus-visible) { outline: 2px solid var(--navy); outline-offset: 2px; }
+  .seg label:has(input:checked) { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .when-custom { margin-top: 6px; }
+  .nowline { font-size: 13px; color: var(--muted); margin-top: 6px; }
+
+  .group-title { font-size: 15px; margin: 18px 0 8px; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .card.open { border-left: 6px solid var(--green); }
+  .card.later { border-left: 6px solid #d9a400; }
+  .card.unknown { border-left: 6px solid #aaa; }
+  .card h3 { font-size: 15.5px; margin: 0 0 2px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 6px; }
+  .badge { font-size: 11.5px; padding: 1px 8px; border-radius: 10px; background: #eee; color: var(--ink); }
+  .badge.st-open { background: var(--green-bg); color: var(--green); font-weight: 700; }
+  .badge.st-later { background: var(--amber-bg); color: var(--amber); font-weight: 700; }
+  .card .row { font-size: 13px; color: var(--ink); }
+  .card .row .k { color: var(--muted); }
+  .card .hours { font-size: 12.5px; color: var(--muted); margin-top: 4px; white-space: pre-line; }
+  .card .note { font-size: 12.5px; background: #f3f2ed; border-radius: 6px; padding: 6px 8px; margin-top: 6px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .actions a {
+    font-size: 13px;
+    text-decoration: none;
+    border: 1px solid var(--navy);
+    color: var(--navy);
+    border-radius: 6px;
+    padding: 5px 10px;
+  }
+  .actions a.tel { background: var(--navy); color: #fff; font-weight: 700; }
+  .empty {
+    background: var(--panel);
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 13.5px;
+  }
+  details.ref { margin-top: 18px; }
+  details.ref summary { cursor: pointer; font-weight: 700; font-size: 14px; }
+  details.ref ul { font-size: 13px; padding-left: 20px; }
+  footer { font-size: 12px; color: var(--muted); margin-top: 20px; }
+  footer a { color: var(--navy); }
+</style>
+</head>
+<body>
+<header>
+  <h1>いま診てもらえる所（埼玉県）</h1>
+  <div class="sub">休日・夜間に自分で受診できる急患診療所をさがす</div>
+</header>
+<main>
+
+  <div class="proto">
+    <b>試作版です。</b>掲載データは検索で集めた未確認の情報で、公式情報との照合がまだです。実際に受診する前に、必ず施設へ電話で確認してください。
+  </div>
+
+  <section class="urgent" aria-label="すぐに119番">
+    <h2>こんなときは迷わず 119番</h2>
+    <ul>
+      <li>意識がない・呼びかけに反応が鈍い、けいれんが止まらない</li>
+      <li>息が苦しい、顔色が悪い、胸や背中の激しい痛み</li>
+      <li>急に手足がしびれる・動かない、ろれつが回らない</li>
+      <li>大量の出血、大きなやけど、高いところからの転落 など</li>
+    </ul>
+    <div class="call-row">
+      <a class="call c119" href="tel:119">119番<small>救急車</small></a>
+      <a class="call c7119" href="tel:%237119">#7119<small>迷ったら相談（24時間）</small></a>
+      <a class="call c8000" href="tel:%238000">#8000<small>子どもの急病（24時間）</small></a>
+    </div>
+    <div class="more">
+      #7119がつながらない電話：<a href="tel:0488244199">048-824-4199</a> ／ #8000：<a href="tel:0488337911">048-833-7911</a><br>
+      チャットで相談：<a href="https://www.pref.saitama.lg.jp/a0703/aikyukyu.html" target="_blank" rel="noopener">埼玉県AI救急相談</a><br>
+      心の急な不調（夜間・休日）：精神科救急情報センター <a href="tel:0487238699">048-723-8699</a>
+    </div>
+  </section>
+
+  <section class="panel" aria-label="検索条件">
+    <h2>どこで・だれが・いつ</h2>
+    <div class="field">
+      <label for="area">地域</label>
+      <select id="area"></select>
+    </div>
+    <div class="field">
+      <span class="lbl">受診する人</span>
+      <div class="seg" id="who">
+        <label><input type="radio" name="who" value="adult" checked>大人</label>
+        <label><input type="radio" name="who" value="child">子ども（中学生まで）</label>
+      </div>
+    </div>
+    <div class="field">
+      <span class="lbl">症状</span>
+      <div class="seg" id="dept">
+        <label><input type="radio" name="dept" value="内科" checked>熱・腹痛など（内科）</label>
+        <label><input type="radio" name="dept" value="外科">けが（外科）</label>
+        <label><input type="radio" name="dept" value="歯科">歯の痛み</label>
+      </div>
+    </div>
+    <div class="field">
+      <span class="lbl">いつ</span>
+      <div class="seg" id="when">
+        <label><input type="radio" name="when" value="now" checked>いま</label>
+        <label><input type="radio" name="when" value="custom">日時を指定</label>
+      </div>
+      <div class="when-custom" id="whenCustomBox" hidden>
+        <input type="datetime-local" id="whenCustom">
+      </div>
+      <div class="nowline" id="nowline"></div>
+    </div>
+  </section>
+
+  <div id="results"></div>
+
+  <details class="ref">
+    <summary>参考：地域の救命救急センター（三次救急）</summary>
+    <p style="font-size:13px">重い病気やけがの人が<b>救急車で運ばれる</b>施設です。自分で向かう先ではありません。重症と思ったら119番へ。</p>
+    <ul id="ccList"></ul>
+  </details>
+
+  <footer>
+    当日の当番医や、ここに載っていない地域の情報は
+    <a href="https://99.pref.saitama.lg.jp/" target="_blank" rel="noopener">埼玉県救急医療情報システム</a>
+    や
+    <a href="https://www.pref.saitama.lg.jp/a0703/20091228iryou/" target="_blank" rel="noopener">埼玉県「休日・夜間の急病などのときの医療機関」</a>
+    で確認できます。<br>
+    祝日データ：2026年・2027年分を収録。<span id="dataDate"></span>
+  </footer>
+</main>
+
+<script>
+// ---------------------------------------------------------------
+// データ（未確認）
+//   days: "weekday"=平日(月〜金), "sat", "sun", "holiday"=祝日・振替休日,
+//         "nenmatsu"=年末年始(12/29〜1/3)。日曜と祝日と年末年始をまとめて
+//         "kyujitsu" と書ける。"daily"=毎日。
+//   end が start より前なら翌日にまたがる（例 19:00〜06:00）。
+//   months: "odd"/"even" で奇数月・偶数月のみ実施。
+//   verified: 公式情報と照合済みなら true。
+//   slots が空の施設は時間の自動判定をせず「時間は要確認」に出す。
+// ---------------------------------------------------------------
+const DATA_DATE = "2026-09-24";
+
+const AREAS = [
+  { id: "saitama",   name: "さいたま市" },
+  { id: "kawaguchi", name: "川口市・蕨市・戸田市" },
+  { id: "ageo",      name: "上尾市・桶川市・伊奈町" },
+  { id: "asaka",     name: "朝霞市・志木市・和光市・新座市" },
+  { id: "tokorozawa",name: "所沢市・狭山市・入間市" },
+  { id: "kawagoe",   name: "川越市" },
+  { id: "hiki",      name: "東松山市・比企郡" },
+  { id: "koshigaya", name: "越谷市・草加市・八潮市・三郷市" },
+  { id: "kasukabe",  name: "春日部市" },
+  { id: "kuki",      name: "久喜市・加須市・幸手市" },
+  { id: "kumagaya",  name: "熊谷市・深谷市・寄居町" },
+  { id: "honjo",     name: "本庄市・児玉郡" },
+  { id: "chichibu",  name: "秩父市・秩父郡" },
+];
+
+const FACILITIES = [
+  {
+    name: "さいたま市浦和休日急患診療所",
+    area: "saitama",
+    address: "さいたま市浦和区常盤6-4-18 浦和区保健センター2階",
+    tel: "048-833-0119",
+    depts: ["内科", "小児科", "歯科"],
+    slots: [
+      { days: ["weekday"], start: "19:30", end: "22:00", depts: ["小児科"] },
+      { days: ["sat"], start: "19:00", end: "21:30", depts: ["内科", "小児科"] },
+      { days: ["kyujitsu"], start: "09:00", end: "11:30", depts: ["内科", "小児科"] },
+      { days: ["kyujitsu"], start: "13:00", end: "16:30", depts: ["内科", "小児科"] },
+      { days: ["kyujitsu"], start: "19:00", end: "21:30", depts: ["内科", "小児科"] },
+      { days: ["kyujitsu"], start: "09:00", end: "12:00", depts: ["歯科"] },
+    ],
+    note: "時間は受付時間の可能性があります。",
+    source: "https://www.city.saitama.lg.jp/002/001/017/006/p019179.html",
+  },
+  {
+    name: "さいたま市大宮休日夜間急患センター",
+    area: "saitama",
+    address: "さいたま市北区宮原町1-851（JCHOさいたま北部医療センター内）",
+    tel: "048-667-8180",
+    depts: ["内科", "小児科"],
+    slots: [],
+    hoursText: "休日の昼間と、夜間（19時〜翌朝）に診療しているとの情報があります。曜日・診療科ごとの時間は要確認。",
+    source: "https://www.omiyamed.com/med/",
+  },
+  {
+    name: "さいたま市与野休日急患診療所",
+    area: "saitama",
+    address: "さいたま市中央区本町西2-9-30",
+    tel: "048-711-6067",
+    depts: ["内科", "小児科"],
+    slots: [],
+    hoursText: "休日の診療。時間は要確認。",
+    source: "https://www.city.saitama.lg.jp/002/001/017/006/p019179.html",
+  },
+  {
+    name: "岩槻休日夜間急患診療所",
+    area: "saitama",
+    address: "さいたま市岩槻区府内1-8-1",
+    tel: "048-798-2221",
+    depts: ["内科", "小児科"],
+    slots: [],
+    hoursText: "休日と夜間（22時ごろまで）に診療。曜日・時間は要確認。",
+    source: "https://iwatsuki-med.or.jp/night.html",
+  },
+  {
+    name: "川口市こども夜間救急診療所",
+    area: "kawaguchi",
+    address: "川口市三ツ和1-14-3 鳩ヶ谷庁舎別棟1階",
+    tel: "048-299-8770",
+    depts: ["小児科"],
+    slots: [
+      { days: ["weekday"], start: "19:30", end: "23:00" },
+      { days: ["sat", "kyujitsu"], start: "17:30", end: "22:00" },
+    ],
+    note: "受付は終了の30分前まで。受診前に必ず電話を。診療所が閉まった後（翌朝8時まで）は市内3病院が当番で子どもを診ます。",
+    source: "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html",
+  },
+  {
+    name: "戸田休日・平日夜間急患診療所",
+    area: "kawaguchi",
+    address: "戸田市新曽1295-3（蕨戸田市医師会館隣）",
+    tel: "048-445-1130",
+    depts: ["内科", "小児科"],
+    months: "odd",
+    slots: [
+      { days: ["kyujitsu"], start: "09:00", end: "12:00" },
+      { days: ["kyujitsu"], start: "13:00", end: "17:00" },
+      { days: ["weekday"], start: "19:30", end: "22:30" },
+    ],
+    note: "奇数月は戸田、偶数月は蕨で診療します。",
+    source: "http://warabitoda-med.or.jp/emergency-medical-system/",
+  },
+  {
+    name: "蕨休日・平日夜間急患診療所",
+    area: "kawaguchi",
+    address: "蕨市中央4-9-22 蕨市福祉・児童センター内",
+    tel: "048-431-2611",
+    depts: ["内科", "小児科"],
+    months: "even",
+    slots: [
+      { days: ["kyujitsu"], start: "09:00", end: "12:00" },
+      { days: ["kyujitsu"], start: "13:00", end: "17:00" },
+      { days: ["weekday"], start: "19:30", end: "22:30" },
+    ],
+    note: "偶数月は蕨、奇数月は戸田で診療します。",
+    source: "http://warabitoda-med.or.jp/emergency-medical-system/",
+  },
+  {
+    name: "上尾市平日夜間及び休日急患診療所",
+    area: "ageo",
+    address: "上尾市緑丘2-1-27",
+    tel: "048-774-2662",
+    depts: ["内科", "小児科", "外科"],
+    slots: [],
+    hoursText: "平日夜間と休日に診療。電話予約制。時間は医師会の診療カレンダーで要確認。",
+    source: "https://www.ageomed.com/night.html",
+  },
+  {
+    name: "朝霞地区医師会 小児救急",
+    area: "asaka",
+    address: "場所は朝霞地区医師会のサイトで確認してください",
+    tel: "",
+    depts: ["小児科"],
+    slots: [
+      { days: ["weekday"], start: "20:00", end: "22:00" },
+      { days: ["sat"], start: "18:00", end: "20:00" },
+      { days: ["kyujitsu"], start: "10:00", end: "12:00" },
+    ],
+    note: "場所・電話番号は未確認です。",
+    source: "http://asaka-qqk.net/",
+  },
+  {
+    name: "所沢市市民医療センター（小児夜間診療）",
+    area: "tokorozawa",
+    address: "所沢市上安松1224-1",
+    tel: "04-2992-1152",
+    depts: ["小児科"],
+    slots: [
+      { days: ["weekday"], start: "19:30", end: "22:15" },
+      { days: ["sat", "kyujitsu"], start: "18:00", end: "20:45" },
+    ],
+    note: "深夜帯・日曜日の小児診療もあります（時間は要確認）。",
+    source: "https://www.city.tokorozawa.saitama.jp/kenko/kenkoiryo/kinkyu/syonikanichiyokyukanyakansinryo.html",
+  },
+  {
+    name: "川越市医師会 夜間休日診療所",
+    area: "kawagoe",
+    address: "",
+    tel: "",
+    depts: ["内科", "小児科"],
+    slots: [
+      { days: ["daily"], start: "20:00", end: "22:00" },
+      { days: ["kyujitsu"], start: "09:00", end: "11:00" },
+      { days: ["kyujitsu"], start: "13:00", end: "15:00" },
+    ],
+    note: "時間は受付時間です。住所・電話番号は未確認です。",
+    source: "https://www.kawagoe-med.jp/night_holiday/",
+  },
+  {
+    name: "東松山市休日夜間急患診療所（東松山医師会病院）",
+    area: "hiki",
+    address: "東松山市神明町1-15-10",
+    tel: "0493-22-2822",
+    depts: ["内科"],
+    slots: [
+      { days: ["weekday", "sat"], start: "17:00", end: "23:00" },
+      { days: ["kyujitsu"], start: "09:00", end: "23:00" },
+    ],
+    note: "受診前に電話で相談を。15歳以下は比企地区こども夜間救急センター（22時まで受付）へ。",
+    source: "https://www.city.higashimatsuyama.lg.jp/soshiki/34/2635.html",
+  },
+  {
+    name: "越谷市夜間急患診療所",
+    area: "koshigaya",
+    address: "越谷市東越谷10-31（越谷市保健所内）",
+    tel: "048-960-1000",
+    depts: ["内科", "小児科"],
+    slots: [
+      { days: ["daily"], start: "19:30", end: "23:00" },
+    ],
+    note: "受付は22時30分まで。けが（骨折・捻挫・切り傷など）は対象外。受診前に必ず電話を。診療日は要確認。",
+    source: "https://www.city.koshigaya.saitama.jp/toiawase/shisetsu/hokeniryo/yakankyuukan.html",
+  },
+  {
+    name: "草加市子ども急病夜間クリニック",
+    area: "koshigaya",
+    address: "草加市草加2-21-1（草加市立病院 心臓・脳血管センター1階）",
+    tel: "048-954-6401",
+    depts: ["小児科"],
+    slots: [
+      { days: ["weekday"], start: "19:30", end: "22:30" },
+      { days: ["sat", "kyujitsu"], start: "18:30", end: "22:30" },
+    ],
+    note: "15歳以下の、熱・腹痛・吐き気など内科系の症状のみ。",
+    source: "https://www.city.soka.saitama.jp/cont/s1510/010/004/009/PAGE000000000000076899.html",
+  },
+  {
+    name: "春日部市小児救急夜間診療所",
+    area: "kasukabe",
+    address: "",
+    tel: "",
+    depts: ["小児科"],
+    slots: [],
+    hoursText: "平日夜間の子どもの急病。時間・住所は要確認。",
+    source: "https://www.city.kasukabe.lg.jp/soshikikarasagasu/kenkoka/gyomuannai/5/1/1/4239.html",
+  },
+  {
+    name: "久喜市休日夜間急患診療所",
+    area: "kuki",
+    address: "",
+    tel: "",
+    depts: ["内科", "小児科"],
+    slots: [],
+    hoursText: "日曜・祝日に診療（夜間あり）。時間は要確認。受診前に電話を。",
+    source: "https://www.city.kuki.lg.jp/kenko/kenko_iryo/kyujitsu/1003818.html",
+  },
+  {
+    name: "熊谷市休日・夜間急患診療所",
+    area: "kumagaya",
+    address: "熊谷市大原1-5-36",
+    tel: "048-525-2720",
+    depts: ["内科", "小児科"],
+    slots: [
+      { days: ["daily"], start: "19:30", end: "22:00" },
+    ],
+    note: "夜間の受付は19時〜21時30分。休日の昼間も診療（時間は要確認）。薬は1日分です。",
+    source: "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyujituyakan.html",
+  },
+  {
+    name: "深谷寄居医師会 休日診療所・こども夜間診療所",
+    area: "kumagaya",
+    address: "",
+    tel: "048-575-1101",
+    depts: ["内科", "小児科"],
+    slots: [],
+    hoursText: "休日の昼間（内科・小児科）と、土曜夜間（中学生以下の小児科）に診療。時間は要確認。電話は深谷市保健センター。",
+    source: "https://www.city.fukaya.saitama.jp/soshiki/fukushikenko/hokensenta/tanto/kyukyuiryokikan/13452.html",
+  },
+  {
+    name: "本庄市休日急患診療所",
+    area: "honjo",
+    address: "本庄市保健センター内",
+    tel: "",
+    depts: ["内科"],
+    slots: [],
+    hoursText: "休日 9:00〜12:00、13:00〜16:00、夜間 19:00〜22:00（受付21:45まで）との情報あり。実施日は要確認。",
+    source: "https://www.city.honjo.lg.jp/soshiki/hoken/kenko/oshirase/kyuukan.html",
+  },
+  {
+    name: "秩父郡市医師会 休日診療所",
+    area: "chichibu",
+    address: "秩父市熊木町",
+    tel: "0494-22-0570",
+    depts: ["内科", "小児科"],
+    slots: [],
+    hoursText: "休日に診療。18時以降は必ず電話で確認してから受診。時間は要確認。",
+    source: "https://chichibu-ishikai.jp/system/",
+  },
+];
+
+const CRITICAL_CARE = [
+  "さいたま赤十字病院（さいたま市中央区）",
+  "自治医科大学附属さいたま医療センター（さいたま市大宮区）",
+  "さいたま市立病院（さいたま市緑区）",
+  "埼玉県立小児医療センター（さいたま市中央区・小児）",
+  "川口市立医療センター（川口市）",
+  "国立病院機構 埼玉病院（和光市）",
+  "防衛医科大学校病院（所沢市）",
+  "埼玉医科大学総合医療センター（川越市）",
+  "埼玉医科大学国際医療センター（日高市）",
+  "獨協医科大学埼玉医療センター（越谷市）",
+  "埼玉県済生会加須病院（加須市）",
+  "深谷赤十字病院（深谷市）",
+];
+
+// 祝日・振替休日・国民の休日（2026〜2027）
+const HOLIDAYS = new Set([
+  "2026-01-01","2026-01-12","2026-02-11","2026-02-23","2026-03-20","2026-04-29",
+  "2026-05-03","2026-05-04","2026-05-05","2026-05-06","2026-07-20","2026-08-11",
+  "2026-09-21","2026-09-22","2026-09-23","2026-10-12","2026-11-03","2026-11-23",
+  "2027-01-01","2027-01-11","2027-02-11","2027-02-23","2027-03-21","2027-03-22",
+  "2027-04-29","2027-05-03","2027-05-04","2027-05-05","2027-07-19","2027-08-11",
+  "2027-09-20","2027-09-23","2027-10-11","2027-11-03","2027-11-23",
+]);
+
+// ---------------------------------------------------------------
+// 日付の判定
+// ---------------------------------------------------------------
+function ymd(d) {
+  const p = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+function isNenmatsu(d) {
+  const m = d.getMonth() + 1, day = d.getDate();
+  return (m === 12 && day >= 29) || (m === 1 && day <= 3);
+}
+// その日に当てはまる区分（"weekday" / "sat" / "sun" / "holiday" / "nenmatsu"）
+function dayKinds(d) {
+  const kinds = new Set(["daily"]);
+  const wd = d.getDay();
+  const holiday = HOLIDAYS.has(ymd(d));
+  const nen = isNenmatsu(d);
+  if (holiday) kinds.add("holiday");
+  if (nen) kinds.add("nenmatsu");
+  if (wd === 0) kinds.add("sun");
+  if (holiday || nen || wd === 0) {
+    kinds.add("kyujitsu");
+  } else if (wd === 6) {
+    kinds.add("sat");
+  } else {
+    kinds.add("weekday");
+  }
+  return kinds;
+}
+function dayLabel(d) {
+  const k = dayKinds(d);
+  const w = "日月火水木金土"[d.getDay()];
+  let t = `${d.getMonth() + 1}月${d.getDate()}日（${w}）`;
+  if (k.has("holiday")) t += "・祝日";
+  else if (k.has("nenmatsu")) t += "・年末年始";
+  return t;
+}
+const toMin = s => { const [h, m] = s.split(":").map(Number); return h * 60 + m; };
+const fmt = m => `${Math.floor(m / 60) % 24}:${String(m % 60).padStart(2, "0")}`;
+
+function slotMatchesDept(slot, fac, dept) {
+  return (slot.depts || fac.depts).includes(dept);
+}
+function monthOk(fac, d) {
+  if (!fac.months) return true;
+  const odd = (d.getMonth() + 1) % 2 === 1;
+  return fac.months === "odd" ? odd : !odd;
+}
+
+// 指定時刻での状態：{state:"open", until} / {state:"later", from} / {state:"closed"}
+function statusAt(fac, dept, t) {
+  const today = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+  const yest = new Date(today); yest.setDate(yest.getDate() - 1);
+  const nowMin = t.getHours() * 60 + t.getMinutes();
+  let later = null;
+
+  // 前日から日付をまたいで続いている時間帯
+  if (monthOk(fac, yest)) {
+    const yk = dayKinds(yest);
+    for (const s of fac.slots) {
+      if (!slotMatchesDept(s, fac, dept) || !s.days.some(x => yk.has(x))) continue;
+      const a = toMin(s.start), b = toMin(s.end);
+      if (b <= a && nowMin < b) return { state: "open", until: b };
+    }
+  }
+  if (!monthOk(fac, today)) return { state: "closed" };
+  const tk = dayKinds(today);
+  for (const s of fac.slots) {
+    if (!slotMatchesDept(s, fac, dept) || !s.days.some(x => tk.has(x))) continue;
+    const a = toMin(s.start), b = toMin(s.end);
+    const overnight = b <= a;
+    if (nowMin >= a && (overnight || nowMin < b)) return { state: "open", until: b };
+    if (nowMin < a && (later === null || a < later)) later = a;
+  }
+  return later !== null ? { state: "later", from: later } : { state: "closed" };
+}
+
+const DAY_NAMES = { weekday: "平日", sat: "土曜", sun: "日曜", holiday: "祝日", nenmatsu: "年末年始", kyujitsu: "日曜・祝日・年末年始", daily: "毎日" };
+function hoursSummary(fac) {
+  if (!fac.slots.length) return fac.hoursText || "時間は要確認";
+  return fac.slots.map(s => {
+    const d = s.days.map(x => DAY_NAMES[x]).join("・");
+    const dep = s.depts ? `（${s.depts.join("・")}）` : "";
+    const end = toMin(s.end) <= toMin(s.start) ? `翌${s.end}` : s.end;
+    return `${d} ${s.start}〜${end}${dep}`;
+  }).join("\n");
+}
+
+// ---------------------------------------------------------------
+// 画面
+// ---------------------------------------------------------------
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+function initArea() {
+  const sel = $("area");
+  sel.innerHTML = `<option value="">地域を選んでください</option>` +
+    AREAS.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join("") +
+    `<option value="all">すべての地域</option>`;
+  try { const saved = localStorage.getItem("er-area"); if (saved) sel.value = saved; } catch (e) {}
+}
+
+function getVal(name) {
+  const el = document.querySelector(`input[name="${name}"]:checked`);
+  return el ? el.value : "";
+}
+
+function targetTime() {
+  if (getVal("when") === "custom" && $("whenCustom").value) return new Date($("whenCustom").value);
+  return new Date();
+}
+
+function card(fac, st, dept) {
+  let cls = "unknown", badge = `<span class="badge">時間は要確認</span>`;
+  if (st.state === "open") { cls = "open"; badge = `<span class="badge st-open">診療中 〜${fmt(st.until)}</span>`; }
+  else if (st.state === "later") { cls = "later"; badge = `<span class="badge st-later">${fmt(st.from)}から</span>`; }
+  const deptBadges = fac.depts.map(d => `<span class="badge">${esc(d)}</span>`).join("");
+  const mapQ = encodeURIComponent(fac.address && !fac.address.startsWith("場所は") ? fac.address : fac.name);
+  return `
+  <div class="card ${cls}">
+    <h3>${esc(fac.name)}</h3>
+    <div class="badges">${badge}${deptBadges}</div>
+    ${fac.address ? `<div class="row"><span class="k">住所：</span>${esc(fac.address)}</div>` : ""}
+    <div class="row"><span class="k">電話：</span>${fac.tel ? esc(fac.tel) : "未確認"}</div>
+    <div class="hours">${esc(hoursSummary(fac))}</div>
+    ${fac.note ? `<div class="note">${esc(fac.note)}</div>` : ""}
+    <div class="actions">
+      ${fac.tel ? `<a class="tel" href="tel:${fac.tel.replace(/-/g, "")}">電話で確認する</a>` : ""}
+      <a href="https://www.google.com/maps/search/?api=1&query=${mapQ}" target="_blank" rel="noopener">地図</a>
+      <a href="${esc(fac.source)}" target="_blank" rel="noopener">情報元</a>
+    </div>
+  </div>`;
+}
+
+function render() {
+  const area = $("area").value;
+  const who = getVal("who");
+  let dept = getVal("dept");
+  // 子どもの内科系は小児科で探す
+  if (who === "child" && dept === "内科") dept = "小児科";
+  const t = targetTime();
+  const hm = `${t.getHours()}:${String(t.getMinutes()).padStart(2, "0")}`;
+  $("nowline").textContent = `${dayLabel(t)} ${hm} の時点で表示しています`;
+  try { localStorage.setItem("er-area", area); } catch (e) {}
+
+  const out = $("results");
+  if (!area) {
+    out.innerHTML = `<div class="empty">地域を選ぶと、受診できる急患診療所が表示されます。</div>`;
+    return;
+  }
+
+  const list = FACILITIES.filter(f => (area === "all" || f.area === area) && f.depts.includes(dept));
+  const open = [], later = [], unknown = [];
+  for (const f of list) {
+    if (!f.slots.length) { unknown.push([f, { state: "unknown" }]); continue; }
+    const st = statusAt(f, dept, t);
+    if (st.state === "open") open.push([f, st]);
+    else if (st.state === "later") later.push([f, st]);
+    else if (!f.slots.some(s => slotMatchesDept(s, f, dept))) unknown.push([f, { state: "unknown" }]);
+  }
+  later.sort((a, b) => a[1].from - b[1].from);
+
+  let html = "";
+  html += `<h2 class="group-title"><span class="dot" style="background:var(--green)"></span>いま診療中（${open.length}件）</h2>`;
+  html += open.length ? open.map(([f, s]) => card(f, s, dept)).join("")
+    : `<div class="empty">この条件で、いま診療中の急患診療所は見つかりませんでした。<br>
+        <b>#7119</b>（子どもは <b>#8000</b>）に電話すると、いま受診できる医療機関を案内してもらえます。<br>
+        <a href="https://99.pref.saitama.lg.jp/" target="_blank" rel="noopener">埼玉県救急医療情報システム</a>でも当番医を確認できます。</div>`;
+  if (later.length) {
+    html += `<h2 class="group-title"><span class="dot" style="background:#d9a400"></span>このあと今日開く（${later.length}件）</h2>`;
+    html += later.map(([f, s]) => card(f, s, dept)).join("");
+  }
+  if (unknown.length) {
+    html += `<h2 class="group-title"><span class="dot" style="background:#aaa"></span>時間を確認できていない施設（${unknown.length}件）</h2>`;
+    html += unknown.map(([f, s]) => card(f, s, dept)).join("");
+  }
+  if (dept === "外科") {
+    html += `<div class="empty" style="margin-top:10px">けがを診る急患診療所は少ないです。骨折が疑われる・出血が止まらないなどのときは <b>#7119</b> に相談するか、重ければ <b>119番</b> を。</div>`;
+  }
+  out.innerHTML = html;
+}
+
+function init() {
+  initArea();
+  $("ccList").innerHTML = CRITICAL_CARE.map(n => `<li>${esc(n)}</li>`).join("");
+  $("dataDate").textContent = `掲載データの収集日：${DATA_DATE}`;
+  document.querySelectorAll("input[name=when]").forEach(r => r.addEventListener("change", () => {
+    const custom = getVal("when") === "custom";
+    $("whenCustomBox").hidden = !custom;
+    if (custom && !$("whenCustom").value) {
+      const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      $("whenCustom").value = d.toISOString().slice(0, 16);
+    }
+    render();
+  }));
+  ["area", "whenCustom"].forEach(id => $(id).addEventListener("change", render));
+  document.querySelectorAll("input[name=who], input[name=dept]").forEach(r => r.addEventListener("change", render));
+  render();
+  // 「いま」表示のときは1分ごとに更新
+  setInterval(() => { if (getVal("when") === "now") render(); }, 60000);
+}
+init();
+</script>
+</body>
+</html>
