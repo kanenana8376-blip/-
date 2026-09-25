@@ -126,6 +126,10 @@
   .badge { font-size: 11.5px; padding: 1px 8px; border-radius: 10px; background: #eee; color: var(--ink); }
   .badge.st-open { background: var(--green-bg); color: var(--green); font-weight: 700; }
   .badge.st-later { background: var(--amber-bg); color: var(--amber); font-weight: 700; }
+  .badge.duty { background: #e8f0f8; color: var(--navy); font-weight: 700; }
+  .duty-info { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+  .duty-info.stale { background: var(--amber-bg); color: var(--amber); border-radius: 8px; padding: 8px 10px; }
+  .duty-info.stale a { color: var(--navy); }
   .card .row { font-size: 13px; color: var(--ink); }
   .card .row .k { color: var(--muted); }
   .card .hours { font-size: 12.5px; color: var(--muted); margin-top: 4px; white-space: pre-line; }
@@ -237,6 +241,8 @@
   </footer>
 </main>
 
+<!-- 毎日更新する当番情報。このファイルだけを書き換える -->
+<script src="emergency-duty.js"></script>
 <script>
 // ---------------------------------------------------------------
 // データ（未確認）
@@ -575,6 +581,12 @@ function dayLabel(d) {
 const toMin = s => { const [h, m] = s.split(":").map(Number); return h * 60 + m; };
 const fmt = m => `${Math.floor(m / 60) % 24}:${String(m % 60).padStart(2, "0")}`;
 
+// その日にこの時間帯があるか（dates があれば日付指定、なければ曜日区分）
+function slotOnDay(slot, day) {
+  if (slot.dates) return slot.dates.includes(ymd(day));
+  const kinds = dayKinds(day);
+  return slot.days.some(x => kinds.has(x));
+}
 function slotMatchesDept(slot, fac, dept) {
   return (slot.depts || fac.depts).includes(dept);
 }
@@ -593,17 +605,15 @@ function statusAt(fac, dept, t) {
 
   // 前日から日付をまたいで続いている時間帯
   if (monthOk(fac, yest)) {
-    const yk = dayKinds(yest);
     for (const s of fac.slots) {
-      if (!slotMatchesDept(s, fac, dept) || !s.days.some(x => yk.has(x))) continue;
+      if (!slotMatchesDept(s, fac, dept) || !slotOnDay(s, yest)) continue;
       const a = toMin(s.start), b = toMin(s.end);
       if (b <= a && nowMin < b) return { state: "open", until: b };
     }
   }
   if (!monthOk(fac, today)) return { state: "closed" };
-  const tk = dayKinds(today);
   for (const s of fac.slots) {
-    if (!slotMatchesDept(s, fac, dept) || !s.days.some(x => tk.has(x))) continue;
+    if (!slotMatchesDept(s, fac, dept) || !slotOnDay(s, today)) continue;
     const a = toMin(s.start), b = toMin(s.end);
     const overnight = b <= a;
     if (nowMin >= a && (overnight || nowMin < b)) return { state: "open", until: b };
@@ -616,7 +626,8 @@ const DAY_NAMES = { weekday: "平日", sat: "土曜", sun: "日曜", holiday: "�
 function hoursSummary(fac) {
   if (!fac.slots.length) return fac.hoursText || "時間は要確認";
   return fac.slots.map(s => {
-    const d = s.days.map(x => DAY_NAMES[x]).join("・");
+    const d = s.dates ? s.dates.map(x => `${+x.slice(5, 7)}/${+x.slice(8)}`).join("・")
+      : s.days.map(x => DAY_NAMES[x]).join("・");
     const dep = s.depts ? `（${s.depts.join("・")}）` : "";
     const end = toMin(s.end) <= toMin(s.start) ? `翌${s.end}` : s.end;
     return `${d} ${s.start}〜${end}${dep}`;
@@ -637,6 +648,44 @@ function initArea() {
   try { const saved = localStorage.getItem("er-area"); if (saved) sel.value = saved; } catch (e) {}
 }
 
+// ---------------------------------------------------------------
+// 毎日の当番情報（emergency-duty.js）
+// ---------------------------------------------------------------
+const DUTY = window.DUTY_DATA || null;
+function dutyFacilities() {
+  if (!DUTY || !Array.isArray(DUTY.entries)) return [];
+  return DUTY.entries.map(e => ({
+    name: e.name,
+    area: e.area,
+    address: e.address || "",
+    tel: e.tel || "",
+    depts: e.depts,
+    slots: [{ dates: [e.date], start: e.start, end: e.end }],
+    note: e.note || "",
+    source: e.source,
+    duty: true,
+  }));
+}
+// 指定日・地域の当番情報を収録しているか
+function dutyCovered(date, area) {
+  if (!DUTY || !DUTY.coverage) return false;
+  const areas = DUTY.coverage[ymd(date)] || [];
+  return area === "all" ? areas.length > 0 : areas.includes(area);
+}
+function dutyStatusHtml(t, area) {
+  if (!DUTY || !DUTY.updatedAt) {
+    return `<div class="duty-info stale">当番医の情報はまだ収録していません。当日の当番医は <b>#7119</b> か
+      <a href="https://99.pref.saitama.lg.jp/" target="_blank" rel="noopener">埼玉県救急医療情報システム</a> で確認してください。</div>`;
+  }
+  const upd = new Date(DUTY.updatedAt);
+  const updText = `${upd.getMonth() + 1}月${upd.getDate()}日 ${upd.getHours()}:${String(upd.getMinutes()).padStart(2, "0")}`;
+  if (!dutyCovered(t, area)) {
+    return `<div class="duty-info stale">この日・この地域の当番医の情報はありません（最終更新 ${updText}）。
+      当番医は <b>#7119</b> か <a href="https://99.pref.saitama.lg.jp/" target="_blank" rel="noopener">埼玉県救急医療情報システム</a> で確認してください。</div>`;
+  }
+  return `<div class="duty-info">当番医の情報：最終更新 ${updText}</div>`;
+}
+
 function getVal(name) {
   const el = document.querySelector(`input[name="${name}"]:checked`);
   return el ? el.value : "";
@@ -651,6 +700,7 @@ function card(fac, st, dept) {
   let cls = "unknown", badge = `<span class="badge">時間は要確認</span>`;
   if (st.state === "open") { cls = "open"; badge = `<span class="badge st-open">診療中 〜${fmt(st.until)}</span>`; }
   else if (st.state === "later") { cls = "later"; badge = `<span class="badge st-later">${fmt(st.from)}から</span>`; }
+  if (fac.duty) badge += `<span class="badge duty">当番</span>`;
   const deptBadges = fac.depts.map(d => `<span class="badge">${esc(d)}</span>`).join("");
   const mapQ = encodeURIComponent(fac.address && !fac.address.startsWith("場所は") ? fac.address : fac.name);
   return `
@@ -686,7 +736,7 @@ function render() {
     return;
   }
 
-  const list = FACILITIES.filter(f => (area === "all" || f.area === area) && f.depts.includes(dept));
+  const list = FACILITIES.concat(dutyFacilities()).filter(f => (area === "all" || f.area === area) && f.depts.includes(dept));
   const open = [], later = [], unknown = [];
   for (const f of list) {
     if (!f.slots.length) { unknown.push([f, { state: "unknown" }]); continue; }
@@ -697,7 +747,7 @@ function render() {
   }
   later.sort((a, b) => a[1].from - b[1].from);
 
-  let html = "";
+  let html = dutyStatusHtml(t, area);
   html += `<h2 class="group-title"><span class="dot" style="background:var(--green)"></span>いま診療中（${open.length}件）</h2>`;
   html += open.length ? open.map(([f, s]) => card(f, s, dept)).join("")
     : `<div class="empty">この条件で、いま診療中の急患診療所は見つかりませんでした。<br>
