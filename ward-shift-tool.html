@@ -49,6 +49,7 @@
     border-radius: 4px; padding: 5px 9px; cursor: pointer; font-size: 12px;
   }
   .month-nav-btn:hover { background: rgba(255,255,255,0.28); }
+  .ward-select { border: none; border-radius: 4px; padding: 6px 8px; font-size: 13px; font-weight: 700; max-width: 180px; }
   .autosave-indicator { font-size: 11px; color: #cfe0ee; margin-left: 6px; }
 
   nav.tabs {
@@ -248,10 +249,13 @@
 
 <header>
   <div>
-    <h1 id="titleText">病棟看護師 勤務表作成ツール</h1>
+    <h1 id="titleText">病棟 勤務表作成ツール</h1>
     <div class="sub">3交代・2交代・時短勤務が混在する病棟向け ／ 夜勤メンバーの経験年数バランスを自動チェック</div>
   </div>
   <div class="month-input">
+    <label for="wardSelect">病棟</label>
+    <select id="wardSelect" class="ward-select" title="病棟を切り替える"></select>
+    <span style="width:10px"></span>
     <button class="month-nav-btn" id="prevMonthBtn" aria-label="前の月">◀</button>
     <input type="number" id="yearInput" min="2020" max="2100">年
     <input type="number" id="monthInput" min="1" max="12">月
@@ -955,13 +959,41 @@ const DEFAULT_SETTINGS = {
   ptoDeadline: null,    // 休み希望の締切日 'YYYY-MM-DD'
 };
 
-const STORAGE_KEY = 'wardShiftTool_autosave_v1';
-let DB = {
-  staff: JSON.parse(JSON.stringify(DEFAULT_STAFF)),
-  settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),
-  months: {},
-  nextId: DEFAULT_STAFF.length + 1,
-};
+// 病棟ごとに、スタッフ・設定・各月の勤務表を別々に持つ。
+//   STORE = { wards: [病棟, ...], currentId, nextWardId, lastYM, savedAt }
+//   病棟   = { id, name, staff, settings, months, nextId }
+// 画面や自動作成は「いま選んでいる病棟」だけを DB として扱う。
+const STORAGE_KEY = 'wardShiftTool_autosave_v2';
+const OLD_STORAGE_KEY = 'wardShiftTool_autosave_v1'; // 病棟が1つだった頃の保存データ
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+function makeWard(id, name, opts) {
+  opts = opts || {};
+  const staff = opts.sample ? clone(DEFAULT_STAFF) : [];
+  return {
+    id, name,
+    staff,
+    settings: clone(opts.settings || DEFAULT_SETTINGS),
+    months: {},
+    nextId: Math.max(0, ...staff.map(s => s.id)) + 1,
+  };
+}
+// 古いデータ・バックアップにも欠けている項目を補う
+function normalizeWard(w, fallbackName) {
+  if (!w || !Array.isArray(w.staff)) throw new Error('形式が違います');
+  w.name = w.name || (w.settings && w.settings.wardName) || fallbackName || '病棟';
+  w.settings = Object.assign(clone(DEFAULT_SETTINGS), w.settings || {});
+  w.months = w.months || {};
+  w.staff.forEach(normalizeStaff);
+  w.nextId = w.nextId || (Math.max(0, ...w.staff.map(s => s.id)) + 1);
+  const S = w.settings;
+  S.maxConsecWork = Math.min(5, Math.max(4, Number(S.maxConsecWork) || 5));
+  S.maxConsecNight = Math.min(2, Math.max(1, Number(S.maxConsecNight) || 2));
+  delete w.lastYM; delete w.savedAt;
+  return w;
+}
+let STORE = { wards: [makeWard(1, 'A病棟', { sample: true })], currentId: 1, nextWardId: 2 };
+let DB = STORE.wards[0];
+function currentWard() { return STORE.wards.find(w => w.id === STORE.currentId) || STORE.wards[0]; }
 const view = { tab: 'grid', pen: null, y: 0, m: 0, highlight: null, swapSel: null };
 
 // ============================================================
@@ -993,10 +1025,10 @@ function scheduleSave() {
 }
 function saveState() {
   try {
-    DB.lastYM = [view.y, view.m];
-    DB.savedAt = new Date().toISOString();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
-    showSavedAt(DB.savedAt);
+    STORE.lastYM = [view.y, view.m];
+    STORE.savedAt = new Date().toISOString();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(STORE));
+    showSavedAt(STORE.savedAt);
   } catch (e) { console.error('autosave failed', e); }
 }
 function showSavedAt(iso) {
@@ -1004,25 +1036,29 @@ function showSavedAt(iso) {
   document.getElementById('autosaveIndicator').textContent =
     `✓ 自動保存 ${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
 }
+// 全病棟の保存データ（新形式）か、病棟1つ分の保存データ（旧形式）を読み込む
 function applyLoaded(saved) {
-  if (!saved || !Array.isArray(saved.staff)) throw new Error('形式が違います');
-  DB = {
-    staff: saved.staff,
-    settings: Object.assign(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), saved.settings || {}),
-    months: saved.months || {},
-    nextId: saved.nextId || (Math.max(0, ...saved.staff.map(s => s.id)) + 1),
-  };
-  DB.staff.forEach(normalizeStaff);
-  const S = DB.settings;
-  S.maxConsecWork = Math.min(5, Math.max(4, Number(S.maxConsecWork) || 5));
-  S.maxConsecNight = Math.min(2, Math.max(1, Number(S.maxConsecNight) || 2));
+  let store;
+  if (saved && Array.isArray(saved.wards)) {
+    if (!saved.wards.length) throw new Error('病棟がありません');
+    saved.wards.forEach((w, i) => normalizeWard(w, `病棟${i + 1}`));
+    store = saved;
+    store.nextWardId = store.nextWardId || (Math.max(...store.wards.map(w => w.id)) + 1);
+  } else {
+    const w = normalizeWard(clone(saved), 'A病棟');
+    w.id = 1;
+    store = { wards: [w], currentId: 1, nextWardId: 2, lastYM: saved.lastYM, savedAt: saved.savedAt };
+  }
+  STORE = store;
+  if (!STORE.wards.some(w => w.id === STORE.currentId)) STORE.currentId = STORE.wards[0].id;
+  DB = currentWard();
   HISTORY.length = 0;
-  if (Array.isArray(saved.lastYM)) { view.y = saved.lastYM[0]; view.m = saved.lastYM[1]; }
-  if (saved.savedAt) setTimeout(() => showSavedAt(saved.savedAt), 0);
+  if (Array.isArray(STORE.lastYM)) { view.y = STORE.lastYM[0]; view.m = STORE.lastYM[1]; }
+  if (STORE.savedAt) setTimeout(() => showSavedAt(STORE.savedAt), 0);
 }
 function loadState() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(OLD_STORAGE_KEY);
     if (!raw) return false;
     applyLoaded(JSON.parse(raw));
     return true;
@@ -1030,6 +1066,39 @@ function loadState() {
     console.error('failed to restore autosave', e);
     return false;
   }
+}
+
+// ============================================================
+// 病棟の切り替え・追加・削除
+// ============================================================
+function switchWard(id) {
+  if (!STORE.wards.some(w => w.id === id)) return;
+  STORE.currentId = id;
+  DB = currentWard();
+  HISTORY.length = 0; // 元に戻すは病棟をまたがない
+  view.swapSel = null; view.highlight = null; view.pen = null;
+  scheduleSave();
+  render();
+}
+function addWard(name, copySettings, sample) {
+  const w = makeWard(STORE.nextWardId++, name, { settings: copySettings ? DB.settings : null, sample });
+  STORE.wards.push(w);
+  switchWard(w.id);
+  showToast(`${name} を追加しました${sample ? '' : '。スタッフタブで看護師を登録してください'}`);
+}
+function deleteWard(id) {
+  const w = STORE.wards.find(x => x.id === id);
+  if (!w || STORE.wards.length <= 1) return;
+  if (!confirm(`${w.name} のスタッフ・設定・すべての月の勤務表を削除します。元に戻せません。よろしいですか？`)) return;
+  STORE.wards = STORE.wards.filter(x => x.id !== id);
+  if (STORE.currentId === id) STORE.currentId = STORE.wards[0].id;
+  switchWard(STORE.currentId);
+}
+function renderWardSelect() {
+  const sel = document.getElementById('wardSelect');
+  sel.innerHTML = STORE.wards.map(w => `<option value="${w.id}"${w.id === STORE.currentId ? ' selected' : ''}>${esc(w.name)}</option>`).join('');
+  document.getElementById('titleText').textContent = `${DB.name}　勤務表作成ツール`;
+  document.title = `${DB.name} 勤務表`;
 }
 
 // ============================================================
@@ -2085,6 +2154,7 @@ function renderGrid() {
       <span class="label">${view.pen === 'SWAP' ? (view.swapSel ? '入れ替える相手のマスをクリック' : '入れ替えたい1つ目のマスをクリック') : '続けて入力：記号を選んでからマスをクリック'}</span>
       ${pens.map(([v, t]) => `<button class="pen${(view.pen || '') === v ? ' active' : ''}" data-pen="${v}" style="background:${v && CODES[v] ? CODES[v].color : v.startsWith('PTO') ? '#f3ecd0' : '#fff'}" title="${v && CODES[v] ? CODES[v].name : ''}">${t}</button>`).join('')}
     </div>
+    ${DB.staff.length ? '' : `<div class="panel" style="margin:0 0 10px;border-color:#e0a36b;background:#fff7ef">「${esc(DB.name)}」にはまだスタッフがいません。<b>スタッフ</b>タブで看護師を登録してください。</div>`}
     <div class="grid-wrap">
       <table class="grid">
         <thead><tr>${head1}</tr><tr>${head2}</tr></thead>
@@ -2187,7 +2257,7 @@ function renderStaff() {
       <button class="btn" id="restoreBtn">バックアップを読み込む</button>
     </div>
     <div class="note" style="margin-bottom:8px;">
-      ${DB.staff.length}名（${Object.keys(WORK_TYPES).map(k => `${WORK_TYPES[k].label} ${cnt(k)}名`).join('・')}）。
+      <b>${esc(DB.name)}</b>　${DB.staff.length}名（${Object.keys(WORK_TYPES).map(k => `${WORK_TYPES[k].label} ${cnt(k)}名`).join('・')}）。
       経験年数は「今年度で何年目か」を入れてください（新卒1年目＝1）。異動・中途で来た人は、看護師経験は通算、病棟経験はこの病棟での年数です。
     </div>
     <div class="scroll-x">
@@ -2202,6 +2272,12 @@ function renderStaff() {
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
+    </div>
+    <div class="panel">
+      <h3>名前をまとめて追加</h3>
+      <div class="note" style="margin-bottom:6px">新しい病棟を作ったときなどに。1行に1人ずつ名前を入れてください（あとで勤務形態・経験年数を入れます）。</div>
+      <textarea id="bulkNames" rows="4" style="width:100%;max-width:420px;font-family:inherit;font-size:13px;padding:6px;border:1px solid var(--line);border-radius:5px" placeholder="山田 花子&#10;佐藤 美咲"></textarea>
+      <div><button class="btn" id="bulkAddBtn" style="margin-top:6px">まとめて追加</button></div>
     </div>
   `;
   document.querySelectorAll('table.form tbody tr').forEach(tr => {
@@ -2239,9 +2315,17 @@ function renderStaff() {
       };
     });
   });
+  document.getElementById('bulkAddBtn').onclick = () => {
+    const names = document.getElementById('bulkNames').value.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+    if (!names.length) { showToast('名前を1行に1人ずつ入れてください', 'error'); return; }
+    names.forEach(nm => DB.staff.push(normalizeStaff(st(DB.nextId++, nm, 'スタッフ', '3交代', 1, 1))));
+    scheduleSave();
+    renderStaff();
+    showToast(`${names.length}人を追加しました。勤務形態と経験年数を入れてください`);
+  };
   document.getElementById('addStaffBtn').onclick = () => {
     const id = DB.nextId++;
-    DB.staff.push(st(id, `看護師${String(id).padStart(2, '0')}`, 'スタッフ', '3交代', 1, 1));
+    DB.staff.push(normalizeStaff(st(id, `看護師${String(id).padStart(2, '0')}`, 'スタッフ', '3交代', 1, 1)));
     scheduleSave();
     renderStaff();
   };
@@ -2398,9 +2482,29 @@ function renderSettings() {
     <div><input type="checkbox" data-s="${key}"${S[key] ? ' checked' : ''}></div></div>`;
   const autoOff = offDayCountOfMonth(view.y, view.m);
   document.getElementById('main').innerHTML = `
+    <div class="panel" style="margin:0 0 14px">
+      <h3>病棟の管理</h3>
+      <div class="note" style="margin-bottom:8px">病棟ごとに、スタッフ・設定（必要人数・夜勤の経験バランスなど）・勤務表を別々に持ちます。下の設定は「${esc(DB.name)}」の設定です。切り替えは画面右上の「病棟」から。</div>
+      <table class="form">
+        <tr><th>病棟名</th><th>スタッフ</th><th>勤務表のある月</th><th></th></tr>
+        ${STORE.wards.map(w => `<tr>
+          <td><input type="text" data-ward-name="${w.id}" value="${esc(w.name)}" style="width:160px"></td>
+          <td>${w.staff.length}名</td>
+          <td>${Object.keys(w.months).filter(k => Object.values(w.months[k].cells || {}).some(c => Object.keys(c).length)).length}か月</td>
+          <td style="white-space:nowrap">${w.id === STORE.currentId ? '<b style="color:var(--navy)">表示中</b>' : `<button class="btn small" data-ward-open="${w.id}">開く</button>`}
+            ${STORE.wards.length > 1 ? `<button class="btn small danger" data-ward-del="${w.id}">削除</button>` : ''}</td>
+        </tr>`).join('')}
+      </table>
+      <div class="toolbar" style="margin:10px 0 0">
+        <input type="text" id="newWardName" placeholder="例：3階東病棟" style="width:170px">
+        <label style="font-size:12px"><input type="checkbox" id="newWardCopy" checked> 今の病棟の設定を引き継ぐ</label>
+        <label style="font-size:12px"><input type="checkbox" id="newWardSample"> サンプルのスタッフ30名を入れる</label>
+        <button class="btn primary" id="addWardBtn">＋ 病棟を追加</button>
+      </div>
+    </div>
     <div class="settings-grid">
       <div class="panel">
-        <h3>必要人数</h3>
+        <h3>必要人数（${esc(DB.name)}）</h3>
         ${num('reqDayWeekday', 0, 60, '平日の日勤')}
         ${num('reqDayHoliday', 0, 60, '土日祝の日勤（基本）', '日ごとの人数は勤務表の「日勤 必要人数」の行で入れます（4〜6人など）')}
         ${num('reqEve', 0, 20, '準夜帯', '準夜（3交代）＋夜勤（2交代）の合計')}
@@ -2440,7 +2544,7 @@ function renderSettings() {
       <div class="panel">
         <h3>データ</h3>
         <div class="note">入力内容はこのブラウザに自動保存されます。別のパソコンで使うときや念のための控えには、スタッフ画面の「バックアップを保存」を使ってください。</div>
-        <div style="margin-top:10px"><button class="btn danger" id="resetBtn">すべて初期状態に戻す</button></div>
+        <div style="margin-top:10px"><button class="btn danger" id="resetBtn">すべての病棟を初期状態に戻す</button></div>
       </div>
     </div>
   `;
@@ -2464,9 +2568,28 @@ function renderSettings() {
     renderSettings();
   };
   document.getElementById('resetBtn').onclick = () => {
-    if (!confirm('スタッフ・設定・すべての月の勤務表を削除して初期状態に戻します。よろしいですか？')) return;
-    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    if (!confirm('すべての病棟のスタッフ・設定・勤務表を削除して初期状態に戻します。よろしいですか？')) return;
+    try { localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(OLD_STORAGE_KEY); } catch (e) {}
     location.reload();
+  };
+  document.querySelectorAll('[data-ward-name]').forEach(inp => {
+    inp.onchange = () => {
+      const w = STORE.wards.find(x => x.id === Number(inp.dataset.wardName));
+      const name = inp.value.trim();
+      if (!name) { inp.value = w.name; return; }
+      if (STORE.wards.some(x => x !== w && x.name === name)) { showToast('同じ名前の病棟があります', 'error'); inp.value = w.name; return; }
+      w.name = name;
+      scheduleSave();
+      render();
+    };
+  });
+  document.querySelectorAll('[data-ward-open]').forEach(b => { b.onclick = () => switchWard(Number(b.dataset.wardOpen)); });
+  document.querySelectorAll('[data-ward-del]').forEach(b => { b.onclick = () => deleteWard(Number(b.dataset.wardDel)); });
+  document.getElementById('addWardBtn').onclick = () => {
+    const name = document.getElementById('newWardName').value.trim();
+    if (!name) { showToast('病棟名を入れてください', 'error'); return; }
+    if (STORE.wards.some(w => w.name === name)) { showToast('同じ名前の病棟があります', 'error'); return; }
+    addWard(name, document.getElementById('newWardCopy').checked, document.getElementById('newWardSample').checked);
   };
 }
 
@@ -2483,6 +2606,8 @@ function renderGuide() {
         <li><b>勤務表</b>画面で、休み希望（★）や決まっている勤務（研修・当日決まっている夜勤など）を先に入れます。</li>
         <li>「▶ 自動作成」を押すと、空いているマスが埋まります。下の「チェック結果」を見ながら手で直してください。直したマスは太字になり、次に自動作成しても動きません。</li>
       </ol>
+      <h3>病棟ごとに使う</h3>
+      <p>画面右上の<b>「病棟」</b>で病棟を切り替えます。スタッフ・設定（必要人数・夜勤の経験バランス・約束ごと）・勤務表は病棟ごとに別々です。病棟の追加・名前の変更・削除は「設定」タブの<b>病棟の管理</b>で行います。新しい病棟は、今の病棟の設定を引き継いで作れます。Excelのファイル名と表題には病棟名が入ります。バックアップは全病棟をまとめて保存します。</p>
       <h3>夜勤メンバーの経験バランス</h3>
       <p>準夜帯・深夜帯ごとに、次の条件を満たすように組みます（数字は「設定」で変えられます）。</p>
       <ul>
@@ -2561,7 +2686,7 @@ function buildWardWorkbook(y, m) {
   CODE_ORDER.forEach(c => { codeStyle[c] = reg.style({ bold: true, fill: CODES[c].color.slice(1), halign: 'center', border: true }); });
 
   const sh = new SheetBuilder('勤務表');
-  sh.set('A1', `${S.wardName ? S.wardName + ' ' : ''}${y}年${m}月 勤務表`, { style: sty.title });
+  sh.set('A1', `${DB.name} ${y}年${m}月 勤務表`, { style: sty.title });
   const fixedCols = ['氏名', '役職', '勤務形態', '看護師経験', '病棟経験'];
   fixedCols.forEach((h, i) => { sh.set(colLetter(i + 1) + '3', h, { style: sty.head }); sh.merge(`${colLetter(i + 1)}3:${colLetter(i + 1)}4`); });
   const dc = d => colLetter(fixedCols.length + d);
@@ -2821,6 +2946,8 @@ async function importWardExcel(file) {
     const title = String(sh['A1'] || '');
     const tm = title.match(/(\d{4})年(\d{1,2})月/);
     let [y, m] = tm ? [Number(tm[1]), Number(tm[2])] : [view.y, view.m];
+    const fileWard = tm ? title.slice(0, tm.index).trim() : '';
+    if (fileWard && fileWard !== DB.name && !confirm(`このファイルは「${fileWard}」の勤務表です。いま表示中の「${DB.name}」に読み込みます。よろしいですか？`)) return;
     if ((y !== view.y || m !== view.m) && !confirm(`このファイルは${y}年${m}月の勤務表です。${y}年${m}月として読み込みます。よろしいですか？`)) return;
     // 3行目の日付見出しから、日付の列を探す
     const dayCol = {};
@@ -2905,7 +3032,7 @@ function exportToExcel() {
     try {
       const bytes = buildWardWorkbook(y, m);
       const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      const fname = `病棟勤務表_${y}年${m}月.xlsx`;
+      const fname = `${DB.name}_勤務表_${y}年${m}月.xlsx`;
       reportSave(await saveGeneratedFile(blob, fname), fname);
     } catch (e) {
       console.error(e);
@@ -2916,9 +3043,9 @@ function exportToExcel() {
   }, 30);
 }
 async function saveBackup() {
-  const blob = new Blob([JSON.stringify(DB, null, 1)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify(STORE, null, 1)], { type: 'application/json' });
   const d = new Date();
-  const fname = `病棟勤務表_バックアップ_${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.json`;
+  const fname = `勤務表_全病棟バックアップ_${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.json`;
   reportSave(await saveGeneratedFile(blob, fname), fname);
 }
 document.getElementById('backupInput').onchange = async e => {
@@ -2927,8 +3054,22 @@ document.getElementById('backupInput').onchange = async e => {
   if (!file) return;
   try {
     const data = JSON.parse(await file.text());
-    if (!confirm('今の入力内容をバックアップの内容で置き換えます。よろしいですか？')) return;
-    applyLoaded(data);
+    if (data && Array.isArray(data.wards)) {
+      if (!confirm(`すべての病棟を、バックアップの内容（${data.wards.map(w => w.name).join('・')}）で置き換えます。よろしいですか？`)) return;
+      applyLoaded(data);
+    } else {
+      // 病棟が1つだった頃のバックアップは、新しい病棟として追加する
+      const w = normalizeWard(clone(data), '読み込んだ病棟');
+      let name = w.name;
+      for (let i = 2; STORE.wards.some(x => x.name === name); i++) name = `${w.name}(${i})`;
+      if (!confirm(`このバックアップを新しい病棟「${name}」として追加します。よろしいですか？`)) return;
+      w.id = STORE.nextWardId++;
+      w.name = name;
+      STORE.wards.push(w);
+      STORE.currentId = w.id;
+      DB = w;
+      HISTORY.length = 0;
+    }
     saveState();
     syncMonthInputs();
     render();
@@ -2952,6 +3093,7 @@ function showToast(msg, type) {
 function showLoading(show) { document.getElementById('loading').classList.toggle('show', show); }
 
 function render() {
+  renderWardSelect();
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === view.tab));
   if (view.tab === 'grid') renderGrid();
   else if (view.tab === 'staff') renderStaff();
@@ -2973,6 +3115,7 @@ function setMonth(y, m) {
 document.querySelectorAll('#tabs button').forEach(b => {
   b.onclick = () => { view.tab = b.dataset.tab; render(); };
 });
+document.getElementById('wardSelect').onchange = e => switchWard(Number(e.target.value));
 document.getElementById('prevMonthBtn').onclick = () => setMonth(...prevYM(view.y, view.m));
 document.getElementById('nextMonthBtn').onclick = () => setMonth(...nextYM(view.y, view.m));
 ['yearInput', 'monthInput'].forEach(id => {
