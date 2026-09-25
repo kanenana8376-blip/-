@@ -1,0 +1,2201 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>病棟勤務表ツール</title>
+<style>
+  :root {
+    --navy: #1F4E79;
+    --navy-dark: #163a59;
+    --ink: #2c2c2a;
+    --muted: #6b6b68;
+    --line: #d8d6cd;
+    --bg: #f7f5f0;
+    --panel: #ffffff;
+    --red: #c0392b;
+    --red-bg: #fde2e1;
+    --orange-bg: #ffe8cc;
+    --purple-bg: #ede4f7;
+    --green-bg: #dff0d8;
+    --yellow-bg: #fff4c2;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 13px;
+  }
+  header {
+    background: var(--navy);
+    color: #fff;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  header h1 { font-size: 18px; margin: 0; letter-spacing: 0.02em; }
+  header .sub { font-size: 12px; color: #cfe0ee; margin-top: 2px; }
+  .month-input { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .month-input input {
+    border: none; border-radius: 4px; padding: 6px 8px; font-size: 13px; width: 72px;
+  }
+  .month-nav-btn {
+    background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 4px; padding: 5px 9px; cursor: pointer; font-size: 12px;
+  }
+  .month-nav-btn:hover { background: rgba(255,255,255,0.28); }
+  .autosave-indicator { font-size: 11px; color: #cfe0ee; margin-left: 6px; }
+
+  nav.tabs {
+    display: flex; gap: 2px; padding: 0 24px; background: var(--panel);
+    border-bottom: 1px solid var(--line); overflow-x: auto;
+  }
+  nav.tabs button {
+    border: none; background: none; padding: 12px 16px; font-size: 14px; cursor: pointer;
+    color: var(--muted); border-bottom: 3px solid transparent; font-family: inherit; white-space: nowrap;
+  }
+  nav.tabs button.active { color: var(--navy); border-bottom-color: var(--navy); font-weight: 700; }
+  main { padding: 16px 24px 60px; }
+
+  .btn {
+    border: 1px solid var(--line); background: #fff; color: var(--ink); border-radius: 6px;
+    padding: 7px 12px; font-size: 13px; cursor: pointer; font-family: inherit;
+  }
+  .btn:hover { background: #f0eee7; }
+  .btn.primary { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .btn.primary:hover { background: var(--navy-dark); }
+  .btn.danger { color: var(--red); border-color: #e6b8b3; }
+  .btn.small { padding: 4px 8px; font-size: 12px; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+  .toolbar .spacer { flex: 1; }
+
+  .palette {
+    display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-bottom: 10px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+  }
+  .palette .label { font-size: 12px; color: var(--muted); margin-right: 6px; }
+  .pen {
+    border: 2px solid transparent; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 13px;
+    font-family: inherit; min-width: 34px;
+  }
+  .pen.active { border-color: var(--navy); box-shadow: 0 0 0 2px #bcd3ea; font-weight: 700; }
+
+  .grid-wrap {
+    overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    max-height: calc(100vh - 260px);
+  }
+  table.grid { border-collapse: separate; border-spacing: 0; font-size: 12px; }
+  table.grid th, table.grid td {
+    border-right: 1px solid #e6e4dc; border-bottom: 1px solid #e6e4dc; text-align: center;
+    padding: 0; height: 30px; min-width: 30px;
+  }
+  table.grid thead th {
+    position: sticky; top: 0; background: #f3f1ea; z-index: 2; font-weight: 600; cursor: pointer;
+  }
+  table.grid thead tr:nth-child(2) th { top: 30px; }
+  table.grid th.name-col, table.grid td.name-col {
+    position: sticky; left: 0; background: #fff; z-index: 1; text-align: left; padding: 3px 8px;
+    min-width: 190px; max-width: 220px; cursor: default;
+  }
+  table.grid thead th.name-col { z-index: 3; background: #f3f1ea; }
+  table.grid th.sat { color: #1565c0; background: #e8f0fb; }
+  table.grid th.sun { color: #c62828; background: #fdecea; }
+  table.grid td.sat { background-color: #f5f9ff; }
+  table.grid td.sun { background-color: #fff6f5; }
+  table.grid td.cell { cursor: pointer; font-weight: 700; font-size: 13px; position: relative; }
+  table.grid td.cell:hover { outline: 2px solid var(--navy); outline-offset: -2px; }
+  table.grid td.cell.auto { font-weight: 400; }
+  table.grid td.cell.pto::after {
+    content: '★'; position: absolute; top: 0; right: 1px; font-size: 8px; color: #b8860b;
+  }
+  table.grid td.cell.bad { box-shadow: inset 0 0 0 2px var(--red); }
+  table.grid td.cell.flash { animation: flash 1.2s ease-out 2; }
+  @keyframes flash { 0% { box-shadow: inset 0 0 0 3px #ff9800; } 100% { box-shadow: none; } }
+  table.grid td.stat { padding: 0 6px; min-width: 44px; font-size: 12px; white-space: nowrap; }
+  table.grid td.stat.bad { color: var(--red); font-weight: 700; background: var(--red-bg); }
+  table.grid tr.sum td { background: #faf9f5; font-weight: 600; }
+  table.grid tr.sum td.name-col { background: #f3f1ea; font-size: 12px; }
+  table.grid tr.sum-first td { border-top: 2px solid #b9b6aa; }
+  table.grid tr.sum td.ok { color: #2e7d32; }
+  table.grid tr.sum td.short { color: var(--red); background: var(--red-bg); }
+  table.grid tr.sum td.over { color: #9c6500; background: var(--yellow-bg); }
+  .staff-name { font-weight: 700; font-size: 13px; }
+  .chips { display: flex; gap: 3px; flex-wrap: wrap; margin-top: 2px; }
+  .chip {
+    font-size: 10px; padding: 0 5px; border-radius: 8px; background: #eef1f4; color: #444; line-height: 16px;
+    white-space: nowrap;
+  }
+  .chip.new { background: var(--red-bg); color: #9c0006; font-weight: 700; }
+  .chip.young { background: var(--orange-bg); color: #8a4b00; }
+  .chip.wardnew { background: var(--purple-bg); color: #5b2d8e; font-weight: 700; }
+  .chip.vet { background: var(--green-bg); color: #2e6b1f; }
+  .chip.type { background: #e0e8f0; color: var(--navy); }
+  .chip.nonight { background: #eee; color: #777; }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px;
+    margin-top: 14px;
+  }
+  .panel h3 { margin: 0 0 10px; font-size: 14px; }
+  .issues { list-style: none; margin: 0; padding: 0; max-height: 320px; overflow: auto; }
+  .issues li { padding: 5px 8px; border-radius: 5px; cursor: pointer; display: flex; gap: 8px; }
+  .issues li:hover { background: #f0eee7; }
+  .issues .sev { font-size: 11px; font-weight: 700; border-radius: 4px; padding: 0 6px; white-space: nowrap; }
+  .issues .sev.error { background: var(--red-bg); color: #9c0006; }
+  .issues .sev.warn { background: var(--yellow-bg); color: #9c6500; }
+  .ok-msg { color: #2e7d32; font-weight: 700; }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 16px; font-size: 12px; color: var(--muted); }
+  .legend span b { display: inline-block; min-width: 22px; text-align: center; border-radius: 4px; color: var(--ink); margin-right: 4px; }
+
+  table.form { border-collapse: collapse; background: var(--panel); font-size: 13px; }
+  table.form th, table.form td { border: 1px solid var(--line); padding: 5px 6px; text-align: left; }
+  table.form th { background: #f3f1ea; font-weight: 600; white-space: nowrap; font-size: 12px; }
+  table.form input[type=text] { width: 110px; }
+  table.form input[type=number] { width: 58px; }
+  input, select {
+    font-family: inherit; font-size: 13px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 5px;
+  }
+  .scroll-x { overflow-x: auto; }
+  .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 14px; }
+  .settings-grid .panel { margin-top: 0; }
+  .field { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px dashed #eee; }
+  .field:last-child { border-bottom: none; }
+  .field .hint { font-size: 11px; color: var(--muted); }
+  .note { font-size: 12px; color: var(--muted); line-height: 1.7; }
+  .guide h3 { margin-top: 20px; }
+  .guide p, .guide li { line-height: 1.8; }
+
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: none; align-items: center;
+    justify-content: center; z-index: 50; padding: 16px;
+  }
+  .overlay.show { display: flex; }
+  .modal {
+    background: #fff; border-radius: 10px; padding: 18px 20px; width: 100%; max-width: 560px;
+    max-height: 90vh; overflow: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+  }
+  .modal h3 { margin: 0 0 4px; font-size: 16px; }
+  .modal .sub { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  .code-buttons { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; }
+  .code-btn {
+    border: 1px solid var(--line); border-radius: 6px; padding: 8px 6px; cursor: pointer; text-align: left;
+    font-family: inherit; font-size: 13px; line-height: 1.3;
+  }
+  .code-btn b { font-size: 16px; margin-right: 4px; }
+  .code-btn small { display: block; color: #555; font-size: 10px; }
+  .code-btn.dim { opacity: 0.45; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+  .crew { margin: 6px 0 12px; }
+  .crew .member { display: flex; align-items: center; gap: 6px; padding: 3px 0; }
+  .rule { font-size: 12px; padding: 2px 0; }
+  .rule.ng { color: var(--red); font-weight: 700; }
+  .rule.okr { color: #2e7d32; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); opacity: 0;
+    background: #2e7d32; color: #fff; padding: 10px 18px; border-radius: 6px; transition: all .25s;
+    z-index: 100; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.error { background: var(--red); }
+  .loading {
+    position: fixed; inset: 0; background: rgba(255,255,255,0.6); display: none; align-items: center;
+    justify-content: center; z-index: 90; font-size: 15px; font-weight: 700; color: var(--navy);
+  }
+  .loading.show { display: flex; }
+
+  @media (max-width: 640px) {
+    header, main { padding-left: 16px; padding-right: 16px; }
+    nav.tabs { padding: 0 8px; }
+    table.grid th.name-col, table.grid td.name-col { min-width: 130px; }
+  }
+
+  @media print {
+    @page { size: A3 landscape; margin: 8mm; }
+    header .month-input, nav.tabs, .toolbar, .palette, .no-print { display: none !important; }
+    header { background: #fff; color: #000; padding: 0 0 6px; }
+    header .sub { display: none; }
+    main { padding: 0; }
+    .grid-wrap { max-height: none; overflow: visible; border: none; }
+    table.grid thead th { position: static; }
+    table.grid th.name-col, table.grid td.name-col { position: static; min-width: 120px; }
+    table.grid th, table.grid td { height: 20px; min-width: 20px; font-size: 10px; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: #fff; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1 id="titleText">病棟看護師 勤務表作成ツール</h1>
+    <div class="sub">3交代・2交代・時短勤務が混在する病棟向け ／ 夜勤メンバーの経験年数バランスを自動チェック</div>
+  </div>
+  <div class="month-input">
+    <button class="month-nav-btn" id="prevMonthBtn" aria-label="前の月">◀</button>
+    <input type="number" id="yearInput" min="2020" max="2100">年
+    <input type="number" id="monthInput" min="1" max="12">月
+    <button class="month-nav-btn" id="nextMonthBtn" aria-label="次の月">▶</button>
+    <span class="autosave-indicator" id="autosaveIndicator"></span>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="grid" class="active">勤務表</button>
+  <button data-tab="staff">スタッフ</button>
+  <button data-tab="settings">設定</button>
+  <button data-tab="guide">使い方</button>
+</nav>
+
+<main id="main"></main>
+
+<div class="overlay" id="pickerOverlay">
+  <div class="modal">
+    <h3 id="pickerTitle"></h3>
+    <div class="sub" id="pickerSub"></div>
+    <div id="pickerBody"></div>
+    <div class="modal-footer">
+      <button class="btn" id="pickerClose">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="dayOverlay">
+  <div class="modal">
+    <h3 id="dayTitle"></h3>
+    <div class="sub">この日の勤務メンバーと、夜勤の経験バランスの判定です</div>
+    <div id="dayBody"></div>
+    <div class="modal-footer">
+      <button class="btn" id="dayClose">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="backupInput" accept=".json" style="display:none;">
+<div class="toast" id="toast"></div>
+<div class="loading" id="loading">勤務表を作成しています…</div>
+
+<script>
+/*
+  Expanded dependency-free XLSX writer (v2).
+  Supports multiple sheets, formulas, fills, merged cells, column
+  widths/hidden columns, conditional formatting rules, and basic
+  data validation lists. Builds a valid OOXML package using an
+  uncompressed ("STORE") ZIP container by hand, so it needs zero
+  external libraries and works fully offline.
+
+  This is a small, purpose-built subset of OOXML -- not a general
+  spreadsheet engine. It deliberately writes FORMULAS as formula
+  strings (no cached value), which is valid OOXML; Excel/LibreOffice
+  recalculate on open.
+*/
+
+// ---------- CRC32 ----------
+const CRC_TABLE = (() => {
+  const table = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    table[n] = c >>> 0;
+  }
+  return table;
+})();
+function crc32(bytes) {
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) crc = CRC_TABLE[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+function strToBytes(str) { return new TextEncoder().encode(str); }
+
+// ---------- minimal ZIP (store, no compression) ----------
+function buildZip(files) {
+  const localParts = [];
+  const centralParts = [];
+  let offset = 0;
+  files.forEach(file => {
+    const nameBytes = strToBytes(file.name);
+    const data = file.data;
+    const crc = crc32(data);
+    const size = data.length;
+
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true);
+    lh.setUint16(4, 20, true);
+    lh.setUint32(14, crc, true);
+    lh.setUint32(18, size, true);
+    lh.setUint32(22, size, true);
+    lh.setUint16(26, nameBytes.length, true);
+    const localChunk = new Uint8Array(30 + nameBytes.length + size);
+    localChunk.set(new Uint8Array(lh.buffer), 0);
+    localChunk.set(nameBytes, 30);
+    localChunk.set(data, 30 + nameBytes.length);
+    localParts.push(localChunk);
+
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true);
+    ch.setUint16(4, 20, true);
+    ch.setUint16(6, 20, true);
+    ch.setUint32(16, crc, true);
+    ch.setUint32(20, size, true);
+    ch.setUint32(24, size, true);
+    ch.setUint16(28, nameBytes.length, true);
+    ch.setUint32(42, offset, true);
+    const centralChunk = new Uint8Array(46 + nameBytes.length);
+    centralChunk.set(new Uint8Array(ch.buffer), 0);
+    centralChunk.set(nameBytes, 46);
+    centralParts.push(centralChunk);
+
+    offset += localChunk.length;
+  });
+  const centralStart = offset;
+  let centralSize = 0;
+  centralParts.forEach(p => centralSize += p.length);
+  const eocd = new DataView(new ArrayBuffer(22));
+  eocd.setUint32(0, 0x06054b50, true);
+  eocd.setUint16(8, files.length, true);
+  eocd.setUint16(10, files.length, true);
+  eocd.setUint32(12, centralSize, true);
+  eocd.setUint32(16, centralStart, true);
+  const out = new Uint8Array(offset + centralSize + 22);
+  let pos = 0;
+  localParts.forEach(p => { out.set(p, pos); pos += p.length; });
+  centralParts.forEach(p => { out.set(p, pos); pos += p.length; });
+  out.set(new Uint8Array(eocd.buffer), pos);
+  return out;
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+}
+function colLetter(n) {
+  let s = '';
+  while (n > 0) { const rem = (n - 1) % 26; s = String.fromCharCode(65 + rem) + s; n = Math.floor((n - 1) / 26); }
+  return s;
+}
+
+// ============================================================
+// Sheet builder: a thin object model so calling code can describe
+// a sheet declaratively, then renderWorkbook() turns N of these
+// into a complete xlsx.
+// ============================================================
+class SheetBuilder {
+  constructor(name) {
+    this.name = name;
+    this.cells = {};       // 'A1' -> {v, f, s (style key), t}
+    this.merges = [];      // 'A1:B1'
+    this.colWidths = {};   // 'A' -> width
+    this.colHidden = {};   // 'A' -> true
+    this.rowHeights = {};  // 1 -> height
+    this.condFormats = []; // {ref, type, formula, dxfId}
+    this.dataValidations = []; // {ref, formula1}
+    this.freezeRow = 0;
+    this.freezeCol = 0;
+    this.showGridLines = true;
+    this.tabColor = null;
+  }
+  set(ref, value, opts) {
+    opts = opts || {};
+    this.cells[ref] = { v: value, s: opts.style || null, formula: !!opts.formula };
+    return this;
+  }
+  formula(ref, formulaStr, opts) {
+    opts = opts || {};
+    this.cells[ref] = { f: formulaStr, s: opts.style || null };
+    return this;
+  }
+  merge(ref) { this.merges.push(ref); return this; }
+  colWidth(letterOrRange, width) {
+    if (letterOrRange.includes(':')) {
+      const [a, b] = letterOrRange.split(':');
+      const start = colNum(a), end = colNum(b);
+      for (let i = start; i <= end; i++) this.colWidths[colLetter(i)] = width;
+    } else this.colWidths[letterOrRange] = width;
+    return this;
+  }
+  hideCol(letter) { this.colHidden[letter] = true; return this; }
+  rowHeight(row, h) { this.rowHeights[row] = h; return this; }
+  freeze(row, col) { this.freezeRow = row; this.freezeCol = col; return this; }
+  noGrid() { this.showGridLines = false; return this; }
+  condFormat(ref, type, params) {
+    this.condFormats.push({ ref, type, params });
+    return this;
+  }
+  dataValidation(ref, listFormula) {
+    this.dataValidations.push({ ref, formula: listFormula });
+    return this;
+  }
+}
+
+function colNum(letter) {
+  let n = 0;
+  for (let i = 0; i < letter.length; i++) n = n * 26 + (letter.charCodeAt(i) - 64);
+  return n;
+}
+
+// ============================================================
+// Style registry: collects fonts/fills/borders/numFmts used across
+// ALL sheets and assigns shared cellXfs indices.
+// ============================================================
+class StyleRegistry {
+  constructor() {
+    this.fonts = [{ name: 'Yu Gothic', sz: 10, bold: false, color: null }];
+    this.fills = [null, null]; // 0=none,1=gray125 reserved by spec
+    this.numFmts = {}; // code -> id (custom only, 164+)
+    this.xfs = [{ fontId: 0, fillId: 0, numFmtId: 0, align: null, border: false }];
+    this.xfKey = new Map();
+    this._nextNumFmtId = 164;
+  }
+  font(opts) {
+    opts = opts || {};
+    const key = JSON.stringify(opts);
+    let idx = this.fonts.findIndex(f => JSON.stringify(f) === key);
+    if (idx === -1) { idx = this.fonts.length; this.fonts.push(Object.assign({ name: 'Yu Gothic', sz: 10, bold: false, color: null }, opts)); }
+    return idx;
+  }
+  fill(hex) {
+    if (!hex) return 0;
+    const key = hex.toUpperCase();
+    let idx = this.fills.indexOf(key);
+    if (idx === -1) { idx = this.fills.length; this.fills.push(key); }
+    return idx;
+  }
+  numFmt(code) {
+    if (!code) return 0;
+    if (this.numFmts[code] !== undefined) return this.numFmts[code];
+    const id = this._nextNumFmtId++;
+    this.numFmts[code] = id;
+    return id;
+  }
+  xf(opts) {
+    // opts: {fontId, fillId, numFmtId, align: {h,v,wrap}, border}
+    const key = JSON.stringify(opts);
+    if (this.xfKey.has(key)) return this.xfKey.get(key);
+    const idx = this.xfs.length;
+    this.xfs.push(opts);
+    this.xfKey.set(key, idx);
+    return idx;
+  }
+  // convenience: build a style and return its xf index in one call
+  style({ bold, size, color, fill, halign, valign, wrap, border, numFmt }) {
+    const fontId = this.font({ name: 'Yu Gothic', sz: size || 10, bold: !!bold, color: color || null });
+    const fillId = this.fill(fill);
+    const numFmtId = this.numFmt(numFmt);
+    return this.xf({
+      fontId, fillId, numFmtId,
+      align: (halign || valign || wrap) ? { h: halign, v: valign, wrap: !!wrap } : null,
+      border: !!border,
+    });
+  }
+}
+
+// ============================================================
+// XML rendering
+// ============================================================
+function renderStylesXml(reg) {
+  let fontsXml = reg.fonts.map(f => {
+    let s = '<font>';
+    if (f.bold) s += '<b/>';
+    s += `<sz val="${f.sz}"/>`;
+    if (f.color) s += `<color rgb="FF${f.color}"/>`;
+    s += `<name val="${esc(f.name)}"/></font>`;
+    return s;
+  }).join('');
+
+  let fillsXml = '<fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>';
+  reg.fills.slice(2).forEach(hex => {
+    fillsXml += `<fill><patternFill patternType="solid"><fgColor rgb="FF${hex}"/><bgColor indexed="64"/></patternFill></fill>`;
+  });
+
+  let numFmtsXml = '';
+  const numFmtEntries = Object.entries(reg.numFmts);
+  if (numFmtEntries.length) {
+    numFmtsXml = `<numFmts count="${numFmtEntries.length}">` +
+      numFmtEntries.map(([code, id]) => `<numFmt numFmtId="${id}" formatCode="${esc(code)}"/>`).join('') +
+      '</numFmts>';
+  }
+
+  let borderXml = '<border><left/><right/><top/><bottom/><diagonal/></border>' +
+    '<border><left style="thin"><color rgb="FFBFBFBF"/></left><right style="thin"><color rgb="FFBFBFBF"/></right>' +
+    '<top style="thin"><color rgb="FFBFBFBF"/></top><bottom style="thin"><color rgb="FFBFBFBF"/></bottom><diagonal/></border>';
+
+  let cellXfsXml = reg.xfs.map(xf => {
+    const align = xf.align;
+    let alignXml = '';
+    if (align && (align.h || align.v || align.wrap)) {
+      alignXml = `<alignment${align.h ? ` horizontal="${align.h}"` : ''}${align.v ? ` vertical="${align.v}"` : ''}${align.wrap ? ' wrapText="1"' : ''}/>`;
+    }
+    const borderId = xf.border ? 1 : 0;
+    return `<xf numFmtId="${xf.numFmtId || 0}" fontId="${xf.fontId || 0}" fillId="${xf.fillId || 0}" borderId="${borderId}" applyFont="1" applyFill="1" applyBorder="${borderId ? 1 : 0}" applyAlignment="${alignXml ? 1 : 0}" applyNumberFormat="${xf.numFmtId ? 1 : 0}">${alignXml}</xf>`;
+  }).join('');
+
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    numFmtsXml +
+    `<fonts count="${reg.fonts.length}">${fontsXml}</fonts>` +
+    `<fills count="${reg.fills.length}">${fillsXml}</fills>` +
+    `<borders count="2">${borderXml}</borders>` +
+    '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+    `<cellXfs count="${reg.xfs.length}">${cellXfsXml}</cellXfs>` +
+    '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>' +
+    '</styleSheet>';
+}
+
+function renderSheetXml(sheet) {
+  // figure out used range
+  let maxRow = 0, maxCol = 0;
+  Object.keys(sheet.cells).forEach(ref => {
+    const m = ref.match(/^([A-Z]+)(\d+)$/);
+    maxCol = Math.max(maxCol, colNum(m[1]));
+    maxRow = Math.max(maxRow, parseInt(m[2]));
+  });
+
+  const rowsMap = {};
+  Object.entries(sheet.cells).forEach(([ref, cell]) => {
+    const m = ref.match(/^([A-Z]+)(\d+)$/);
+    const r = parseInt(m[2]);
+    if (!rowsMap[r]) rowsMap[r] = [];
+    rowsMap[r].push({ ref, col: colNum(m[1]), cell });
+  });
+
+  let sheetData = '';
+  for (let r = 1; r <= maxRow; r++) {
+    const rowCells = (rowsMap[r] || []).sort((a, b) => a.col - b.col);
+    if (rowCells.length === 0 && !sheet.rowHeights[r]) continue;
+    const hAttr = sheet.rowHeights[r] ? ` ht="${sheet.rowHeights[r]}" customHeight="1"` : '';
+    let cellsXml = '';
+    rowCells.forEach(({ ref, cell }) => {
+      const sAttr = cell.s !== null && cell.s !== undefined ? ` s="${cell.s}"` : '';
+      if (cell.f !== undefined) {
+        cellsXml += `<c r="${ref}"${sAttr}><f>${esc(cell.f)}</f></c>`;
+      } else if (typeof cell.v === 'number') {
+        cellsXml += `<c r="${ref}"${sAttr}><v>${cell.v}</v></c>`;
+      } else if (cell.v === null || cell.v === undefined || cell.v === '') {
+        cellsXml += `<c r="${ref}"${sAttr}/>`;
+      } else {
+        cellsXml += `<c r="${ref}" t="inlineStr"${sAttr}><is><t xml:space="preserve">${esc(cell.v)}</t></is></c>`;
+      }
+    });
+    sheetData += `<row r="${r}"${hAttr}>${cellsXml}</row>`;
+  }
+
+  let colsXml = '';
+  const colEntries = Object.keys(sheet.colWidths).map(l => colNum(l));
+  if (colEntries.length || Object.keys(sheet.colHidden).length) {
+    const allLetters = new Set([...Object.keys(sheet.colWidths), ...Object.keys(sheet.colHidden)]);
+    const nums = [...allLetters].map(colNum).sort((a, b) => a - b);
+    colsXml = '<cols>' + nums.map(n => {
+      const letter = colLetter(n);
+      const w = sheet.colWidths[letter] || 8.43;
+      const hidden = sheet.colHidden[letter] ? ' hidden="1"' : '';
+      return `<col min="${n}" max="${n}" width="${w}" customWidth="1"${hidden}/>`;
+    }).join('') + '</cols>';
+  }
+
+  let mergeXml = '';
+  if (sheet.merges.length) {
+    mergeXml = `<mergeCells count="${sheet.merges.length}">` +
+      sheet.merges.map(m => `<mergeCell ref="${m}"/>`).join('') + '</mergeCells>';
+  }
+
+  let cfXml = '';
+  sheet.condFormats.forEach(cf => {
+    if (cf.type === 'cellIs') {
+      cfXml += `<conditionalFormatting sqref="${cf.ref}"><cfRule type="cellIs" dxfId="${cf.params.dxfId}" priority="${cfXml.length + 1}" operator="${cf.params.operator}"><formula>${esc(cf.params.formula)}</formula></cfRule></conditionalFormatting>`;
+    } else if (cf.type === 'expression') {
+      cfXml += `<conditionalFormatting sqref="${cf.ref}"><cfRule type="expression" dxfId="${cf.params.dxfId}" priority="${cfXml.length + 1}"><formula>${esc(cf.params.formula)}</formula></cfRule></conditionalFormatting>`;
+    }
+  });
+
+  let dvXml = '';
+  if (sheet.dataValidations.length) {
+    dvXml = `<dataValidations count="${sheet.dataValidations.length}">` +
+      sheet.dataValidations.map(dv =>
+        `<dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" sqref="${dv.ref}"><formula1>${esc(dv.formula)}</formula1></dataValidation>`
+      ).join('') + '</dataValidations>';
+  }
+
+  let paneXml = '';
+  if (sheet.freezeRow || sheet.freezeCol) {
+    const topLeft = colLetter(sheet.freezeCol + 1) + (sheet.freezeRow + 1);
+    paneXml = `<pane xSplit="${sheet.freezeCol}" ySplit="${sheet.freezeRow}" topLeftCell="${topLeft}" activePane="bottomRight" state="frozen"/>`;
+  }
+  const sheetViewXml = `<sheetViews><sheetView${sheet.showGridLines ? '' : ' showGridLines="0"'} workbookViewId="0">${paneXml}</sheetView></sheetViews>`;
+
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    sheetViewXml +
+    colsXml +
+    `<sheetData>${sheetData}</sheetData>` +
+    mergeXml +
+    dvXml +
+    cfXml +
+    '</worksheet>';
+}
+
+function renderDxfsXml(dxfs) {
+  // dxfs: array of {fontColor, fill}
+  const items = dxfs.map(d => {
+    let s = '<dxf>';
+    if (d.fontColor || d.bold) {
+      s += '<font>';
+      if (d.fontColor) s += `<color rgb="FF${d.fontColor}"/>`;
+      if (d.bold) s += '<b/>';
+      s += '</font>';
+    }
+    if (d.fill) s += `<fill><patternFill><bgColor rgb="FF${d.fill}"/></patternFill></fill>`;
+    s += '</dxf>';
+    return s;
+  }).join('');
+  return { count: dxfs.length, xml: items };
+}
+
+// ============================================================
+// Public API: build a full multi-sheet workbook
+// ============================================================
+function renderWorkbook(sheets, styleRegistry, dxfs) {
+  const dxfData = renderDxfsXml(dxfs || []);
+
+  let stylesXml = renderStylesXml(styleRegistry);
+  if (dxfData.count) {
+    stylesXml = stylesXml.replace('</styleSheet>', `<dxfs count="${dxfData.count}">${dxfData.xml}</dxfs></styleSheet>`);
+  }
+
+  const sheetEntries = sheets.map((s, i) => ({ sheet: s, idx: i + 1 }));
+
+  const workbookXml =
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+    '<sheets>' + sheetEntries.map(e => `<sheet name="${esc(e.sheet.name)}" sheetId="${e.idx}" r:id="rId${e.idx}"/>`).join('') + '</sheets>' +
+    '</workbook>';
+
+  const workbookRels =
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    sheetEntries.map(e => `<Relationship Id="rId${e.idx}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${e.idx}.xml"/>`).join('') +
+    `<Relationship Id="rId${sheetEntries.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>` +
+    '</Relationships>';
+
+  const rootRels =
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' +
+    '</Relationships>';
+
+  const contentTypes =
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+    '<Default Extension="xml" ContentType="application/xml"/>' +
+    '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+    sheetEntries.map(e => `<Override PartName="/xl/worksheets/sheet${e.idx}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('') +
+    '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+    '</Types>';
+
+  const files = [
+    { name: '[Content_Types].xml', data: strToBytes(contentTypes) },
+    { name: '_rels/.rels', data: strToBytes(rootRels) },
+    { name: 'xl/workbook.xml', data: strToBytes(workbookXml) },
+    { name: 'xl/_rels/workbook.xml.rels', data: strToBytes(workbookRels) },
+    { name: 'xl/styles.xml', data: strToBytes(stylesXml) },
+  ];
+  sheetEntries.forEach(e => {
+    files.push({ name: `xl/worksheets/sheet${e.idx}.xml`, data: strToBytes(renderSheetXml(e.sheet)) });
+  });
+
+  return buildZip(files);
+}
+
+function nthMonday(year, month, n) {
+  const first = new Date(year, month - 1, 1);
+  const firstMonday = 1 + ((8 - first.getDay()) % 7);
+  return firstMonday + (n - 1) * 7;
+}
+function vernalEquinoxDay(year) {
+  // 近似式（国立天文台の式に基づく、2000-2099年で有効）
+  return Math.floor(20.8431 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+}
+function autumnalEquinoxDay(year) {
+  return Math.floor(23.2488 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+}
+function japaneseHolidaysForYear(year) {
+  // returns a Set of 'YYYY-MM-DD' strings for all holidays (including 振替休日)
+  const holidays = new Map(); // 'YYYY-MM-DD' -> name
+
+  function add(month, day, name) {
+    const key = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    holidays.set(key, name);
+  }
+
+  add(1, 1, '元日');
+  add(1, nthMonday(year, 1, 2), '成人の日');
+  add(2, 11, '建国記念の日');
+  if (year >= 2020) add(2, 23, '天皇誕生日');
+  add(3, vernalEquinoxDay(year), '春分の日');
+  add(4, 29, '昭和の日');
+  add(5, 3, '憲法記念日');
+  add(5, 4, 'みどりの日');
+  add(5, 5, 'こどもの日');
+  add(7, nthMonday(year, 7, 3), '海の日');
+  if (year >= 2016) add(8, 11, '山の日');
+  add(9, nthMonday(year, 9, 3), '敬老の日');
+  add(9, autumnalEquinoxDay(year), '秋分の日');
+  add(10, nthMonday(year, 10, 2), 'スポーツの日');
+  add(11, 3, '文化の日');
+  add(11, 23, '勤労感謝の日');
+
+  // 振替休日: 祝日が日曜なら、その後の最初の平日（祝日でない日）を休日にする
+  const sorted = [...holidays.keys()].sort();
+  sorted.forEach(key => {
+    const [y, m, d] = key.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    if (date.getDay() === 0) {
+      let next = new Date(y, m - 1, d + 1);
+      let nextKey = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`;
+      while (holidays.has(nextKey)) {
+        next = new Date(next.getFullYear(), next.getMonth(), next.getDate() + 1);
+        nextKey = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`;
+      }
+      holidays.set(nextKey, '振替休日');
+    }
+  });
+
+  // 国民の休日: 祝日と祝日に挟まれた平日（祝日でなく、日曜でもない日）も休日とする
+  const afterSubstitutes = [...holidays.keys()];
+  afterSubstitutes.forEach(key => {
+    const [y, m, d] = key.split('-').map(Number);
+    const middle = new Date(y, m - 1, d + 1);
+    const middleKey = `${middle.getFullYear()}-${String(middle.getMonth() + 1).padStart(2, '0')}-${String(middle.getDate()).padStart(2, '0')}`;
+    if (holidays.has(middleKey) || middle.getDay() === 0 || middle.getDay() === 6) return;
+    const after = new Date(y, m - 1, d + 2);
+    const afterKey = `${after.getFullYear()}-${String(after.getMonth() + 1).padStart(2, '0')}-${String(after.getDate()).padStart(2, '0')}`;
+    if (holidays.has(afterKey)) holidays.set(middleKey, '国民の休日');
+  });
+
+  return holidays;
+}
+const _holidayCache = {};
+function isJapaneseHoliday(year, month, day) {
+  if (!_holidayCache[year]) _holidayCache[year] = japaneseHolidaysForYear(year);
+  const key = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  return _holidayCache[year].has(key);
+}
+function holidayName(year, month, day) {
+  if (!_holidayCache[year]) _holidayCache[year] = japaneseHolidaysForYear(year);
+  const key = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  return _holidayCache[year].get(key) || '';
+}
+
+// ============================================================
+// 勤務記号
+// ============================================================
+// kind: day=日勤帯（日勤人数に数える） night=夜勤 ake=夜勤明け off=休み other=病棟外の勤務
+const CODES = {
+  '日': { name: '日勤',          time: '8:30〜17:00',   color: '#C6E0B4', kind: 'day' },
+  '短': { name: '時短日勤',      time: '9:00〜16:00',   color: '#E2EFDA', kind: 'day' },
+  '準': { name: '準夜勤',        time: '16:00〜翌0:30', color: '#F4B183', kind: 'night' },
+  '深': { name: '深夜勤',        time: '0:00〜8:45',    color: '#9DC3E6', kind: 'night' },
+  '夜': { name: '夜勤（2交代）', time: '16:30〜翌9:00', color: '#B4A7D6', kind: 'night' },
+  '明': { name: '夜勤明け',      time: '〜9:00',        color: '#E4DFF2', kind: 'ake' },
+  '公': { name: '公休',          time: '',              color: '#D9D9D9', kind: 'off' },
+  '有': { name: '有給休暇',      time: '',              color: '#FFF2CC', kind: 'off' },
+  '研': { name: '研修・出張',    time: '',              color: '#FCE4D6', kind: 'other' },
+};
+const CODE_ORDER = ['日', '短', '準', '深', '夜', '明', '公', '有', '研'];
+const COMMON_CODES = ['公', '有', '研'];
+
+// 勤務形態ごとに入れられる記号。「両方」は2交代・3交代どちらの夜勤にも入れる人。
+const WORK_TYPES = {
+  '3交代':    { label: '3交代',                 short: '3交代', codes: ['日', '準', '深'] },
+  '2交代':    { label: '2交代',                 short: '2交代', codes: ['日', '夜', '明'] },
+  '両方':     { label: '2交代・3交代どちらも', short: '2/3交代', codes: ['日', '準', '深', '夜', '明'] },
+  '日勤のみ': { label: '日勤のみ',              short: '日勤のみ', codes: ['日'] },
+  '時短':     { label: '時短勤務（日勤のみ）', short: '時短', codes: ['短'] },
+};
+const ROLES = ['師長', '副師長', '主任', 'スタッフ'];
+
+function isWork(code) { return !!code && code !== '公' && code !== '有'; }
+function isNight(code) { return code === '準' || code === '深' || code === '夜'; }
+// 夜勤回数：2交代の夜勤（16時間）は2回分として数える（準夜・深夜の2回分を1回で勤めるため）
+function nightUnits(code) { return code === '夜' ? 2 : (code === '準' || code === '深') ? 1 : 0; }
+function allowedCodes(staff) { return WORK_TYPES[staff.workType].codes.concat(COMMON_CODES); }
+function canNightType(staff) {
+  return staff.nightOK && WORK_TYPES[staff.workType].codes.some(isNight);
+}
+
+// ============================================================
+// 初期データ
+// ============================================================
+function st(id, name, role, workType, nurseYear, wardYear, extra) {
+  return Object.assign({
+    id, name, role, workType, nurseYear, wardYear,
+    nightOK: workType !== '日勤のみ' && workType !== '時短',
+    nightMax: 8, offAdjust: 0, weekendOff: false,
+  }, extra || {});
+}
+const DEFAULT_STAFF = [
+  st(1,  '看護師長',   '師長',   '日勤のみ', 25, 5),
+  st(2,  '副師長A',    '副師長', '3交代', 18, 6, { nightMax: 6 }),
+  st(3,  '副師長B',    '副師長', '2交代', 15, 3, { nightMax: 6 }),
+  st(4,  '主任A',      '主任',   '3交代', 12, 5),
+  st(5,  '主任B',      '主任',   '2交代', 10, 4),
+  st(6,  '看護師06',   'スタッフ', '3交代', 9, 4),
+  st(7,  '看護師07',   'スタッフ', '3交代', 7, 3),
+  st(8,  '看護師08',   'スタッフ', '3交代', 6, 6),
+  st(9,  '看護師09',   'スタッフ', '3交代', 5, 2),
+  st(10, '看護師10',   'スタッフ', '3交代', 4, 4),
+  st(11, '看護師11',   'スタッフ', '3交代', 8, 1),
+  st(12, '看護師12',   'スタッフ', '3交代', 3, 3),
+  st(13, '看護師13',   'スタッフ', '3交代', 2, 2),
+  st(14, '看護師14',   'スタッフ', '3交代', 1, 1),
+  st(15, '看護師15',   'スタッフ', '3交代', 1, 1, { nightOK: false }),
+  st(16, '看護師16',   'スタッフ', '3交代', 11, 5),
+  st(17, '看護師17',   'スタッフ', '3交代', 6, 2),
+  st(18, '看護師18',   'スタッフ', '2交代', 11, 7),
+  st(19, '看護師19',   'スタッフ', '2交代', 6, 3),
+  st(20, '看護師20',   'スタッフ', '2交代', 5, 5),
+  st(21, '看護師21',   'スタッフ', '2交代', 3, 3),
+  st(22, '看護師22',   'スタッフ', '2交代', 2, 2),
+  st(23, '看護師23',   'スタッフ', '2交代', 1, 1),
+  st(24, '看護師24',   'スタッフ', '2交代', 14, 1),
+  st(25, '看護師25',   'スタッフ', '両方', 7, 4),
+  st(26, '看護師26',   'スタッフ', '両方', 3, 2),
+  st(27, '看護師27',   'スタッフ', '時短', 10, 4, { weekendOff: true }),
+  st(28, '看護師28',   'スタッフ', '時短', 8, 2),
+  st(29, '看護師29',   'スタッフ', '時短', 13, 6, { weekendOff: true }),
+  st(30, '看護師30',   'スタッフ', '日勤のみ', 20, 8, { weekendOff: true }),
+];
+
+const DEFAULT_SETTINGS = {
+  wardName: '',
+  reqDayWeekday: 9,     // 平日の日勤人数
+  reqDayHoliday: 5,     // 土日祝の日勤人数
+  reqEve: 3,            // 準夜帯（準夜＋2交代夜勤）の人数
+  reqLate: 3,           // 深夜帯（深夜＋前日からの2交代夜勤）の人数
+  countShort: true,     // 時短日勤を日勤の人数に含める
+  vetNurseYear: 4,      // 中堅以上＝看護師経験この年目以上
+  vetWardYear: 2,       //           かつ 病棟経験この年目以上
+  minVet: 1,            // 夜勤帯ごとの中堅以上の最低人数
+  youngMaxYear: 3,      // 若手＝看護師経験この年目以下
+  maxYoung: 2,          // 夜勤帯ごとの若手（新人含む）の上限
+  maxNewbie: 1,         // 夜勤帯ごとの新人（看護師1年目）の上限
+  maxWardNew: 1,        // 夜勤帯ごとの病棟1年目の上限
+  maxConsecWork: 5,
+  maxConsecNight: 2,    // 準夜・深夜を同じ記号で続ける上限
+  restAfterAke: true,   // 夜勤明けの翌日は休み
+  offTargetOverride: null,
+  hours: { '準': 8, '深': 8, '夜': 16 },
+};
+
+const STORAGE_KEY = 'wardShiftTool_autosave_v1';
+let DB = {
+  staff: JSON.parse(JSON.stringify(DEFAULT_STAFF)),
+  settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),
+  months: {},
+  nextId: DEFAULT_STAFF.length + 1,
+};
+const view = { tab: 'grid', pen: null, y: 0, m: 0, highlight: null };
+
+// ============================================================
+// 保存（ブラウザ内に自動保存）
+// ============================================================
+let saveTimer = null;
+function scheduleSave() {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => { saveTimer = null; saveState(); }, 300);
+}
+function saveState() {
+  try {
+    DB.lastYM = [view.y, view.m];
+    DB.savedAt = new Date().toISOString();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
+    showSavedAt(DB.savedAt);
+  } catch (e) { console.error('autosave failed', e); }
+}
+function showSavedAt(iso) {
+  const t = new Date(iso);
+  document.getElementById('autosaveIndicator').textContent =
+    `✓ 自動保存 ${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
+}
+function applyLoaded(saved) {
+  if (!saved || !Array.isArray(saved.staff)) throw new Error('形式が違います');
+  DB = {
+    staff: saved.staff,
+    settings: Object.assign(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), saved.settings || {}),
+    months: saved.months || {},
+    nextId: saved.nextId || (Math.max(0, ...saved.staff.map(s => s.id)) + 1),
+  };
+  DB.staff.forEach(s => {
+    if (!WORK_TYPES[s.workType]) s.workType = '3交代';
+    if (typeof s.nightMax !== 'number') s.nightMax = 8;
+    if (typeof s.offAdjust !== 'number') s.offAdjust = 0;
+  });
+  if (Array.isArray(saved.lastYM)) { view.y = saved.lastYM[0]; view.m = saved.lastYM[1]; }
+  if (saved.savedAt) setTimeout(() => showSavedAt(saved.savedAt), 0);
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    applyLoaded(JSON.parse(raw));
+    return true;
+  } catch (e) {
+    console.error('failed to restore autosave', e);
+    return false;
+  }
+}
+
+// ============================================================
+// 日付
+// ============================================================
+function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
+function weekday(y, m, d) { return new Date(y, m - 1, d).getDay(); }
+const WEEKDAYS_JP = ['日', '月', '火', '水', '木', '金', '土'];
+function isOffDay(y, m, d) {
+  const w = weekday(y, m, d);
+  return w === 0 || w === 6 || isJapaneseHoliday(y, m, d);
+}
+function prevYM(y, m) { return m === 1 ? [y - 1, 12] : [y, m - 1]; }
+function nextYM(y, m) { return m === 12 ? [y + 1, 1] : [y, m + 1]; }
+function monthKey(y, m) { return `${y}-${String(m).padStart(2, '0')}`; }
+function offDayCountOfMonth(y, m) {
+  let n = 0;
+  for (let d = 1; d <= daysInMonth(y, m); d++) if (isOffDay(y, m, d)) n++;
+  return n;
+}
+function offTarget(staff, y, m) {
+  const S = DB.settings;
+  const base = (S.offTargetOverride !== null && S.offTargetOverride !== '' && !isNaN(S.offTargetOverride))
+    ? Number(S.offTargetOverride) : offDayCountOfMonth(y, m);
+  return Math.max(0, base + (Number(staff.offAdjust) || 0));
+}
+function reqDay(y, m, d) {
+  return isOffDay(y, m, d) ? DB.settings.reqDayHoliday : DB.settings.reqDayWeekday;
+}
+
+// ============================================================
+// 経験年数による区分
+// ============================================================
+function isNewbie(s) { return s.nurseYear <= 1; }
+function isYoung(s) { return s.nurseYear <= DB.settings.youngMaxYear; }
+function isWardNew(s) { return s.wardYear <= 1; }
+function isVet(s) {
+  return s.nurseYear >= DB.settings.vetNurseYear && s.wardYear >= DB.settings.vetWardYear;
+}
+function expChips(s) {
+  const chips = [];
+  chips.push(`<span class="chip type">${WORK_TYPES[s.workType].short}</span>`);
+  const nCls = isNewbie(s) ? 'new' : isYoung(s) ? 'young' : '';
+  chips.push(`<span class="chip ${nCls}" title="看護師経験">看${s.nurseYear}年目${isNewbie(s) ? '（新人）' : ''}</span>`);
+  chips.push(`<span class="chip ${isWardNew(s) ? 'wardnew' : ''}" title="病棟経験">病棟${s.wardYear}年目</span>`);
+  if (isVet(s)) chips.push('<span class="chip vet" title="夜勤の中心になれる人">中堅以上</span>');
+  if (!s.nightOK && WORK_TYPES[s.workType].codes.some(isNight)) chips.push('<span class="chip nonight">夜勤なし</span>');
+  return chips.join('');
+}
+function staffById(id) { return DB.staff.find(s => s.id === id); }
+
+// 夜勤帯のメンバー構成を判定する
+function crewCheck(ids) {
+  const S = DB.settings;
+  const members = ids.map(staffById).filter(Boolean);
+  const r = {
+    total: members.length,
+    vet: members.filter(isVet).length,
+    newbie: members.filter(isNewbie).length,
+    young: members.filter(isYoung).length,
+    wardNew: members.filter(isWardNew).length,
+    problems: [],
+  };
+  if (r.total > 0) {
+    if (r.vet < S.minVet) r.problems.push(`中堅以上が${r.vet}人（${S.minVet}人以上必要）`);
+    if (r.young > S.maxYoung) r.problems.push(`看護師${S.youngMaxYear}年目以下が${r.young}人（上限${S.maxYoung}人）`);
+    if (r.newbie > S.maxNewbie) r.problems.push(`新人（看護師1年目）が${r.newbie}人（上限${S.maxNewbie}人）`);
+    if (r.wardNew > S.maxWardNew) r.problems.push(`病棟1年目が${r.wardNew}人（上限${S.maxWardNew}人）`);
+    if (r.total >= 2 && r.young === r.total) r.problems.push('全員が若手');
+  }
+  return r;
+}
+
+// ============================================================
+// 月データ
+// ============================================================
+// months[YYYY-MM] = { cells: {id: {day: code}}, pto: {id: {day: '公'|'有'}}, auto: {id: {day: true}} }
+function monthData(y, m) {
+  const key = monthKey(y, m);
+  if (!DB.months[key]) DB.months[key] = { cells: {}, pto: {}, auto: {} };
+  return DB.months[key];
+}
+function mdGet(md, part, id, d) { return (md && md[part][id] && md[part][id][d]) || ''; }
+function mdSet(md, part, id, d, v) {
+  if (!md[part][id]) md[part][id] = {};
+  if (v) md[part][id][d] = v; else delete md[part][id][d];
+}
+
+// 1ヶ月分の勤務を配列にした作業用のコピー。d<1 は前月の末日を参照する。
+function buildPlan(y, m, dropAuto) {
+  const n = daysInMonth(y, m);
+  const md = monthData(y, m);
+  const [py, pm] = prevYM(y, m);
+  const pn = daysInMonth(py, pm);
+  const pmd = DB.months[monthKey(py, pm)];
+  const cells = {}, fixed = {}, pto = {}, prev = {};
+  DB.staff.forEach(s => {
+    cells[s.id] = new Array(n + 2).fill('');
+    fixed[s.id] = new Array(n + 2).fill(false);
+    pto[s.id] = new Array(n + 2).fill(false);
+    for (let d = 1; d <= n; d++) {
+      const p = mdGet(md, 'pto', s.id, d);
+      if (p) { cells[s.id][d] = p; fixed[s.id][d] = true; pto[s.id][d] = true; continue; }
+      if (dropAuto && mdGet(md, 'auto', s.id, d)) continue;
+      const c = mdGet(md, 'cells', s.id, d);
+      if (c) { cells[s.id][d] = c; fixed[s.id][d] = true; }
+    }
+    prev[s.id] = {};
+    for (let k = 0; k >= -3; k--) {
+      prev[s.id][k] = pmd ? (mdGet(pmd, 'pto', s.id, pn + k) || mdGet(pmd, 'cells', s.id, pn + k)) : '';
+    }
+  });
+  return {
+    y, m, n, cells, fixed, pto, prev,
+    get(id, d) {
+      if (d < 1) return (this.prev[id] && this.prev[id][d]) || '';
+      if (d > this.n) return '';
+      return this.cells[id][d];
+    },
+  };
+}
+
+// ============================================================
+// チェック（勤務表の問題点を洗い出す）
+// ============================================================
+function analyze(plan) {
+  const S = DB.settings;
+  const { y, m, n } = plan;
+  const issues = [];
+  let score = 0;
+  const add = (sev, d, id, msg, w) => { issues.push({ sev, d, id, msg }); score += w; };
+
+  const days = [];
+  for (let d = 1; d <= n; d++) {
+    const day = { d, dayIds: [], shortIds: [], eve: [], late: [], req: reqDay(y, m, d) };
+    DB.staff.forEach(s => {
+      const c = plan.get(s.id, d);
+      if (c === '日') day.dayIds.push(s.id);
+      if (c === '短') day.shortIds.push(s.id);
+      if (c === '準' || c === '夜') day.eve.push(s.id);
+      if (c === '深' || plan.get(s.id, d - 1) === '夜') day.late.push(s.id);
+    });
+    day.dayCount = day.dayIds.length + (S.countShort ? day.shortIds.length : 0);
+    day.eveCheck = crewCheck(day.eve);
+    day.lateCheck = crewCheck(day.late);
+    const label = `${m}/${d}(${WEEKDAYS_JP[weekday(y, m, d)]})`;
+    if (day.dayCount < day.req) add('error', d, null, `${label} 日勤が${day.req - day.dayCount}人不足（${day.dayCount}/${day.req}人）`, 10 * (day.req - day.dayCount));
+    [['準夜帯', day.eve, day.eveCheck, S.reqEve], ['深夜帯', day.late, day.lateCheck, S.reqLate]].forEach(([nm, ids, chk, req]) => {
+      if (ids.length < req) add('error', d, null, `${label} ${nm}が${req - ids.length}人不足（${ids.length}/${req}人）`, 60 * (req - ids.length));
+      if (ids.length > req) add('warn', d, null, `${label} ${nm}が${ids.length - req}人多い（${ids.length}/${req}人）`, 15 * (ids.length - req));
+      chk.problems.forEach(p => add('error', d, null, `${label} ${nm}：${p}`, 50));
+    });
+    days.push(day);
+  }
+
+  const staffStats = {};
+  DB.staff.forEach(s => {
+    const stt = { off: 0, paid: 0, nightUnits: 0, nightHours: 0, empty: 0, counts: {} };
+    let run = 0, runStart = 0;
+    let sameNight = 0;
+    for (let d = 1; d <= n; d++) {
+      const c = plan.get(s.id, d);
+      const p = plan.get(s.id, d - 1);
+      const label = `${m}/${d}`;
+      if (!c) stt.empty++;
+      if (c) stt.counts[c] = (stt.counts[c] || 0) + 1;
+      if (c === '公') stt.off++;
+      if (c === '有') stt.paid++;
+      stt.nightUnits += nightUnits(c);
+      stt.nightHours += (S.hours[c] || 0);
+
+      if (c && !allowedCodes(s).includes(c)) add('warn', d, s.id, `${s.name} ${label}「${c}」は勤務形態（${WORK_TYPES[s.workType].label}）にない勤務です`, 20);
+      if (isNight(c) && !s.nightOK) add('error', d, s.id, `${s.name} ${label} 夜勤なしの人に夜勤が入っています`, 40);
+      if (p === '夜' && c !== '明' && d >= 1) add('error', d, s.id, `${s.name} ${label} 夜勤の翌日が「明」になっていません`, 40);
+      if (c === '明' && p !== '夜') add('error', d, s.id, `${s.name} ${label}「明」の前日が夜勤ではありません`, 40);
+      if (p === '準' && c && c !== '準' && isWork(c)) add('error', d, s.id, `${s.name} ${label} 準夜の翌日に「${c}」（準夜明けは休みか準夜）`, 40);
+      if (c === '深' && (p === '準' || p === '明')) add('error', d, s.id, `${s.name} ${label} 「${p}」の翌日に深夜が入っています`, 40);
+      if (S.restAfterAke && p === '明' && isWork(c)) add('warn', d, s.id, `${s.name} ${label} 夜勤明けの翌日に「${c}」（明けの翌日は休みの設定）`, 25);
+
+      if ((c === '準' || c === '深') && p === c) sameNight++; else sameNight = (c === '準' || c === '深') ? 1 : 0;
+      if (sameNight === S.maxConsecNight + 1) add('warn', d, s.id, `${s.name} ${label}「${c}」が${S.maxConsecNight}回を超えて続いています`, 20);
+
+      if (isWork(c)) { if (run === 0) runStart = d; run++; } else run = 0;
+      if (run === S.maxConsecWork + 1) add('warn', d, s.id, `${s.name} ${runStart}日から${S.maxConsecWork}日を超えて連続勤務`, 20);
+    }
+    const target = offTarget(s, y, m);
+    if (stt.empty === 0 && stt.off !== target) {
+      add('warn', null, s.id, `${s.name} 公休が${stt.off}日（目標${target}日）`, 8 * Math.abs(stt.off - target));
+    } else if (stt.empty > 0 && stt.off > target) {
+      add('warn', null, s.id, `${s.name} 公休が${stt.off}日で目標${target}日を超えています`, 8 * (stt.off - target));
+    }
+    if (stt.nightUnits > s.nightMax) add('warn', null, s.id, `${s.name} 夜勤${stt.nightUnits}回（上限${s.nightMax}回）`, 30 * (stt.nightUnits - s.nightMax));
+    stt.target = target;
+    staffStats[s.id] = stt;
+  });
+
+  // 夜勤回数の偏り（上限に対する割合のばらつき）
+  const ratios = DB.staff.filter(canNightType).map(s => staffStats[s.id].nightUnits / Math.max(1, s.nightMax));
+  if (ratios.length > 1) {
+    const avg = ratios.reduce((a, b) => a + b, 0) / ratios.length;
+    const variance = ratios.reduce((a, b) => a + (b - avg) * (b - avg), 0) / ratios.length;
+    score += variance * 200;
+  }
+
+  // 月平均夜勤時間（72時間ルールの目安）：夜勤をした人の平均
+  const nightWorkers = DB.staff.filter(s => staffStats[s.id].nightHours > 0);
+  const avgNightHours = nightWorkers.length
+    ? nightWorkers.reduce((a, s) => a + staffStats[s.id].nightHours, 0) / nightWorkers.length : 0;
+
+  issues.sort((a, b) => (a.sev === b.sev ? 0 : a.sev === 'error' ? -1 : 1) || ((a.d || 99) - (b.d || 99)));
+  return { days, staffStats, issues, score, avgNightHours };
+}
+
+// ============================================================
+// 自動作成
+// ============================================================
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function autoGenerateOnce(y, m) {
+  const S = DB.settings;
+  const plan = buildPlan(y, m, true);
+  const { n, cells, fixed } = plan;
+  const get = (id, d) => plan.get(id, d);
+  const empty = (id, d) => d >= 1 && d <= n && !cells[id][d];
+  const staff = DB.staff;
+  const units = {};
+  staff.forEach(s => {
+    units[s.id] = 0;
+    for (let d = 1; d <= n; d++) units[s.id] += nightUnits(cells[s.id][d]);
+  });
+
+  // 前月末の夜勤の続き（明・明けの翌日の休み）
+  staff.forEach(s => {
+    if (get(s.id, 0) === '夜' && empty(s.id, 1)) cells[s.id][1] = '明';
+    if (S.restAfterAke && get(s.id, 1) === '明' && empty(s.id, 2)) cells[s.id][2] = '公';
+    if (S.restAfterAke && get(s.id, 0) === '明' && empty(s.id, 1)) cells[s.id][1] = '公';
+  });
+
+  function workRun(id, d, len) {
+    // d から len 日連続で勤務にした場合の連続勤務日数
+    let left = 0;
+    for (let k = d - 1; k >= d - 10 && isWork(get(id, k)); k--) left++;
+    let right = 0;
+    for (let k = d + len; k <= n && isWork(get(id, k)); k++) right++;
+    return left + len + right;
+  }
+  function sameRun(id, d, code) {
+    let left = 0;
+    for (let k = d - 1; k >= d - 5 && get(id, k) === code; k--) left++;
+    let right = 0;
+    for (let k = d + 1; k <= n && get(id, k) === code; k++) right++;
+    return left + 1 + right;
+  }
+
+  function canNight(s, code, d) {
+    if (!s.nightOK || !allowedCodes(s).includes(code) || !empty(s.id, d)) return false;
+    if (units[s.id] + nightUnits(code) > s.nightMax) return false;
+    const p = get(s.id, d - 1), nx = get(s.id, d + 1);
+    if (code === '深') {
+      if (p === '準' || p === '夜' || p === '明') return false;
+      if (sameRun(s.id, d, '深') > S.maxConsecNight) return false;
+      if (workRun(s.id, d, 1) > S.maxConsecWork) return false;
+    } else if (code === '準') {
+      if (p === '夜' || p === '明' && S.restAfterAke) return false;
+      if (nx && nx !== '準' && isWork(nx)) return false;
+      if (sameRun(s.id, d, '準') > S.maxConsecNight) return false;
+      if (workRun(s.id, d, 1) > S.maxConsecWork) return false;
+    } else if (code === '夜') {
+      if (p === '準' || p === '夜' || (p === '明' && S.restAfterAke)) return false;
+      if (d < n && !empty(s.id, d + 1)) return false;
+      if (S.restAfterAke && d + 2 <= n && !empty(s.id, d + 2) && isWork(get(s.id, d + 2))) return false;
+      if (workRun(s.id, d, d < n ? 2 : 1) > S.maxConsecWork) return false;
+    }
+    return true;
+  }
+  function crewOf(slot, d) {
+    const ids = [];
+    staff.forEach(s => {
+      const c = get(s.id, d);
+      if (slot === 'eve' && (c === '準' || c === '夜')) ids.push(s.id);
+      if (slot === 'late' && (c === '深' || get(s.id, d - 1) === '夜')) ids.push(s.id);
+    });
+    return ids;
+  }
+  // 候補者をこの夜勤帯に入れても経験バランスが崩れないか
+  function fitsCrew(s, ids, req, strict) {
+    const c = crewCheck(ids.concat([s.id]));
+    if (c.newbie > S.maxNewbie || c.wardNew > S.maxWardNew || c.young > S.maxYoung) return false;
+    if (!strict) return true;
+    // 残りの枠で中堅以上の最低人数を満たせるか
+    const remaining = req - ids.length - 1;
+    const vetShort = S.minVet - c.vet;
+    return vetShort <= remaining;
+  }
+  function assign(s, code, d) {
+    cells[s.id][d] = code;
+    units[s.id] += nightUnits(code);
+    if (code === '夜') {
+      if (d + 1 <= n) cells[s.id][d + 1] = '明';
+      if (S.restAfterAke && d + 2 <= n && empty(s.id, d + 2)) cells[s.id][d + 2] = '公';
+    }
+  }
+  function nightScore(s, code, d, ids) {
+    let sc = (units[s.id] / Math.max(1, s.nightMax)) * 10;
+    const p = get(s.id, d - 1);
+    if ((code === '深' || code === '準') && p === code) sc -= 1.5;        // 同じ夜勤を2回続けるまとまりを作る
+    if (code === '深' && p === '日') sc -= 0.3;                            // 日勤→深夜
+    for (let k = 2; k <= 3; k++) if (isNight(get(s.id, d - k))) sc += 0.6; // 夜勤が詰まりすぎないように
+    const vetNow = crewCheck(ids).vet;
+    if (isVet(s) && vetNow >= S.minVet) sc += 1.2;                         // 中堅は他の日のために温存
+    if (!isVet(s) && vetNow < S.minVet) sc += 0.8;
+    if (s.role === '師長' || s.role === '副師長') sc += 1.0;
+    return sc + Math.random() * 2.5;
+  }
+  function pick(cands) {
+    cands.sort((a, b) => a.sc - b.sc);
+    return cands[0];
+  }
+
+  for (let d = 1; d <= n; d++) {
+    // 深夜帯（深夜＋前日からの2交代夜勤）
+    let late = crewOf('late', d);
+    for (let guard = 0; late.length < S.reqLate && guard < 20; guard++) {
+      let cands = [];
+      for (const strict of [true, false]) {
+        cands = staff.filter(s => canNight(s, '深', d) && fitsCrew(s, late, S.reqLate, strict))
+          .map(s => ({ s, code: '深', sc: nightScore(s, '深', d, late) }));
+        if (cands.length) break;
+      }
+      if (!cands.length) cands = staff.filter(s => canNight(s, '深', d)).map(s => ({ s, code: '深', sc: nightScore(s, '深', d, late) + 20 }));
+      if (!cands.length) break;
+      const c = pick(cands);
+      assign(c.s, c.code, d);
+      late = crewOf('late', d);
+    }
+    // 準夜帯（準夜＋2交代夜勤）。2交代夜勤は翌日の深夜帯も埋めるので、翌日が満員なら入れない。
+    let eve = crewOf('eve', d);
+    for (let guard = 0; eve.length < S.reqEve && guard < 20; guard++) {
+      const nextLate = d < n ? crewOf('late', d + 1) : [];
+      const nightRoom = d >= n || nextLate.length < S.reqLate;
+      let cands = [];
+      for (const strict of [true, false]) {
+        cands = [];
+        staff.forEach(s => {
+          if (canNight(s, '準', d) && fitsCrew(s, eve, S.reqEve, strict)) {
+            cands.push({ s, code: '準', sc: nightScore(s, '準', d, eve) });
+          }
+          if (nightRoom && canNight(s, '夜', d) && fitsCrew(s, eve, S.reqEve, strict)
+              && (d >= n || fitsCrew(s, nextLate, S.reqLate, strict))) {
+            // 2交代の人は夜勤が少ないと月の勤務が偏るので、同条件なら2交代を優先
+            cands.push({ s, code: '夜', sc: nightScore(s, '夜', d, eve) - 0.5 });
+          }
+        });
+        if (cands.length) break;
+      }
+      if (!cands.length) {
+        staff.forEach(s => {
+          if (canNight(s, '準', d)) cands.push({ s, code: '準', sc: nightScore(s, '準', d, eve) + 20 });
+          if (nightRoom && canNight(s, '夜', d)) cands.push({ s, code: '夜', sc: nightScore(s, '夜', d, eve) + 20 });
+        });
+      }
+      if (!cands.length) break;
+      const c = pick(cands);
+      assign(c.s, c.code, d);
+      eve = crewOf('eve', d);
+    }
+  }
+
+  // ---- 日勤と公休 ----
+  const dayCode = s => (s.workType === '時短' ? '短' : '日');
+  const counts = s => (dayCode(s) === '短' ? (S.countShort ? 1 : 0) : 1);
+  const tentative = {}; // 自動で日勤にした（公休と入れ替えてよい）日
+  const forcedOff = {};
+  staff.forEach(s => {
+    tentative[s.id] = {};
+    forcedOff[s.id] = {};
+    for (let d = 1; d <= n; d++) {
+      if (!empty(s.id, d)) continue;
+      const p = get(s.id, d - 1);
+      if (s.weekendOff && isOffDay(y, m, d)) { cells[s.id][d] = '公'; continue; }
+      if (p === '準' || (S.restAfterAke && p === '明')) { cells[s.id][d] = '公'; forcedOff[s.id][d] = true; continue; }
+      cells[s.id][d] = dayCode(s);
+      tentative[s.id][d] = true;
+    }
+  });
+  const dayCount = new Array(n + 1).fill(0);
+  for (let d = 1; d <= n; d++) {
+    staff.forEach(s => {
+      const c = cells[s.id][d];
+      if (c === '日' || (c === '短' && S.countShort)) dayCount[d]++;
+    });
+  }
+  const offCount = s => { let k = 0; for (let d = 1; d <= n; d++) if (cells[s.id][d] === '公') k++; return k; };
+  const need = {};
+  staff.forEach(s => { need[s.id] = offTarget(s, y, m) - offCount(s); });
+
+  function runAround(id, d) {
+    let len = 1;
+    for (let k = d - 1; k >= 1 && isWork(cells[id][k]); k--) len++;
+    for (let k = d + 1; k <= n && isWork(cells[id][k]); k++) len++;
+    return len;
+  }
+  function makeOff(s, d) {
+    cells[s.id][d] = '公';
+    delete tentative[s.id][d];
+    dayCount[d] -= counts(s);
+  }
+  function makeWork(s, d) {
+    cells[s.id][d] = dayCode(s);
+    tentative[s.id][d] = true;
+    dayCount[d] += counts(s);
+  }
+  // 公休を1日ずつ、人手に余裕のある日から順に割り当てる（全員に均等に回す）
+  for (let round = 0; round < 40; round++) {
+    const needy = shuffle(staff.filter(s => need[s.id] > 0));
+    if (!needy.length) break;
+    needy.sort((a, b) => need[b.id] - need[a.id]);
+    needy.forEach(s => {
+      let best = null, bestVal = -Infinity;
+      Object.keys(tentative[s.id]).forEach(k => {
+        const d = Number(k);
+        const surplus = dayCount[d] - reqDay(y, m, d);
+        let val = surplus * 3 + runAround(s.id, d) * 0.8 + Math.random() * 0.8;
+        if (cells[s.id][d - 1] === '公' || cells[s.id][d + 1] === '公') val += 0.4;
+        if (val > bestVal) { bestVal = val; best = d; }
+      });
+      if (best === null) { need[s.id] = 0; return; }
+      makeOff(s, best);
+      need[s.id]--;
+    });
+  }
+  // 連続勤務が長すぎるところに休みを入れる
+  staff.forEach(s => {
+    for (let guard = 0; guard < 10; guard++) {
+      let run = 0, found = null;
+      for (let d = 1; d <= n; d++) {
+        run = isWork(cells[s.id][d]) ? run + 1 : 0;
+        if (run > S.maxConsecWork) { found = d; break; }
+      }
+      if (found === null) break;
+      let best = null, bestSur = -Infinity;
+      for (let d = found - S.maxConsecWork; d <= found; d++) {
+        if (!tentative[s.id][d]) continue;
+        const sur = dayCount[d] - reqDay(y, m, d);
+        if (sur > bestSur) { bestSur = sur; best = d; }
+      }
+      if (best === null) break;
+      makeOff(s, best);
+      // 公休が目標より多くなったら、人手が足りない日の公休を1日勤務に戻す
+      if (offCount(s) > offTarget(s, y, m)) {
+        let back = null, worst = Infinity;
+        for (let d = 1; d <= n; d++) {
+          if (cells[s.id][d] !== '公' || fixed[s.id][d] || forcedOff[s.id][d] || d === best) continue;
+          if (s.weekendOff && isOffDay(y, m, d)) continue;
+          const p = get(s.id, d - 1);
+          if (p === '準' || p === '明') continue;
+          cells[s.id][d] = dayCode(s);
+          const ok = runAround(s.id, d) <= S.maxConsecWork;
+          cells[s.id][d] = '公';
+          if (!ok) continue;
+          const sur = dayCount[d] - reqDay(y, m, d);
+          if (sur < worst) { worst = sur; back = d; }
+        }
+        if (back !== null) makeWork(s, back);
+      }
+    }
+  });
+  // 日勤が足りない日と余っている日で、同じ人の勤務と公休を入れ替える
+  for (let iter = 0; iter < 300; iter++) {
+    const shortDays = [];
+    for (let d = 1; d <= n; d++) if (dayCount[d] < reqDay(y, m, d)) shortDays.push(d);
+    if (!shortDays.length) break;
+    const d = shortDays[Math.floor(Math.random() * shortDays.length)];
+    let done = false;
+    for (const s of shuffle(staff.slice())) {
+      if (cells[s.id][d] !== '公' || fixed[s.id][d] || forcedOff[s.id][d]) continue;
+      if (s.weekendOff && isOffDay(y, m, d)) continue;
+      const p = get(s.id, d - 1);
+      if (p === '準' || p === '明') continue;
+      for (const k of shuffle(Object.keys(tentative[s.id]).map(Number))) {
+        if (dayCount[k] - counts(s) < reqDay(y, m, k)) continue;
+        cells[s.id][k] = '公';
+        cells[s.id][d] = dayCode(s);
+        const ok = runAround(s.id, d) <= S.maxConsecWork;
+        cells[s.id][k] = dayCode(s);
+        cells[s.id][d] = '公';
+        if (!ok) continue;
+        makeOff(s, k);
+        makeWork(s, d);
+        done = true;
+        break;
+      }
+      if (done) break;
+    }
+  }
+  return plan;
+}
+
+function runAutoGenerate() {
+  const { y, m } = view;
+  const md = monthData(y, m);
+  const hasManual = DB.staff.some(s => Object.keys(md.cells[s.id] || {}).some(d => !mdGet(md, 'auto', s.id, d)));
+  const msg = hasManual
+    ? '手で入力した勤務と休み希望はそのまま残し、空いている所を自動で埋めます。\n（前回の自動作成分は作り直します）\nよろしいですか？'
+    : '休み希望を残して、この月の勤務表を自動で作成します。よろしいですか？';
+  if (!confirm(msg)) return;
+  showLoading(true);
+  setTimeout(() => {
+    try {
+      let best = null, bestA = null;
+      const tries = 40;
+      for (let i = 0; i < tries; i++) {
+        const plan = autoGenerateOnce(y, m);
+        const a = analyze(plan);
+        if (!best || a.score < bestA.score) { best = plan; bestA = a; }
+      }
+      // 自動作成分を書き込む
+      DB.staff.forEach(s => {
+        for (let d = 1; d <= best.n; d++) {
+          if (mdGet(md, 'auto', s.id, d)) { mdSet(md, 'cells', s.id, d, ''); mdSet(md, 'auto', s.id, d, false); }
+          if (best.fixed[s.id][d]) continue;
+          const v = best.cells[s.id][d];
+          if (v) { mdSet(md, 'cells', s.id, d, v); mdSet(md, 'auto', s.id, d, true); }
+        }
+      });
+      scheduleSave();
+      render();
+      const errors = bestA.issues.filter(i => i.sev === 'error').length;
+      showToast(errors ? `作成しました。要確認が${errors}件あります（下の一覧を確認してください）` : '作成しました。問題は見つかりませんでした', errors ? 'error' : 'success');
+    } catch (e) {
+      console.error(e);
+      showToast('作成に失敗しました: ' + e.message, 'error');
+    } finally {
+      showLoading(false);
+    }
+  }, 30);
+}
+
+function clearAuto() {
+  const md = monthData(view.y, view.m);
+  if (!confirm('自動作成で入った勤務を消します（手で入力した勤務と休み希望は残ります）。よろしいですか？')) return;
+  DB.staff.forEach(s => {
+    Object.keys(md.auto[s.id] || {}).forEach(d => mdSet(md, 'cells', s.id, d, ''));
+    md.auto[s.id] = {};
+  });
+  scheduleSave();
+  render();
+}
+function clearMonth() {
+  if (!confirm(`${view.y}年${view.m}月の勤務と休み希望をすべて消します。よろしいですか？`)) return;
+  DB.months[monthKey(view.y, view.m)] = { cells: {}, pto: {}, auto: {} };
+  scheduleSave();
+  render();
+}
+
+// ============================================================
+// 勤務の入力
+// ============================================================
+function applyCode(id, d, code) {
+  const { y, m } = view;
+  const n = daysInMonth(y, m);
+  const md = monthData(y, m);
+  const old = mdGet(md, 'cells', id, d);
+  const nextIsAke = d < n && mdGet(md, 'cells', id, d + 1) === '明' && !mdGet(md, 'pto', id, d + 1);
+  if (code === 'PTO公' || code === 'PTO有') {
+    mdSet(md, 'pto', id, d, code.slice(3));
+    mdSet(md, 'cells', id, d, '');
+  } else if (code === 'ERASE') {
+    mdSet(md, 'pto', id, d, '');
+    mdSet(md, 'cells', id, d, '');
+  } else {
+    mdSet(md, 'pto', id, d, '');
+    mdSet(md, 'cells', id, d, code);
+    if (code === '夜' && d < n && !mdGet(md, 'cells', id, d + 1) && !mdGet(md, 'pto', id, d + 1)) {
+      mdSet(md, 'cells', id, d + 1, '明');
+    }
+  }
+  mdSet(md, 'auto', id, d, false);
+  if (old === '夜' && code !== '夜' && nextIsAke) {
+    mdSet(md, 'cells', id, d + 1, '');
+    mdSet(md, 'auto', id, d + 1, false);
+  }
+  scheduleSave();
+}
+
+function openPicker(id, d) {
+  const s = staffById(id);
+  const { y, m } = view;
+  const md = monthData(y, m);
+  const cur = mdGet(md, 'pto', id, d) ? '休み希望（' + mdGet(md, 'pto', id, d) + '）' : (mdGet(md, 'cells', id, d) || '未入力');
+  document.getElementById('pickerTitle').textContent = `${s.name}　${m}月${d}日(${WEEKDAYS_JP[weekday(y, m, d)]})`;
+  document.getElementById('pickerSub').textContent = `勤務形態：${WORK_TYPES[s.workType].label} ／ 現在：${cur}`;
+  const allowed = allowedCodes(s);
+  const btn = (code, dim) => {
+    const c = CODES[code];
+    return `<button class="code-btn${dim ? ' dim' : ''}" data-code="${code}" style="background:${c.color}">
+      <b>${code}</b>${c.name}<small>${c.time || '&nbsp;'}</small></button>`;
+  };
+  const main = CODE_ORDER.filter(c => allowed.includes(c)).map(c => btn(c, false)).join('');
+  const others = CODE_ORDER.filter(c => !allowed.includes(c)).map(c => btn(c, true)).join('');
+  document.getElementById('pickerBody').innerHTML = `
+    <div class="code-buttons">${main}</div>
+    <h4 style="margin:14px 0 6px;font-size:13px;">休み希望（自動作成でも動かしません）</h4>
+    <div class="code-buttons">
+      <button class="code-btn" data-code="PTO公" style="background:#D9D9D9"><b>★公</b>休み希望<small>公休として確保</small></button>
+      <button class="code-btn" data-code="PTO有" style="background:#FFF2CC"><b>★有</b>有給希望<small>有給として確保</small></button>
+      <button class="code-btn" data-code="ERASE" style="background:#fff"><b>✕</b>消す<small>空欄に戻す</small></button>
+    </div>
+    ${others ? `<details style="margin-top:12px;"><summary style="cursor:pointer;font-size:12px;color:#6b6b68;">勤務形態にない記号も入れる</summary><div class="code-buttons" style="margin-top:6px;">${others}</div></details>` : ''}
+  `;
+  document.querySelectorAll('#pickerBody .code-btn').forEach(b => {
+    b.onclick = () => {
+      applyCode(id, d, b.dataset.code);
+      closeOverlay('pickerOverlay');
+      render();
+    };
+  });
+  document.getElementById('pickerOverlay').classList.add('show');
+}
+function closeOverlay(id) { document.getElementById(id).classList.remove('show'); }
+
+function openDayDetail(d) {
+  const { y, m } = view;
+  const plan = buildPlan(y, m, false);
+  const a = analyze(plan);
+  const day = a.days[d - 1];
+  const S = DB.settings;
+  const member = (id, slot) => {
+    const s = staffById(id);
+    const fromPrev = slot === 'late' && plan.get(id, d - 1) === '夜';
+    const c = fromPrev ? '夜' : plan.get(id, d);
+    return `<div class="member"><b style="min-width:84px;">${esc(s.name)}</b><span class="chip" style="background:${CODES[c].color}">${fromPrev ? '前日の夜' : c}</span><span class="chips" style="margin:0">${expChips(s)}</span></div>`;
+  };
+  const crewBlock = (title, ids, chk, req, slot) => {
+    const rules = [
+      [`人数 ${ids.length}/${req}人`, ids.length >= req],
+      [`中堅以上（看護師${S.vetNurseYear}年目以上・病棟${S.vetWardYear}年目以上）${chk.vet}人 ／ ${S.minVet}人以上`, chk.vet >= S.minVet],
+      [`看護師${S.youngMaxYear}年目以下 ${chk.young}人 ／ 上限${S.maxYoung}人`, chk.young <= S.maxYoung],
+      [`新人（看護師1年目）${chk.newbie}人 ／ 上限${S.maxNewbie}人`, chk.newbie <= S.maxNewbie],
+      [`病棟1年目 ${chk.wardNew}人 ／ 上限${S.maxWardNew}人`, chk.wardNew <= S.maxWardNew],
+    ];
+    return `<h4 style="margin:12px 0 4px;">${title}</h4>
+      <div class="crew">${ids.map(id => member(id, slot)).join('') || '<span class="note">まだ誰も入っていません</span>'}</div>
+      ${rules.map(([t, ok]) => `<div class="rule ${ok ? 'okr' : 'ng'}">${ok ? '✓' : '✕'} ${t}</div>`).join('')}`;
+  };
+  const dayMembers = day.dayIds.concat(day.shortIds);
+  document.getElementById('dayTitle').textContent = `${m}月${d}日(${WEEKDAYS_JP[weekday(y, m, d)]})${holidayName(y, m, d) ? ' ' + holidayName(y, m, d) : ''}`;
+  document.getElementById('dayBody').innerHTML = `
+    <h4 style="margin:4px 0;">日勤 ${day.dayCount}/${day.req}人${day.shortIds.length ? `（うち時短${day.shortIds.length}人）` : ''}</h4>
+    <div class="note">${dayMembers.map(id => esc(staffById(id).name)).join('、') || 'なし'}</div>
+    ${crewBlock('準夜帯（準夜・2交代夜勤）', day.eve, day.eveCheck, S.reqEve, 'eve')}
+    ${crewBlock('深夜帯（深夜・前日からの2交代夜勤）', day.late, day.lateCheck, S.reqLate, 'late')}
+  `;
+  document.getElementById('dayOverlay').classList.add('show');
+}
+
+// ============================================================
+// 画面：勤務表
+// ============================================================
+function renderGrid() {
+  const { y, m } = view;
+  const n = daysInMonth(y, m);
+  const md = monthData(y, m);
+  const plan = buildPlan(y, m, false);
+  const a = analyze(plan);
+  const S = DB.settings;
+
+  const badCells = new Set(a.issues.filter(i => i.id && i.d).map(i => `${i.id}-${i.d}`));
+  const dayCls = d => {
+    const w = weekday(y, m, d);
+    return (w === 0 || isJapaneseHoliday(y, m, d)) ? 'sun' : w === 6 ? 'sat' : '';
+  };
+
+  let head1 = '<th class="name-col" rowspan="2">氏名 ／ 勤務形態・経験</th>';
+  let head2 = '';
+  for (let d = 1; d <= n; d++) {
+    const hn = holidayName(y, m, d);
+    head1 += `<th class="${dayCls(d)}" data-day="${d}" title="${hn ? hn + ' ／ ' : ''}クリックでこの日のメンバーを表示">${d}</th>`;
+    head2 += `<th class="${dayCls(d)}" data-day="${d}">${WEEKDAYS_JP[weekday(y, m, d)]}</th>`;
+  }
+  head1 += '<th rowspan="2" title="公休の日数 ／ 目標">公休</th><th rowspan="2">有給</th><th rowspan="2" title="準夜・深夜は1回、2交代の夜勤は2回と数えます">夜勤<br>回数</th><th rowspan="2" title="夜勤時間の合計">夜勤<br>時間</th>';
+
+  let body = '';
+  DB.staff.forEach(s => {
+    const stt = a.staffStats[s.id];
+    let row = `<td class="name-col"><div class="staff-name">${esc(s.name)} <span class="note" style="font-weight:400">${s.role !== 'スタッフ' ? esc(s.role) : ''}</span></div><div class="chips">${expChips(s)}</div></td>`;
+    for (let d = 1; d <= n; d++) {
+      const p = mdGet(md, 'pto', s.id, d);
+      const c = p || mdGet(md, 'cells', s.id, d);
+      const auto = !p && mdGet(md, 'auto', s.id, d);
+      const cls = ['cell', dayCls(d)];
+      if (p) cls.push('pto');
+      if (auto) cls.push('auto');
+      if (badCells.has(`${s.id}-${d}`)) cls.push('bad');
+      if (view.highlight === `${s.id}-${d}`) cls.push('flash');
+      const bg = c && CODES[c] ? ` style="background:${CODES[c].color}"` : '';
+      row += `<td class="${cls.join(' ')}" data-id="${s.id}" data-day="${d}"${bg}${p ? ' title="休み希望"' : ''}>${c}</td>`;
+    }
+    const offBad = stt.empty === 0 ? stt.off !== stt.target : stt.off > stt.target;
+    const nightBad = stt.nightUnits > s.nightMax;
+    row += `<td class="stat${offBad ? ' bad' : ''}">${stt.off}/${stt.target}</td>`;
+    row += `<td class="stat">${stt.paid || ''}</td>`;
+    row += `<td class="stat${nightBad ? ' bad' : ''}" title="上限${s.nightMax}回">${stt.nightUnits || ''}${canNightType(s) ? `<span class="note">/${s.nightMax}</span>` : ''}</td>`;
+    row += `<td class="stat">${stt.nightHours ? stt.nightHours + 'h' : ''}</td>`;
+    body += `<tr>${row}</tr>`;
+  });
+
+  const sumRow = (label, fn, first) => {
+    let r = `<tr class="sum${first ? ' sum-first' : ''}"><td class="name-col">${label}</td>`;
+    for (let d = 1; d <= n; d++) {
+      const [txt, state, title] = fn(a.days[d - 1], d);
+      r += `<td class="${state || ''}" data-day="${d}" title="${esc(title || '')}" style="cursor:pointer">${txt}</td>`;
+    }
+    return r + '<td colspan="4"></td></tr>';
+  };
+  const names = ids => ids.map(id => staffById(id).name).join('、');
+  const countState = (have, need) => (have < need ? 'short' : have > need ? 'over' : 'ok');
+  body += sumRow('日勤（人数／必要）', day => [`${day.dayCount}`, countState(day.dayCount, day.req), `必要${day.req}人`], true);
+  [['準夜帯', 'eve', 'eveCheck', S.reqEve], ['深夜帯', 'late', 'lateCheck', S.reqLate]].forEach(([nm, key, ck, req]) => {
+    body += sumRow(`${nm} 人数（必要${req}）`, day => [`${day[key].length}`, countState(day[key].length, req), names(day[key])]);
+    body += sumRow(`${nm} うち中堅以上`, day => [`${day[ck].vet}`, day[ck].vet < S.minVet ? 'short' : 'ok', `中堅以上 ${day[ck].vet}人`]);
+    body += sumRow(`${nm} 経験バランス`, day => {
+      const probs = day[ck].problems;
+      return [probs.length ? '✕' : (day[key].length ? '✓' : ''), probs.length ? 'short' : 'ok', probs.join(' ／ ') || 'OK'];
+    });
+  });
+
+  const pens = [['', '選ぶ'], ...CODE_ORDER.map(c => [c, c]), ['PTO公', '★公'], ['PTO有', '★有'], ['ERASE', '✕消す']];
+  const errors = a.issues.filter(i => i.sev === 'error').length;
+  const warns = a.issues.length - errors;
+  document.getElementById('main').innerHTML = `
+    <div class="toolbar">
+      <button class="btn primary" id="autoBtn">▶ 自動作成（空欄を埋める）</button>
+      <button class="btn" id="clearAutoBtn">自動作成分を消す</button>
+      <button class="btn danger" id="clearMonthBtn">この月をすべて消す</button>
+      <span class="spacer"></span>
+      <button class="btn" id="excelBtn">Excelで保存</button>
+      <button class="btn" id="printBtn">印刷</button>
+    </div>
+    <div class="palette">
+      <span class="label">続けて入力：記号を選んでからマスをクリック</span>
+      ${pens.map(([v, t]) => `<button class="pen${(view.pen || '') === v ? ' active' : ''}" data-pen="${v}" style="background:${v && CODES[v] ? CODES[v].color : v.startsWith('PTO') ? '#f3ecd0' : '#fff'}" title="${v && CODES[v] ? CODES[v].name : ''}">${t}</button>`).join('')}
+    </div>
+    <div class="grid-wrap">
+      <table class="grid">
+        <thead><tr>${head1}</tr><tr>${head2}</tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>
+    <div class="panel legend">
+      ${CODE_ORDER.map(c => `<span><b style="background:${CODES[c].color}">${c}</b>${CODES[c].name}${CODES[c].time ? ' ' + CODES[c].time : ''}</span>`).join('')}
+      <span>★＝休み希望　太字＝手入力　細字＝自動作成</span>
+      <span>夜勤ありの人の平均夜勤時間：<b style="background:${a.avgNightHours > 72 ? 'var(--red-bg)' : 'var(--green-bg)'};padding:0 6px;">${a.avgNightHours.toFixed(1)}h</b>（目安72時間以内）</span>
+    </div>
+    <div class="panel">
+      <h3>チェック結果　${a.issues.length ? `<span class="issues"><span class="sev error">要修正 ${errors}</span> <span class="sev warn">注意 ${warns}</span></span>` : ''}</h3>
+      ${a.issues.length
+        ? `<ul class="issues">${a.issues.map((i, k) => `<li data-k="${k}"><span class="sev ${i.sev}">${i.sev === 'error' ? '要修正' : '注意'}</span><span>${esc(i.msg)}</span></li>`).join('')}</ul>`
+        : '<div class="ok-msg">✓ 問題は見つかりませんでした</div>'}
+    </div>
+  `;
+
+  document.getElementById('autoBtn').onclick = runAutoGenerate;
+  document.getElementById('clearAutoBtn').onclick = clearAuto;
+  document.getElementById('clearMonthBtn').onclick = clearMonth;
+  document.getElementById('excelBtn').onclick = exportToExcel;
+  document.getElementById('printBtn').onclick = () => window.print();
+  document.querySelectorAll('.pen').forEach(b => {
+    b.onclick = () => { view.pen = b.dataset.pen || null; renderGrid(); };
+  });
+  document.querySelectorAll('td.cell').forEach(td => {
+    td.onclick = () => {
+      const id = Number(td.dataset.id), d = Number(td.dataset.day);
+      view.highlight = null;
+      if (view.pen) { applyCode(id, d, view.pen); renderGrid(); }
+      else openPicker(id, d);
+    };
+  });
+  document.querySelectorAll('thead th[data-day], tr.sum td[data-day]').forEach(th => {
+    th.onclick = () => openDayDetail(Number(th.dataset.day));
+  });
+  document.querySelectorAll('.issues li[data-k]').forEach(li => {
+    li.onclick = () => {
+      const i = a.issues[Number(li.dataset.k)];
+      if (i.id && i.d) {
+        view.highlight = `${i.id}-${i.d}`;
+        renderGrid();
+        const td = document.querySelector(`td.cell[data-id="${i.id}"][data-day="${i.d}"]`);
+        if (td) td.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
+      } else if (i.d) {
+        openDayDetail(i.d);
+      }
+    };
+  });
+}
+
+// ============================================================
+// 画面：スタッフ
+// ============================================================
+function renderStaff() {
+  const rows = DB.staff.map((s, idx) => `
+    <tr data-id="${s.id}">
+      <td>${idx + 1}</td>
+      <td><input type="text" data-f="name" value="${esc(s.name)}"></td>
+      <td><select data-f="role">${ROLES.map(r => `<option${r === s.role ? ' selected' : ''}>${r}</option>`).join('')}</select></td>
+      <td><select data-f="workType">${Object.keys(WORK_TYPES).map(k => `<option value="${k}"${k === s.workType ? ' selected' : ''}>${WORK_TYPES[k].label}</option>`).join('')}</select></td>
+      <td><input type="number" min="1" max="50" data-f="nurseYear" value="${s.nurseYear}"> 年目</td>
+      <td><input type="number" min="1" max="50" data-f="wardYear" value="${s.wardYear}"> 年目</td>
+      <td><div class="chips">${expChips(s)}</div></td>
+      <td style="text-align:center"><input type="checkbox" data-f="nightOK"${s.nightOK ? ' checked' : ''}${WORK_TYPES[s.workType].codes.some(isNight) ? '' : ' disabled'}></td>
+      <td><input type="number" min="0" max="20" data-f="nightMax" value="${s.nightMax}"></td>
+      <td><input type="number" min="-10" max="10" data-f="offAdjust" value="${s.offAdjust}"></td>
+      <td style="text-align:center"><input type="checkbox" data-f="weekendOff"${s.weekendOff ? ' checked' : ''}></td>
+      <td style="white-space:nowrap">
+        <button class="btn small" data-act="up" title="上へ">↑</button>
+        <button class="btn small" data-act="down" title="下へ">↓</button>
+        <button class="btn small danger" data-act="del">削除</button>
+      </td>
+    </tr>`).join('');
+  const cnt = k => DB.staff.filter(s => s.workType === k).length;
+  document.getElementById('main').innerHTML = `
+    <div class="toolbar">
+      <button class="btn primary" id="addStaffBtn">＋ スタッフを追加</button>
+      <button class="btn" id="yearUpBtn">年度更新（全員の経験年数を+1）</button>
+      <span class="spacer"></span>
+      <button class="btn" id="backupBtn">バックアップを保存</button>
+      <button class="btn" id="restoreBtn">バックアップを読み込む</button>
+    </div>
+    <div class="note" style="margin-bottom:8px;">
+      ${DB.staff.length}名（${Object.keys(WORK_TYPES).map(k => `${WORK_TYPES[k].label} ${cnt(k)}名`).join('・')}）。
+      経験年数は「今年度で何年目か」を入れてください（新卒1年目＝1）。異動・中途で来た人は、看護師経験は通算、病棟経験はこの病棟での年数です。
+    </div>
+    <div class="scroll-x">
+      <table class="form">
+        <thead><tr>
+          <th>No</th><th>氏名</th><th>役職</th><th>勤務形態</th><th>看護師経験</th><th>病棟経験</th><th>区分</th>
+          <th title="夜勤に入れるか（夜勤デビュー前の新人はオフ）">夜勤<br>可</th>
+          <th title="月の夜勤回数の上限。2交代の夜勤は2回と数えます">夜勤<br>上限</th>
+          <th title="公休の目標日数を人ごとに増減（週4勤務の人は+4など）">公休<br>調整</th>
+          <th title="土日祝は休みにする（時短・日勤のみの人向け）">土日祝<br>休み</th>
+          <th></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+  document.querySelectorAll('table.form tbody tr').forEach(tr => {
+    const s = staffById(Number(tr.dataset.id));
+    tr.querySelectorAll('[data-f]').forEach(inp => {
+      inp.onchange = () => {
+        const f = inp.dataset.f;
+        if (inp.type === 'checkbox') s[f] = inp.checked;
+        else if (inp.type === 'number') s[f] = Math.max(Number(inp.min), Math.min(Number(inp.max), Number(inp.value) || 0));
+        else s[f] = inp.value.trim() || s[f];
+        if (f === 'workType') {
+          const nightType = WORK_TYPES[s.workType].codes.some(isNight);
+          s.nightOK = nightType;
+        }
+        scheduleSave();
+        renderStaff();
+      };
+    });
+    tr.querySelectorAll('[data-act]').forEach(b => {
+      b.onclick = () => {
+        const i = DB.staff.indexOf(s);
+        if (b.dataset.act === 'up' && i > 0) [DB.staff[i - 1], DB.staff[i]] = [DB.staff[i], DB.staff[i - 1]];
+        if (b.dataset.act === 'down' && i < DB.staff.length - 1) [DB.staff[i + 1], DB.staff[i]] = [DB.staff[i], DB.staff[i + 1]];
+        if (b.dataset.act === 'del') {
+          if (!confirm(`${s.name} を削除します。入力済みの勤務も表示されなくなります。よろしいですか？`)) return;
+          DB.staff.splice(i, 1);
+        }
+        scheduleSave();
+        renderStaff();
+      };
+    });
+  });
+  document.getElementById('addStaffBtn').onclick = () => {
+    const id = DB.nextId++;
+    DB.staff.push(st(id, `看護師${String(id).padStart(2, '0')}`, 'スタッフ', '3交代', 1, 1));
+    scheduleSave();
+    renderStaff();
+  };
+  document.getElementById('yearUpBtn').onclick = () => {
+    if (!confirm('全員の看護師経験・病棟経験を1年ずつ増やします（4月の年度替わりに1回だけ押してください）。よろしいですか？')) return;
+    DB.staff.forEach(s => { s.nurseYear++; s.wardYear++; });
+    scheduleSave();
+    renderStaff();
+    showToast('経験年数を更新しました');
+  };
+  document.getElementById('backupBtn').onclick = saveBackup;
+  document.getElementById('restoreBtn').onclick = () => document.getElementById('backupInput').click();
+}
+
+// ============================================================
+// 画面：設定
+// ============================================================
+function renderSettings() {
+  const S = DB.settings;
+  const num = (key, min, max, label, hint) => `
+    <div class="field"><div>${label}${hint ? `<div class="hint">${hint}</div>` : ''}</div>
+    <div><input type="number" data-s="${key}" min="${min}" max="${max}" value="${S[key]}"></div></div>`;
+  const chk = (key, label, hint) => `
+    <div class="field"><div>${label}${hint ? `<div class="hint">${hint}</div>` : ''}</div>
+    <div><input type="checkbox" data-s="${key}"${S[key] ? ' checked' : ''}></div></div>`;
+  const autoOff = offDayCountOfMonth(view.y, view.m);
+  document.getElementById('main').innerHTML = `
+    <div class="settings-grid">
+      <div class="panel">
+        <h3>必要人数</h3>
+        ${num('reqDayWeekday', 0, 60, '平日の日勤')}
+        ${num('reqDayHoliday', 0, 60, '土日祝の日勤')}
+        ${num('reqEve', 0, 20, '準夜帯', '準夜（3交代）＋夜勤（2交代）の合計')}
+        ${num('reqLate', 0, 20, '深夜帯', '深夜（3交代）＋前日からの夜勤（2交代）の合計')}
+        ${chk('countShort', '時短勤務の人を日勤の人数に含める')}
+      </div>
+      <div class="panel">
+        <h3>夜勤の経験バランス（新人ばかりにしない）</h3>
+        <div class="note">準夜帯・深夜帯それぞれについて判定します。自動作成はこの条件を守るように組みます。</div>
+        ${num('vetNurseYear', 2, 20, '「中堅以上」＝看護師経験 ○年目以上', '')}
+        ${num('vetWardYear', 1, 10, '　かつ 病棟経験 ○年目以上', '異動・中途で病棟に不慣れな人を外すため')}
+        ${num('minVet', 0, 10, '中堅以上の最低人数（1つの夜勤帯）')}
+        ${num('youngMaxYear', 1, 10, '「若手」＝看護師経験 ○年目以下')}
+        ${num('maxYoung', 0, 10, '若手（新人含む）の上限（1つの夜勤帯）')}
+        ${num('maxNewbie', 0, 10, '新人（看護師1年目）の上限（1つの夜勤帯）')}
+        ${num('maxWardNew', 0, 10, '病棟1年目の上限（1つの夜勤帯）', '異動・中途で来た人も含みます')}
+      </div>
+      <div class="panel">
+        <h3>勤務のルール</h3>
+        ${num('maxConsecWork', 2, 10, '連続勤務の上限（日）', '夜勤明けも勤務日として数えます')}
+        ${num('maxConsecNight', 1, 5, '準夜・深夜を続けてよい回数')}
+        ${chk('restAfterAke', '2交代の夜勤明けの翌日は休みにする')}
+        <div class="field"><div>公休の目標日数<div class="hint">空欄＝その月の土日祝の日数（${view.y}年${view.m}月は${autoOff}日）</div></div>
+          <div><input type="number" id="offOverride" min="0" max="20" value="${S.offTargetOverride ?? ''}" placeholder="${autoOff}"></div></div>
+        <div class="note">準夜のあとは「準夜」か「休み」、深夜の前日は「日勤」「深夜」「休み」になるように組みます。</div>
+      </div>
+      <div class="panel">
+        <h3>夜勤時間（72時間ルールの目安）</h3>
+        <div class="field"><div>準夜勤 1回の夜勤時間</div><div><input type="number" data-h="準" min="0" max="24" value="${S.hours['準']}"> h</div></div>
+        <div class="field"><div>深夜勤 1回の夜勤時間</div><div><input type="number" data-h="深" min="0" max="24" value="${S.hours['深']}"> h</div></div>
+        <div class="field"><div>2交代夜勤 1回の夜勤時間</div><div><input type="number" data-h="夜" min="0" max="24" value="${S.hours['夜']}"> h</div></div>
+        <div class="note">勤務表の下に「夜勤ありの人の平均夜勤時間」を表示します。正式な計算は病院の届出の定義に合わせて確認してください。</div>
+      </div>
+      <div class="panel">
+        <h3>データ</h3>
+        <div class="note">入力内容はこのブラウザに自動保存されます。別のパソコンで使うときや念のための控えには、スタッフ画面の「バックアップを保存」を使ってください。</div>
+        <div style="margin-top:10px"><button class="btn danger" id="resetBtn">すべて初期状態に戻す</button></div>
+      </div>
+    </div>
+  `;
+  document.querySelectorAll('[data-s]').forEach(inp => {
+    inp.onchange = () => {
+      const k = inp.dataset.s;
+      if (inp.type === 'checkbox') S[k] = inp.checked;
+      else S[k] = Math.max(Number(inp.min), Math.min(Number(inp.max), Number(inp.value) || 0));
+      scheduleSave();
+      renderSettings();
+    };
+  });
+  document.querySelectorAll('[data-h]').forEach(inp => {
+    inp.onchange = () => { S.hours[inp.dataset.h] = Math.max(0, Number(inp.value) || 0); scheduleSave(); };
+  });
+  document.getElementById('offOverride').onchange = e => {
+    S.offTargetOverride = e.target.value === '' ? null : Math.max(0, Number(e.target.value));
+    scheduleSave();
+    renderSettings();
+  };
+  document.getElementById('resetBtn').onclick = () => {
+    if (!confirm('スタッフ・設定・すべての月の勤務表を削除して初期状態に戻します。よろしいですか？')) return;
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    location.reload();
+  };
+}
+
+// ============================================================
+// 画面：使い方
+// ============================================================
+function renderGuide() {
+  const S = DB.settings;
+  document.getElementById('main').innerHTML = `
+    <div class="panel guide" style="max-width:860px">
+      <h3 style="margin-top:0">3ステップで勤務表ができます</h3>
+      <ol>
+        <li><b>スタッフ</b>画面で、全員の勤務形態（3交代・2交代・時短など）と、看護師経験・病棟経験の年数を入れます。</li>
+        <li><b>勤務表</b>画面で、休み希望（★）や決まっている勤務（研修・当日決まっている夜勤など）を先に入れます。</li>
+        <li>「▶ 自動作成」を押すと、空いているマスが埋まります。下の「チェック結果」を見ながら手で直してください。直したマスは太字になり、次に自動作成しても動きません。</li>
+      </ol>
+      <h3>夜勤メンバーの経験バランス</h3>
+      <p>準夜帯・深夜帯ごとに、次の条件を満たすように組みます（数字は「設定」で変えられます）。</p>
+      <ul>
+        <li><span class="chip vet">中堅以上</span>（看護師${S.vetNurseYear}年目以上 かつ 病棟${S.vetWardYear}年目以上）が${S.minVet}人以上</li>
+        <li><span class="chip young">若手</span>（看護師${S.youngMaxYear}年目以下、新人を含む）は${S.maxYoung}人まで</li>
+        <li><span class="chip new">新人</span>（看護師1年目）は${S.maxNewbie}人まで</li>
+        <li><span class="chip wardnew">病棟1年目</span>（異動・中途で来た人を含む）は${S.maxWardNew}人まで</li>
+      </ul>
+      <p>勤務表の日付か下の集計行をクリックすると、その日の夜勤メンバーと判定の中身が見られます。夜勤デビュー前の新人は、スタッフ画面で「夜勤可」を外してください。</p>
+      <h3>2交代と3交代が混ざっている場合の数え方</h3>
+      <ul>
+        <li><b>準夜帯</b>＝その日の「準」（3交代の準夜）＋「夜」（2交代の夜勤）の人数</li>
+        <li><b>深夜帯</b>＝その日の「深」（3交代の深夜）＋<b>前日</b>の「夜」の人数（2交代の夜勤は日付をまたいで深夜帯も担当するため）</li>
+        <li>夜勤回数は、準夜・深夜を1回、2交代の夜勤を2回と数えます。</li>
+      </ul>
+      <h3>時短勤務</h3>
+      <p>勤務形態を「時短勤務」にすると、勤務日は「短」（時短日勤）になり、夜勤には入りません。日勤の人数に含めるかは「設定」で選べます。土日祝を休みにしたい人は、スタッフ画面の「土日祝休み」にチェックを入れてください。</p>
+      <h3>月をまたぐ勤務</h3>
+      <p>前の月の最終日が2交代夜勤なら、その月の1日は自動で「明」になります。前の月の勤務表もこのツールで作っておくと、月初めの勤務の並びもチェックされます。</p>
+    </div>
+  `;
+}
+
+// ============================================================
+// Excel
+// ============================================================
+function buildWardWorkbook(y, m) {
+  const plan = buildPlan(y, m, false);
+  const a = analyze(plan);
+  const n = plan.n;
+  const S = DB.settings;
+  const reg = new StyleRegistry();
+  const sty = {
+    title: reg.style({ bold: true, size: 14 }),
+    head: reg.style({ bold: true, fill: '1F4E79', color: 'FFFFFF', halign: 'center', valign: 'center', border: true }),
+    sat: reg.style({ bold: true, fill: 'DCE8F7', color: '1565C0', halign: 'center', border: true }),
+    sun: reg.style({ bold: true, fill: 'FDE3E1', color: 'C62828', halign: 'center', border: true }),
+    text: reg.style({ border: true, valign: 'center' }),
+    center: reg.style({ border: true, halign: 'center', valign: 'center' }),
+    sum: reg.style({ bold: true, fill: 'F3F1EA', border: true }),
+    sumC: reg.style({ bold: true, fill: 'F3F1EA', border: true, halign: 'center' }),
+    bad: reg.style({ bold: true, fill: 'FFC7CE', color: '9C0006', border: true, halign: 'center' }),
+    err: reg.style({ color: '9C0006', border: true }),
+    warn: reg.style({ color: '9C6500', border: true }),
+  };
+  const codeStyle = {};
+  CODE_ORDER.forEach(c => { codeStyle[c] = reg.style({ bold: true, fill: CODES[c].color.slice(1), halign: 'center', border: true }); });
+
+  const sh = new SheetBuilder('勤務表');
+  sh.set('A1', `${S.wardName ? S.wardName + ' ' : ''}${y}年${m}月 勤務表`, { style: sty.title });
+  const fixedCols = ['氏名', '役職', '勤務形態', '看護師経験', '病棟経験'];
+  fixedCols.forEach((h, i) => { sh.set(colLetter(i + 1) + '3', h, { style: sty.head }); sh.merge(`${colLetter(i + 1)}3:${colLetter(i + 1)}4`); });
+  const dc = d => colLetter(fixedCols.length + d);
+  for (let d = 1; d <= n; d++) {
+    const w = weekday(y, m, d);
+    const s = (w === 0 || isJapaneseHoliday(y, m, d)) ? sty.sun : w === 6 ? sty.sat : sty.head;
+    sh.set(dc(d) + '3', d, { style: s });
+    sh.set(dc(d) + '4', WEEKDAYS_JP[w], { style: s });
+    sh.colWidth(dc(d), 3.6);
+  }
+  const tail = ['公休', '有給', '夜勤回数', '夜勤時間'];
+  tail.forEach((h, i) => { const c = colLetter(fixedCols.length + n + 1 + i); sh.set(c + '3', h, { style: sty.head }); sh.merge(`${c}3:${c}4`); sh.colWidth(c, 7); });
+  sh.colWidth('A', 14).colWidth('B', 7).colWidth('C', 10).colWidth('D', 9).colWidth('E', 8);
+  let r = 5;
+  DB.staff.forEach(s => {
+    const stt = a.staffStats[s.id];
+    sh.set('A' + r, s.name, { style: sty.text });
+    sh.set('B' + r, s.role, { style: sty.center });
+    sh.set('C' + r, WORK_TYPES[s.workType].short, { style: sty.center });
+    sh.set('D' + r, `${s.nurseYear}年目`, { style: isNewbie(s) ? sty.bad : sty.center });
+    sh.set('E' + r, `${s.wardYear}年目`, { style: isWardNew(s) ? sty.bad : sty.center });
+    for (let d = 1; d <= n; d++) {
+      const c = plan.get(s.id, d);
+      sh.set(dc(d) + r, c + (plan.pto[s.id][d] ? '★' : ''), { style: c && codeStyle[c] ? codeStyle[c] : sty.center });
+    }
+    const t0 = fixedCols.length + n + 1;
+    sh.set(colLetter(t0) + r, `${stt.off}/${stt.target}`, { style: sty.center });
+    sh.set(colLetter(t0 + 1) + r, stt.paid, { style: sty.center });
+    sh.set(colLetter(t0 + 2) + r, stt.nightUnits, { style: stt.nightUnits > s.nightMax ? sty.bad : sty.center });
+    sh.set(colLetter(t0 + 3) + r, stt.nightHours, { style: sty.center });
+    r++;
+  });
+  const sumRows = [
+    ['日勤', day => [day.dayCount, day.dayCount < day.req]],
+    ['準夜帯', day => [day.eve.length, day.eve.length < S.reqEve]],
+    ['準夜帯 中堅以上', day => [day.eveCheck.vet, day.eveCheck.vet < S.minVet]],
+    ['準夜帯 経験バランス', day => [day.eveCheck.problems.length ? '✕' : '○', day.eveCheck.problems.length > 0]],
+    ['深夜帯', day => [day.late.length, day.late.length < S.reqLate]],
+    ['深夜帯 中堅以上', day => [day.lateCheck.vet, day.lateCheck.vet < S.minVet]],
+    ['深夜帯 経験バランス', day => [day.lateCheck.problems.length ? '✕' : '○', day.lateCheck.problems.length > 0]],
+  ];
+  sumRows.forEach(([label, fn]) => {
+    sh.set('A' + r, label, { style: sty.sum });
+    sh.merge(`A${r}:E${r}`);
+    for (let d = 1; d <= n; d++) {
+      const [v, bad] = fn(a.days[d - 1]);
+      sh.set(dc(d) + r, v, { style: bad ? sty.bad : sty.sumC });
+    }
+    r++;
+  });
+  sh.set('A' + (r + 1), '★＝休み希望', {});
+  sh.freeze(4, 1);
+
+  const sh2 = new SheetBuilder('スタッフ一覧');
+  ['氏名', '役職', '勤務形態', '看護師経験', '病棟経験', '区分', '夜勤可', '夜勤上限', '公休調整', '土日祝休み'].forEach((h, i) => sh2.set(colLetter(i + 1) + '1', h, { style: sty.head }));
+  DB.staff.forEach((s, i) => {
+    const rr = i + 2;
+    const kinds = [];
+    if (isNewbie(s)) kinds.push('新人'); else if (isYoung(s)) kinds.push('若手');
+    if (isWardNew(s)) kinds.push('病棟1年目');
+    if (isVet(s)) kinds.push('中堅以上');
+    [s.name, s.role, WORK_TYPES[s.workType].label, s.nurseYear, s.wardYear, kinds.join('・'), s.nightOK ? '○' : '×', s.nightMax, s.offAdjust, s.weekendOff ? '○' : '']
+      .forEach((v, k) => sh2.set(colLetter(k + 1) + rr, v, { style: sty.text }));
+  });
+  sh2.colWidth('A', 14).colWidth('C', 20).colWidth('F', 20);
+  sh2.freeze(1, 1);
+
+  const sh3 = new SheetBuilder('チェック結果');
+  sh3.set('A1', '区分', { style: sty.head }).set('B1', '内容', { style: sty.head });
+  if (!a.issues.length) sh3.set('A2', '問題は見つかりませんでした', {});
+  a.issues.forEach((i, k) => {
+    sh3.set('A' + (k + 2), i.sev === 'error' ? '要修正' : '注意', { style: i.sev === 'error' ? sty.err : sty.warn });
+    sh3.set('B' + (k + 2), i.msg, { style: sty.text });
+  });
+  sh3.colWidth('A', 10).colWidth('B', 80);
+
+  return renderWorkbook([sh, sh2, sh3], reg, []);
+}
+
+// ファイルの渡し方は開き方によって変わる。
+//   ・HTMLファイルを直接開いた場合 … 通常のリンクでダウンロードする
+//   ・Webページ（claude.ai）で開いた場合 … 閲覧者に確認を出す仕組みを通して渡す
+async function saveGeneratedFile(blob, filename) {
+  try {
+    const downloads = window.claude && window.claude.use ? await window.claude.use('downloads') : null;
+    if (downloads) {
+      await downloads.save({ filename, data: blob });
+      return { ok: true, via: 'viewer' };
+    }
+  } catch (e) {
+    return { ok: false, code: (e && e.code) || 'unavailable', message: (e && e.message) || '' };
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  return { ok: true, via: 'link' };
+}
+function reportSave(res, fname) {
+  if (res.ok) showToast(`${fname} を保存しました`);
+  else if (res.code === 'declined') showToast('保存を取り消しました');
+  else showToast('保存できませんでした。HTMLファイル版をお使いください', 'error');
+}
+function exportToExcel() {
+  const { y, m } = view;
+  showLoading(true);
+  setTimeout(async () => {
+    try {
+      const bytes = buildWardWorkbook(y, m);
+      const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const fname = `病棟勤務表_${y}年${m}月.xlsx`;
+      reportSave(await saveGeneratedFile(blob, fname), fname);
+    } catch (e) {
+      console.error(e);
+      showToast('Excelの作成に失敗しました: ' + e.message, 'error');
+    } finally {
+      showLoading(false);
+    }
+  }, 30);
+}
+async function saveBackup() {
+  const blob = new Blob([JSON.stringify(DB, null, 1)], { type: 'application/json' });
+  const d = new Date();
+  const fname = `病棟勤務表_バックアップ_${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.json`;
+  reportSave(await saveGeneratedFile(blob, fname), fname);
+}
+document.getElementById('backupInput').onchange = async e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    const data = JSON.parse(await file.text());
+    if (!confirm('今の入力内容をバックアップの内容で置き換えます。よろしいですか？')) return;
+    applyLoaded(data);
+    saveState();
+    syncMonthInputs();
+    render();
+    showToast('バックアップを読み込みました');
+  } catch (err) {
+    showToast('読み込めませんでした: ' + err.message, 'error');
+  }
+};
+
+// ============================================================
+// 共通
+// ============================================================
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.toggle('error', type === 'error');
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => t.classList.remove('show'), 3200);
+}
+function showLoading(show) { document.getElementById('loading').classList.toggle('show', show); }
+
+function render() {
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === view.tab));
+  if (view.tab === 'grid') renderGrid();
+  else if (view.tab === 'staff') renderStaff();
+  else if (view.tab === 'settings') renderSettings();
+  else renderGuide();
+}
+function syncMonthInputs() {
+  document.getElementById('yearInput').value = view.y;
+  document.getElementById('monthInput').value = view.m;
+}
+function setMonth(y, m) {
+  view.y = y; view.m = m; view.highlight = null;
+  syncMonthInputs();
+  scheduleSave();
+  render();
+}
+
+document.querySelectorAll('#tabs button').forEach(b => {
+  b.onclick = () => { view.tab = b.dataset.tab; render(); };
+});
+document.getElementById('prevMonthBtn').onclick = () => setMonth(...prevYM(view.y, view.m));
+document.getElementById('nextMonthBtn').onclick = () => setMonth(...nextYM(view.y, view.m));
+['yearInput', 'monthInput'].forEach(id => {
+  document.getElementById(id).onchange = () => {
+    const y = Number(document.getElementById('yearInput').value);
+    const m = Number(document.getElementById('monthInput').value);
+    if (y >= 2020 && y <= 2100 && m >= 1 && m <= 12) setMonth(y, m);
+    else syncMonthInputs();
+  };
+});
+document.getElementById('pickerClose').onclick = () => closeOverlay('pickerOverlay');
+document.getElementById('dayClose').onclick = () => closeOverlay('dayOverlay');
+['pickerOverlay', 'dayOverlay'].forEach(id => {
+  document.getElementById(id).addEventListener('click', e => { if (e.target.id === id) closeOverlay(id); });
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeOverlay('pickerOverlay'); closeOverlay('dayOverlay'); }
+});
+
+(function init() {
+  const today = new Date();
+  [view.y, view.m] = nextYM(today.getFullYear(), today.getMonth() + 1);
+  loadState();
+  syncMonthInputs();
+  render();
+})();
+</script>
+</body>
+</html>
