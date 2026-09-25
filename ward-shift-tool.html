@@ -840,6 +840,20 @@ const WORK_TYPES = {
 const ROLES = ['師長', '副師長', '主任', 'スタッフ'];
 
 function isWork(code) { return !!code && code !== '公' && code !== '有'; }
+// 勤務の並びの約束。前の日が prev のとき、次の日に cur を入れてよいか（空欄はいつでも可）。
+//   準夜の翌日 … 休み か 準夜
+//   深夜の翌日 … 休み か 深夜 か 準夜
+//   2交代夜勤の翌日 … 明け
+//   明けの翌日 … 休み（設定で変更可）。明けの翌日に深夜は入れない
+function followOk(prev, cur) {
+  if (!cur) return true;
+  if (prev === '準') return !isWork(cur) || cur === '準';
+  if (prev === '深') return !isWork(cur) || cur === '深' || cur === '準';
+  if (prev === '夜') return cur === '明';
+  if (cur === '明') return prev === '夜';
+  if (prev === '明') return !(DB.settings.restAfterAke && isWork(cur)) && cur !== '深' && cur !== '夜';
+  return true;
+}
 function isNight(code) { return code === '準' || code === '深' || code === '夜'; }
 // 夜勤回数：2交代の夜勤（16時間）は2回分として数える（準夜・深夜の2回分を1回で勤めるため）
 function nightUnits(code) { return code === '夜' ? 2 : (code === '準' || code === '深') ? 1 : 0; }
@@ -925,12 +939,12 @@ const DEFAULT_SETTINGS = {
   maxYoung: 2,          // 夜勤帯ごとの若手（新人含む）の上限
   maxNewbie: 1,         // 夜勤帯ごとの新人（看護師1年目）の上限
   maxWardNew: 1,        // 夜勤帯ごとの病棟1年目の上限
-  maxConsecWork: 5,
-  maxConsecNight: 2,    // 準夜・深夜を同じ記号で続ける上限
+  maxConsecWork: 5,     // 連続勤務の上限（4日か5日）
+  maxConsecNight: 2,    // 夜勤（準夜・深夜・2交代夜勤）を続けてよい日数
   restAfterAke: true,   // 夜勤明けの翌日は休み
   offTargetOverride: null,
   hours: { '準': 8, '深': 8, '夜': 16 },
-  maxPtoRequests: 5,    // 休み希望の上限（これを超えると知らせる）
+  maxPtoRequests: 5,    // 休み希望は1人この日数まで（★公・★有の合計）
   ptoDeadline: null,    // 休み希望の締切日 'YYYY-MM-DD'
 };
 
@@ -992,6 +1006,9 @@ function applyLoaded(saved) {
     nextId: saved.nextId || (Math.max(0, ...saved.staff.map(s => s.id)) + 1),
   };
   DB.staff.forEach(normalizeStaff);
+  const S = DB.settings;
+  S.maxConsecWork = Math.min(5, Math.max(4, Number(S.maxConsecWork) || 5));
+  S.maxConsecNight = Math.min(2, Math.max(1, Number(S.maxConsecNight) || 2));
   HISTORY.length = 0;
   if (Array.isArray(saved.lastYM)) { view.y = saved.lastYM[0]; view.m = saved.lastYM[1]; }
   if (saved.savedAt) setTimeout(() => showSavedAt(saved.savedAt), 0);
@@ -1215,7 +1232,8 @@ function analyze(plan) {
   DB.staff.forEach(s => {
     const stt = { off: 0, paid: 0, nightUnits: 0, nightHours: 0, empty: 0, counts: {}, weekendOff: 0, ptoCount: 0 };
     let run = 0, runStart = 0;
-    let sameNight = 0;
+    let nightRun = 0;
+    for (let k = 0; k >= -3 && isNight(plan.get(s.id, k)); k--) nightRun++;
     for (let d = 1; d <= n; d++) {
       const c = plan.get(s.id, d);
       const p = plan.get(s.id, d - 1);
@@ -1233,20 +1251,20 @@ function analyze(plan) {
       if (isNight(c) && !s.nightOK) add('error', d, s.id, `${s.name} ${label} 夜勤なしの人に夜勤が入っています`, 40);
       if (p === '夜' && c !== '明' && d >= 1) add('error', d, s.id, `${s.name} ${label} 夜勤の翌日が「明」になっていません`, 40);
       if (c === '明' && p !== '夜') add('error', d, s.id, `${s.name} ${label}「明」の前日が夜勤ではありません`, 40);
-      if (p === '準' && c && c !== '準' && isWork(c)) add('error', d, s.id, `${s.name} ${label} 準夜の翌日に「${c}」（準夜明けは休みか準夜）`, 40);
-      if (c === '深' && (p === '準' || p === '明')) add('error', d, s.id, `${s.name} ${label} 「${p}」の翌日に深夜が入っています`, 40);
-      if (S.restAfterAke && p === '明' && isWork(c)) add('warn', d, s.id, `${s.name} ${label} 夜勤明けの翌日に「${c}」（明けの翌日は休みの設定）`, 25);
+      if (p === '準' && !followOk(p, c)) add('error', d, s.id, `${s.name} ${label} 準夜の翌日に「${c}」（準夜の翌日は休みか準夜）`, 40);
+      if (p === '深' && !followOk(p, c)) add('error', d, s.id, `${s.name} ${label} 深夜の翌日に「${c}」（深夜の翌日は休み・深夜・準夜のどれか）`, 40);
+      if (p === '明' && !followOk(p, c)) add('error', d, s.id, `${s.name} ${label} 夜勤明けの翌日に「${c}」（明けの翌日は休み）`, 40);
       // 休み希望の前日の準夜は休みの日の未明まで、翌日の深夜は休みの日の夜中から働くことになる
       if (c === '準' && plan.isPto(s.id, d + 1)) add('error', d, s.id, `${s.name} ${label} 翌日が休み希望なのに準夜（休みの日の未明まで勤務になる）`, 40);
       if (c === '深' && plan.isPto(s.id, d - 1)) add('error', d, s.id, `${s.name} ${label} 前日が休み希望なのに深夜（休みの日の夜中から勤務になる）`, 40);
       if (c === '夜' && plan.isPto(s.id, d + 1)) add('error', d, s.id, `${s.name} ${label} 翌日が休み希望なのに2交代夜勤（翌日が明けになる）`, 40);
       if (isNight(c) && nightNgOn(s, y, m, d, c)) add('error', d, s.id, `${s.name} ${label} ${WEEKDAYS_JP[weekday(y, m, d)]}曜は「${c}」に入れない約束です`, 40);
 
-      if ((c === '準' || c === '深') && p === c) sameNight++; else sameNight = (c === '準' || c === '深') ? 1 : 0;
-      if (sameNight === S.maxConsecNight + 1) add('warn', d, s.id, `${s.name} ${label}「${c}」が${S.maxConsecNight}回を超えて続いています`, 20);
+      nightRun = isNight(c) ? nightRun + 1 : 0;
+      if (nightRun === S.maxConsecNight + 1) add('error', d, s.id, `${s.name} ${label} 夜勤が${S.maxConsecNight}日を超えて続いています（夜勤は${S.maxConsecNight}連続まで）`, 40);
 
       if (isWork(c)) { if (run === 0) runStart = d; run++; } else run = 0;
-      if (run === S.maxConsecWork + 1) add('warn', d, s.id, `${s.name} ${runStart}日から${S.maxConsecWork}日を超えて連続勤務`, 20);
+      if (run === S.maxConsecWork + 1) add('error', d, s.id, `${s.name} ${runStart}日から${S.maxConsecWork}日を超えて連続勤務（連続勤務は${S.maxConsecWork}日まで）`, 40);
     }
     const target = offTarget(s, y, m);
     if (stt.empty === 0 && stt.off !== target) {
@@ -1333,11 +1351,12 @@ function autoGenerateOnce(y, m) {
     for (let k = d + len; k <= n && isWork(get(id, k)); k++) right++;
     return left + len + right;
   }
-  function sameRun(id, d, code) {
+  // d に夜勤を入れた場合に、夜勤（準夜・深夜・2交代夜勤）が何日続くか
+  function nightRunAround(id, d) {
     let left = 0;
-    for (let k = d - 1; k >= d - 5 && get(id, k) === code; k--) left++;
+    for (let k = d - 1; k >= d - 5 && isNight(get(id, k)); k--) left++;
     let right = 0;
-    for (let k = d + 1; k <= n && get(id, k) === code; k++) right++;
+    for (let k = d + 1; k <= n && isNight(get(id, k)); k++) right++;
     return left + 1 + right;
   }
 
@@ -1349,17 +1368,12 @@ function autoGenerateOnce(y, m) {
     if ((code === '準' || code === '夜') && plan.isPto(s.id, d + 1)) return false;
     if (code === '深' && plan.isPto(s.id, d - 1)) return false;
     const p = get(s.id, d - 1), nx = get(s.id, d + 1);
-    if (code === '深') {
-      if (p === '準' || p === '夜' || p === '明') return false;
-      if (sameRun(s.id, d, '深') > S.maxConsecNight) return false;
-      if (workRun(s.id, d, 1) > S.maxConsecWork) return false;
-    } else if (code === '準') {
-      if (p === '夜' || p === '明' && S.restAfterAke) return false;
-      if (nx && nx !== '準' && isWork(nx)) return false;
-      if (sameRun(s.id, d, '準') > S.maxConsecNight) return false;
+    if (!followOk(p, code)) return false;
+    if (nightRunAround(s.id, d) > S.maxConsecNight) return false;
+    if (code === '深' || code === '準') {
+      if (!followOk(code, nx)) return false;
       if (workRun(s.id, d, 1) > S.maxConsecWork) return false;
     } else if (code === '夜') {
-      if (p === '準' || p === '夜' || (p === '明' && S.restAfterAke)) return false;
       if (d < n && !empty(s.id, d + 1)) return false;
       if (S.restAfterAke && d + 2 <= n && !empty(s.id, d + 2) && isWork(get(s.id, d + 2))) return false;
       if (workRun(s.id, d, d < n ? 2 : 1) > S.maxConsecWork) return false;
@@ -1478,7 +1492,8 @@ function autoGenerateOnce(y, m) {
       if (!empty(s.id, d)) continue;
       const p = get(s.id, d - 1);
       if (s.weekendOff && isOffDay(y, m, d)) { cells[s.id][d] = '公'; continue; }
-      if (p === '準' || (S.restAfterAke && p === '明')) { cells[s.id][d] = '公'; forcedOff[s.id][d] = true; continue; }
+      // 準夜・深夜・明けの翌日に日勤は入れられないので休みにする
+      if (!followOk(p, dayCode(s))) { cells[s.id][d] = '公'; forcedOff[s.id][d] = true; continue; }
       cells[s.id][d] = dayCode(s);
       tentative[s.id][d] = true;
     }
@@ -1557,8 +1572,7 @@ function autoGenerateOnce(y, m) {
         for (let d = 1; d <= n; d++) {
           if (cells[s.id][d] !== '公' || fixed[s.id][d] || forcedOff[s.id][d] || d === best) continue;
           if (s.weekendOff && isOffDay(y, m, d)) continue;
-          const p = get(s.id, d - 1);
-          if (p === '準' || p === '明') continue;
+          if (!followOk(get(s.id, d - 1), dayCode(s))) continue;
           cells[s.id][d] = dayCode(s);
           const ok = runAround(s.id, d) <= S.maxConsecWork;
           cells[s.id][d] = '公';
@@ -1568,6 +1582,25 @@ function autoGenerateOnce(y, m) {
         }
         if (back !== null) makeWork(s, back);
       }
+    }
+  });
+  // 夜勤の後の休みが重なって公休が目標より多くなった人は、並びの約束を守れる日を日勤に戻す
+  staff.forEach(s => {
+    for (let excess = offCount(s) - offTarget(s, y, m); excess > 0; excess--) {
+      let best = null, bestSur = Infinity;
+      for (let d = 1; d <= n; d++) {
+        if (cells[s.id][d] !== '公' || fixed[s.id][d] || forcedOff[s.id][d]) continue;
+        if (s.weekendOff && isOffDay(y, m, d)) continue;
+        if (!followOk(get(s.id, d - 1), dayCode(s)) || !followOk(dayCode(s), get(s.id, d + 1))) continue;
+        cells[s.id][d] = dayCode(s);
+        const ok = runAround(s.id, d) <= S.maxConsecWork;
+        cells[s.id][d] = '公';
+        if (!ok) continue;
+        const sur = dayCount[d] - reqDay(y, m, d);
+        if (sur < bestSur) { bestSur = sur; best = d; }
+      }
+      if (best === null) break;
+      makeWork(s, best);
     }
   });
   // 日勤が足りない日と余っている日で、同じ人の勤務と公休を入れ替える
@@ -1580,8 +1613,7 @@ function autoGenerateOnce(y, m) {
     for (const s of shuffle(staff.slice())) {
       if (cells[s.id][d] !== '公' || fixed[s.id][d] || forcedOff[s.id][d]) continue;
       if (s.weekendOff && isOffDay(y, m, d)) continue;
-      const p = get(s.id, d - 1);
-      if (p === '準' || p === '明') continue;
+      if (!followOk(get(s.id, d - 1), dayCode(s))) continue;
       for (const k of shuffle(Object.keys(tentative[s.id]).map(Number))) {
         if (dayCount[k] - counts(s) < reqDay(y, m, k)) continue;
         cells[s.id][k] = '公';
@@ -1679,6 +1711,14 @@ function applyCode(id, d, code) {
   const { y, m } = view;
   const n = daysInMonth(y, m);
   const md = monthData(y, m);
+  if ((code === 'PTO公' || code === 'PTO有') && !mdGet(md, 'pto', id, d)) {
+    const used = Object.keys(md.pto[id] || {}).length;
+    if (used >= DB.settings.maxPtoRequests) {
+      showToast(`休み希望は1人${DB.settings.maxPtoRequests}日までです（${staffById(id).name}さんはすでに${used}日）`, 'error');
+      return false;
+    }
+  }
+  const before = new Set(issuesNear(id, d).map(i => i.msg));
   const old = mdGet(md, 'cells', id, d);
   const nextIsAke = d < n && mdGet(md, 'cells', id, d + 1) === '明' && !mdGet(md, 'pto', id, d + 1);
   if (code === 'PTO公' || code === 'PTO有') {
@@ -1700,6 +1740,15 @@ function applyCode(id, d, code) {
     mdSet(md, 'auto', id, d + 1, false);
   }
   scheduleSave();
+  // 手で入れた勤務が約束ごとに反したら、その場で知らせる（入力は止めない）
+  const added = issuesNear(id, d).filter(i => !before.has(i.msg));
+  if (added.length) showToast('⚠ ' + added[0].msg, 'error');
+  return true;
+}
+// そのマスの前後の日の、その人に関する問題
+function issuesNear(id, d) {
+  const a = analyze(buildPlan(view.y, view.m, false));
+  return a.issues.filter(i => i.id === id && i.d && Math.abs(i.d - d) <= 1 && i.sev === 'error');
 }
 
 function openPicker(id, d) {
@@ -1737,7 +1786,7 @@ function openPicker(id, d) {
   document.querySelectorAll('#pickerBody .code-btn').forEach(b => {
     b.onclick = () => {
       pushHistory();
-      applyCode(id, d, b.dataset.code);
+      if (!applyCode(id, d, b.dataset.code)) { HISTORY.pop(); return; }
       closeOverlay('pickerOverlay');
       render();
     };
@@ -1770,10 +1819,10 @@ function replacementCandidates(id, d) {
     if (plan.isPto(s.id, d) || (cur && cur !== '公')) return;
     if (isNight(give) && (!s.nightOK || nightNgOn(s, y, m, d, give))) return;
     const p = plan.get(s.id, d - 1), nx = plan.get(s.id, d + 1);
-    if (p === '夜' || (p === '準' && give !== '準') || (p === '明' && S.restAfterAke)) return;
+    if (!followOk(p, give)) return;
+    if (give !== '夜' && !followOk(give, nx)) return;
     if (give === '深' && plan.isPto(s.id, d - 1)) return;
     if ((give === '準' || give === '夜') && plan.isPto(s.id, d + 1)) return;
-    if (give === '準' && nx && nx !== '準' && isWork(nx)) return;
     if (give === '夜' && d < n && nx && nx !== '公') return;
 
     // 仮に入れ替えてチェックする
@@ -2039,7 +2088,7 @@ function renderGrid() {
       const id = Number(td.dataset.id), d = Number(td.dataset.day);
       view.highlight = null;
       if (view.pen === 'SWAP') handleSwap(id, d);
-      else if (view.pen) { pushHistory(); applyCode(id, d, view.pen); renderGrid(); }
+      else if (view.pen) { pushHistory(); if (!applyCode(id, d, view.pen)) HISTORY.pop(); renderGrid(); }
       else openPicker(id, d);
     };
   });
@@ -2328,13 +2377,15 @@ function renderSettings() {
       </div>
       <div class="panel">
         <h3>勤務のルール</h3>
-        ${num('maxConsecWork', 2, 10, '連続勤務の上限（日）', '夜勤明けも勤務日として数えます')}
-        ${num('maxConsecNight', 1, 5, '準夜・深夜を続けてよい回数')}
+        <div class="field"><div>連続勤務の上限<div class="hint">夜勤明けも勤務日として数えます</div></div>
+          <div><select id="maxConsecWorkSel">${[4, 5].map(v => `<option value="${v}"${S.maxConsecWork === v ? ' selected' : ''}>${v}日まで</option>`).join('')}</select></div></div>
+        <div class="field"><div>夜勤の連続<div class="hint">準夜・深夜・2交代夜勤を何日続けてよいか</div></div>
+          <div><select id="maxConsecNightSel">${[1, 2].map(v => `<option value="${v}"${S.maxConsecNight === v ? ' selected' : ''}>${v}連続まで</option>`).join('')}</select></div></div>
         ${chk('restAfterAke', '2交代の夜勤明けの翌日は休みにする')}
-        ${num('maxPtoRequests', 0, 31, '休み希望の目安の上限（日）', '超えた人を入力状況で知らせます')}
+        ${num('maxPtoRequests', 0, 31, '休み希望は1人何日まで', '★公・★有の合計。これを超える希望は入力できません')}
         <div class="field"><div>公休の目標日数<div class="hint">空欄＝その月の土日祝の日数（${view.y}年${view.m}月は${autoOff}日）</div></div>
           <div><input type="number" id="offOverride" min="0" max="20" value="${S.offTargetOverride ?? ''}" placeholder="${autoOff}"></div></div>
-        <div class="note">準夜のあとは「準夜」か「休み」、深夜の前日は「日勤」「深夜」「休み」になるように組みます。休み希望の前日の準夜・2交代夜勤と、翌日の深夜は入れません。</div>
+        <div class="note">準夜の翌日は「休み」か「準夜」、深夜の翌日は「休み」「深夜」「準夜」のどれかにします。休み希望の前日に準夜（2交代夜勤も）、休み希望の翌日に深夜は入れません。</div>
       </div>
       <div class="panel">
         <h3>夜勤時間（72時間ルールの目安）</h3>
@@ -2359,6 +2410,8 @@ function renderSettings() {
       renderSettings();
     };
   });
+  document.getElementById('maxConsecWorkSel').onchange = e => { S.maxConsecWork = Number(e.target.value); scheduleSave(); };
+  document.getElementById('maxConsecNightSel').onchange = e => { S.maxConsecNight = Number(e.target.value); scheduleSave(); };
   document.querySelectorAll('[data-h]').forEach(inp => {
     inp.onchange = () => { S.hours[inp.dataset.h] = Math.max(0, Number(inp.value) || 0); scheduleSave(); };
   });
@@ -2411,8 +2464,16 @@ function renderGuide() {
         <li><b>同じ夜勤帯に入れない人</b>：組み合わせを避けたい2人を設定します（相手側にも自動で設定されます）。</li>
         <li><b>夜勤回数の下限</b>・<b>有給の付与日数</b>もここで設定します。</li>
       </ul>
-      <h3>休み希望の前後の夜勤</h3>
-      <p>休み希望の前日の準夜（休みの日の未明まで勤務になる）と、翌日の深夜（休みの日の夜中から勤務になる）は入れません。2交代夜勤も、翌日が休み希望なら入れません。</p>
+      <h3>勤務の並びの約束ごと</h3>
+      <ul>
+        <li>準夜の翌日は<b>休み</b>か<b>準夜</b></li>
+        <li>深夜の翌日は<b>休み</b>・<b>深夜</b>・<b>準夜</b>のどれか</li>
+        <li>夜勤（準夜・深夜・2交代夜勤）は<b>${S.maxConsecNight}連続まで</b></li>
+        <li>連続勤務は<b>${S.maxConsecWork}日まで</b>（4日か5日を「設定」で選べます。夜勤明けも勤務日に数えます）</li>
+      </ul>
+      <p>自動作成はこの約束を守って組みます。手で入力して約束に反したときは、その場で知らせます。</p>
+      <h3>休み希望</h3>
+      <p>休み希望（★公・★有）は<b>1人${S.maxPtoRequests}日まで</b>入れられます（日数は「設定」で変えられます）。休み希望の<b>前の日に準夜</b>（休みの日の未明まで勤務になる）、<b>次の日に深夜</b>（休みの日の夜中から勤務になる）は入れません。2交代夜勤も、次の日が休み希望なら入れません。</p>
       <h3>急な休みのとき</h3>
       <p>勤務の入ったマスをクリックし「代わりを探す」を押すと、代わりに入れる人が一覧で出ます。代わった後の勤務表をまるごとチェックして、問題が増えない人から順に並べます。</p>
       <h3>便利な操作</h3>
