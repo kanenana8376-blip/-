@@ -296,6 +296,17 @@
   </div>
 </div>
 
+<div class="overlay" id="confirmOverlay" style="z-index:80">
+  <div class="modal" style="max-width:460px">
+    <h3>確認</h3>
+    <div id="confirmMsg" style="white-space:pre-wrap;line-height:1.7;margin:8px 0 4px;font-size:14px"></div>
+    <div class="modal-footer">
+      <button class="btn" id="confirmNo">やめる</button>
+      <button class="btn primary" id="confirmYes">OK</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="dayOverlay">
   <div class="modal">
     <h3 id="dayTitle"></h3>
@@ -1086,10 +1097,10 @@ function addWard(name, copySettings, sample) {
   switchWard(w.id);
   showToast(`${name} を追加しました${sample ? '' : '。スタッフタブで看護師を登録してください'}`);
 }
-function deleteWard(id) {
+async function deleteWard(id) {
   const w = STORE.wards.find(x => x.id === id);
   if (!w || STORE.wards.length <= 1) return;
-  if (!confirm(`${w.name} のスタッフ・設定・すべての月の勤務表を削除します。元に戻せません。よろしいですか？`)) return;
+  if (!(await askConfirm(`${w.name} のスタッフ・設定・すべての月の勤務表を削除します。元に戻せません。よろしいですか？`))) return;
   STORE.wards = STORE.wards.filter(x => x.id !== id);
   if (STORE.currentId === id) STORE.currentId = STORE.wards[0].id;
   switchWard(STORE.currentId);
@@ -1724,14 +1735,14 @@ function autoGenerateOnce(y, m) {
   return plan;
 }
 
-function runAutoGenerate() {
+async function runAutoGenerate() {
   const { y, m } = view;
   const md = monthData(y, m);
   const hasManual = DB.staff.some(s => Object.keys(md.cells[s.id] || {}).some(d => !mdGet(md, 'auto', s.id, d)));
   const msg = hasManual
     ? '手で入力した勤務と休み希望はそのまま残し、空いている所を自動で埋めます。\n（前回の自動作成分は作り直します）\nよろしいですか？'
     : '休み希望を残して、この月の勤務表を自動で作成します。よろしいですか？';
-  if (!confirm(msg)) return;
+  if (!(await askConfirm(msg))) return;
   showLoading(true);
   setTimeout(() => {
     try {
@@ -1765,9 +1776,9 @@ function runAutoGenerate() {
   }, 30);
 }
 
-function clearAuto() {
+async function clearAuto() {
   const md = monthData(view.y, view.m);
-  if (!confirm('自動作成で入った勤務を消します（手で入力した勤務と休み希望は残ります）。よろしいですか？')) return;
+  if (!(await askConfirm('自動作成で入った勤務を消します（手で入力した勤務と休み希望は残ります）。よろしいですか？'))) return;
   pushHistory();
   DB.staff.forEach(s => {
     Object.keys(md.auto[s.id] || {}).forEach(d => mdSet(md, 'cells', s.id, d, ''));
@@ -1787,8 +1798,8 @@ function confirmAuto() {
   render();
   showToast(`自動作成分${n}マスを確定しました（次の自動作成でも動きません）`);
 }
-function clearMonth() {
-  if (!confirm(`${view.y}年${view.m}月の勤務と休み希望をすべて消します。よろしいですか？`)) return;
+async function clearMonth() {
+  if (!(await askConfirm(`${view.y}年${view.m}月の勤務と休み希望をすべて消します。よろしいですか？`))) return;
   pushHistory();
   // 日ごとに入れた日勤の必要人数は勤務ではないので残す
   DB.months[monthKey(view.y, view.m)] = { cells: {}, pto: {}, auto: {}, reqDay: monthData(view.y, view.m).reqDay || {} };
@@ -1886,6 +1897,27 @@ function openPicker(id, d) {
   document.getElementById('pickerOverlay').classList.add('show');
 }
 function closeOverlay(id) { document.getElementById(id).classList.remove('show'); }
+
+// 確認の窓。Webページとして公開した版では、ブラウザ標準の確認（confirm）が
+// 表示されずに「キャンセル」扱いになるため、ページの中に自前で出す。
+let confirmResolve = null;
+function askConfirm(message) {
+  if (confirmResolve) confirmResolve(false);
+  document.getElementById('confirmMsg').textContent = message;
+  const yes = document.getElementById('confirmYes');
+  const danger = /削除|消し|消す|置き換え|初期状態/.test(message);
+  yes.className = danger ? 'btn danger' : 'btn primary';
+  yes.textContent = danger ? 'OK（実行する）' : 'OK';
+  document.getElementById('confirmOverlay').classList.add('show');
+  setTimeout(() => yes.focus(), 0);
+  return new Promise(resolve => { confirmResolve = resolve; });
+}
+function answerConfirm(ok) {
+  document.getElementById('confirmOverlay').classList.remove('show');
+  const r = confirmResolve;
+  confirmResolve = null;
+  if (r) r(ok);
+}
 
 // ============================================================
 // 急な休みの代わりを探す
@@ -2326,13 +2358,13 @@ function renderStaff() {
       };
     });
     tr.querySelectorAll('[data-act]').forEach(b => {
-      b.onclick = () => {
+      b.onclick = async () => {
         const i = DB.staff.indexOf(s);
         if (b.dataset.act === 'up' && i > 0) [DB.staff[i - 1], DB.staff[i]] = [DB.staff[i], DB.staff[i - 1]];
         if (b.dataset.act === 'down' && i < DB.staff.length - 1) [DB.staff[i + 1], DB.staff[i]] = [DB.staff[i], DB.staff[i + 1]];
         if (b.dataset.act === 'detail') { openStaffDetail(s.id); return; }
         if (b.dataset.act === 'del') {
-          if (!confirm(`${s.name} を削除します。入力済みの勤務も表示されなくなります。よろしいですか？`)) return;
+          if (!(await askConfirm(`${s.name} を削除します。入力済みの勤務も表示されなくなります。よろしいですか？`))) return;
           removeStaff([s.id]);
         }
         scheduleSave();
@@ -2348,12 +2380,12 @@ function renderStaff() {
   document.getElementById('selAllBtn').onclick = () => setSel(DB.staff.map(s => s.id));
   document.getElementById('selNightBtn').onclick = () => setSel(DB.staff.filter(canNightType).map(s => s.id));
   document.getElementById('selNoneBtn').onclick = () => setSel([]);
-  document.getElementById('delSelBtn').onclick = () => {
+  document.getElementById('delSelBtn').onclick = async () => {
     const targets = DB.staff.filter(s => sel.has(s.id));
     if (!targets.length) return;
     const names = targets.map(s => s.name);
     const list = names.length > 10 ? names.slice(0, 10).join('、') + ` ほか${names.length - 10}人` : names.join('、');
-    if (!confirm(`次の${names.length}人を削除します。入力済みの勤務も表示されなくなり、元に戻せません。\n\n${list}\n\nよろしいですか？`)) return;
+    if (!(await askConfirm(`次の${names.length}人を削除します。入力済みの勤務も表示されなくなり、元に戻せません。\n\n${list}\n\nよろしいですか？`))) return;
     removeStaff(targets.map(s => s.id));
     renderStaff();
     showToast(`${names.length}人を削除しました（${DB.staff.length}人になりました）`);
@@ -2380,8 +2412,8 @@ function renderStaff() {
     scheduleSave();
     renderStaff();
   };
-  document.getElementById('yearUpBtn').onclick = () => {
-    if (!confirm('全員の看護師経験・病棟経験を1年ずつ増やします（4月の年度替わりに1回だけ押してください）。よろしいですか？')) return;
+  document.getElementById('yearUpBtn').onclick = async () => {
+    if (!(await askConfirm('全員の看護師経験・病棟経験を1年ずつ増やします（4月の年度替わりに1回だけ押してください）。よろしいですか？'))) return;
     DB.staff.forEach(s => { s.nurseYear++; s.wardYear++; });
     scheduleSave();
     renderStaff();
@@ -2618,8 +2650,8 @@ function renderSettings() {
     scheduleSave();
     renderSettings();
   };
-  document.getElementById('resetBtn').onclick = () => {
-    if (!confirm('すべての病棟のスタッフ・設定・勤務表を削除して初期状態に戻します。よろしいですか？')) return;
+  document.getElementById('resetBtn').onclick = async () => {
+    if (!(await askConfirm('すべての病棟のスタッフ・設定・勤務表を削除して初期状態に戻します。よろしいですか？'))) return;
     try { localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(OLD_STORAGE_KEY); } catch (e) {}
     location.reload();
   };
@@ -2998,8 +3030,8 @@ async function importWardExcel(file) {
     const tm = title.match(/(\d{4})年(\d{1,2})月/);
     let [y, m] = tm ? [Number(tm[1]), Number(tm[2])] : [view.y, view.m];
     const fileWard = tm ? title.slice(0, tm.index).trim() : '';
-    if (fileWard && fileWard !== DB.name && !confirm(`このファイルは「${fileWard}」の勤務表です。いま表示中の「${DB.name}」に読み込みます。よろしいですか？`)) return;
-    if ((y !== view.y || m !== view.m) && !confirm(`このファイルは${y}年${m}月の勤務表です。${y}年${m}月として読み込みます。よろしいですか？`)) return;
+    if (fileWard && fileWard !== DB.name && !(await askConfirm(`このファイルは「${fileWard}」の勤務表です。いま表示中の「${DB.name}」に読み込みます。よろしいですか？`))) return;
+    if ((y !== view.y || m !== view.m) && !(await askConfirm(`このファイルは${y}年${m}月の勤務表です。${y}年${m}月として読み込みます。よろしいですか？`))) return;
     // 3行目の日付見出しから、日付の列を探す
     const dayCol = {};
     Object.keys(sh).forEach(ref => {
@@ -3106,14 +3138,14 @@ document.getElementById('backupInput').onchange = async e => {
   try {
     const data = JSON.parse(await file.text());
     if (data && Array.isArray(data.wards)) {
-      if (!confirm(`すべての病棟を、バックアップの内容（${data.wards.map(w => w.name).join('・')}）で置き換えます。よろしいですか？`)) return;
+      if (!(await askConfirm(`すべての病棟を、バックアップの内容（${data.wards.map(w => w.name).join('・')}）で置き換えます。よろしいですか？`))) return;
       applyLoaded(data);
     } else {
       // 病棟が1つだった頃のバックアップは、新しい病棟として追加する
       const w = normalizeWard(clone(data), '読み込んだ病棟');
       let name = w.name;
       for (let i = 2; STORE.wards.some(x => x.name === name); i++) name = `${w.name}(${i})`;
-      if (!confirm(`このバックアップを新しい病棟「${name}」として追加します。よろしいですか？`)) return;
+      if (!(await askConfirm(`このバックアップを新しい病棟「${name}」として追加します。よろしいですか？`))) return;
       w.id = STORE.nextWardId++;
       w.name = name;
       STORE.wards.push(w);
@@ -3177,6 +3209,9 @@ document.getElementById('nextMonthBtn').onclick = () => setMonth(...nextYM(view.
     else syncMonthInputs();
   };
 });
+document.getElementById('confirmYes').onclick = () => answerConfirm(true);
+document.getElementById('confirmNo').onclick = () => answerConfirm(false);
+document.getElementById('confirmOverlay').addEventListener('click', e => { if (e.target.id === 'confirmOverlay') answerConfirm(false); });
 document.getElementById('pickerClose').onclick = () => closeOverlay('pickerOverlay');
 document.getElementById('dayClose').onclick = () => closeOverlay('dayOverlay');
 document.getElementById('staffDetailClose').onclick = () => { closeOverlay('staffOverlay'); render(); };
@@ -3184,6 +3219,7 @@ document.getElementById('staffDetailClose').onclick = () => { closeOverlay('staf
   document.getElementById(id).addEventListener('click', e => { if (e.target.id === id) closeOverlay(id); });
 });
 document.addEventListener('keydown', e => {
+  if (confirmResolve) { if (e.key === 'Escape') answerConfirm(false); return; }
   if (e.key === 'Escape') {
     const wasStaff = document.getElementById('staffOverlay').classList.contains('show');
     ['pickerOverlay', 'dayOverlay', 'staffOverlay'].forEach(closeOverlay);
