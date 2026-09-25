@@ -994,7 +994,7 @@ function normalizeWard(w, fallbackName) {
 let STORE = { wards: [makeWard(1, 'A病棟', { sample: true })], currentId: 1, nextWardId: 2 };
 let DB = STORE.wards[0];
 function currentWard() { return STORE.wards.find(w => w.id === STORE.currentId) || STORE.wards[0]; }
-const view = { tab: 'grid', pen: null, y: 0, m: 0, highlight: null, swapSel: null };
+const view = { tab: 'grid', pen: null, y: 0, m: 0, highlight: null, swapSel: null, staffSel: new Set() };
 
 // ============================================================
 // 元に戻す：月の勤務を変える操作の直前の状態を覚えておく
@@ -1076,7 +1076,7 @@ function switchWard(id) {
   STORE.currentId = id;
   DB = currentWard();
   HISTORY.length = 0; // 元に戻すは病棟をまたがない
-  view.swapSel = null; view.highlight = null; view.pen = null;
+  view.swapSel = null; view.highlight = null; view.pen = null; view.staffSel.clear();
   scheduleSave();
   render();
 }
@@ -2226,9 +2226,24 @@ function renderGrid() {
 // ============================================================
 // 画面：スタッフ
 // ============================================================
+// スタッフを削除する。消した人を「同じ夜勤にしない人」「指導者」にしていた設定も外す。
+function removeStaff(ids) {
+  const gone = new Set(ids);
+  DB.staff = DB.staff.filter(s => !gone.has(s.id));
+  DB.staff.forEach(o => {
+    o.ngPartners = (o.ngPartners || []).filter(x => !gone.has(x));
+    if (gone.has(o.mentorId)) { o.mentorId = null; o.needMentor = false; }
+  });
+  ids.forEach(id => view.staffSel.delete(id));
+  scheduleSave();
+}
+
 function renderStaff() {
+  const sel = view.staffSel;
+  [...sel].forEach(id => { if (!staffById(id)) sel.delete(id); });
   const rows = DB.staff.map((s, idx) => `
-    <tr data-id="${s.id}">
+    <tr data-id="${s.id}"${sel.has(s.id) ? ' style="background:#e8f0f8"' : ''}>
+      <td style="text-align:center"><input type="checkbox" data-sel="${s.id}"${sel.has(s.id) ? ' checked' : ''} aria-label="${esc(s.name)}を選ぶ"></td>
       <td>${idx + 1}</td>
       <td><input type="text" data-f="name" value="${esc(s.name)}"></td>
       <td><select data-f="role">${ROLES.map(r => `<option${r === s.role ? ' selected' : ''}>${r}</option>`).join('')}</select></td>
@@ -2260,9 +2275,23 @@ function renderStaff() {
       <b>${esc(DB.name)}</b>　${DB.staff.length}名（${Object.keys(WORK_TYPES).map(k => `${WORK_TYPES[k].label} ${cnt(k)}名`).join('・')}）。
       経験年数は「今年度で何年目か」を入れてください（新卒1年目＝1）。異動・中途で来た人は、看護師経験は通算、病棟経験はこの病棟での年数です。
     </div>
+    <div class="toolbar" style="background:${sel.size ? '#e8f0f8' : 'var(--panel)'};border:1px solid var(--line);border-radius:8px;padding:8px 10px">
+      <span style="font-size:12px;color:var(--muted)">選ぶ：</span>
+      <button class="btn small" id="selAllBtn">すべて</button>
+      <button class="btn small" id="selNightBtn">夜勤に入る人</button>
+      <button class="btn small" id="selNoneBtn"${sel.size ? '' : ' disabled'}>選択を解除</button>
+      <span style="width:12px"></span>
+      <b style="font-size:13px">${sel.size}人を選択中</b>
+      <button class="btn small danger" id="delSelBtn"${sel.size ? '' : ' disabled'}>選んだ人を削除</button>
+      <span style="font-size:12px">夜勤上限を</span>
+      <input type="number" id="selNightMax" min="0" max="20" value="9" style="width:52px">
+      <span style="font-size:12px">回に</span>
+      <button class="btn small" id="setNightMaxBtn"${sel.size ? '' : ' disabled'}>まとめて変更</button>
+    </div>
     <div class="scroll-x">
       <table class="form">
         <thead><tr>
+          <th title="チェックした人をまとめて削除・変更できます"><input type="checkbox" id="selHeader"${DB.staff.length && sel.size === DB.staff.length ? ' checked' : ''} aria-label="すべて選ぶ"></th>
           <th>No</th><th>氏名</th><th>役職</th><th>勤務形態</th><th>看護師経験</th><th>病棟経験</th><th>区分</th>
           <th title="夜勤に入れるか（夜勤デビュー前の新人はオフ）">夜勤<br>可</th>
           <th title="月の夜勤回数の上限。2交代の夜勤は2回と数えます">夜勤<br>上限</th>
@@ -2304,17 +2333,39 @@ function renderStaff() {
         if (b.dataset.act === 'detail') { openStaffDetail(s.id); return; }
         if (b.dataset.act === 'del') {
           if (!confirm(`${s.name} を削除します。入力済みの勤務も表示されなくなります。よろしいですか？`)) return;
-          DB.staff.splice(i, 1);
-          DB.staff.forEach(o => {
-            o.ngPartners = (o.ngPartners || []).filter(x => x !== s.id);
-            if (o.mentorId === s.id) { o.mentorId = null; o.needMentor = false; }
-          });
+          removeStaff([s.id]);
         }
         scheduleSave();
         renderStaff();
       };
     });
   });
+  const setSel = ids => { sel.clear(); ids.forEach(id => sel.add(id)); renderStaff(); };
+  document.querySelectorAll('[data-sel]').forEach(cb => {
+    cb.onchange = () => { const id = Number(cb.dataset.sel); if (cb.checked) sel.add(id); else sel.delete(id); renderStaff(); };
+  });
+  document.getElementById('selHeader').onchange = e => setSel(e.target.checked ? DB.staff.map(s => s.id) : []);
+  document.getElementById('selAllBtn').onclick = () => setSel(DB.staff.map(s => s.id));
+  document.getElementById('selNightBtn').onclick = () => setSel(DB.staff.filter(canNightType).map(s => s.id));
+  document.getElementById('selNoneBtn').onclick = () => setSel([]);
+  document.getElementById('delSelBtn').onclick = () => {
+    const targets = DB.staff.filter(s => sel.has(s.id));
+    if (!targets.length) return;
+    const names = targets.map(s => s.name);
+    const list = names.length > 10 ? names.slice(0, 10).join('、') + ` ほか${names.length - 10}人` : names.join('、');
+    if (!confirm(`次の${names.length}人を削除します。入力済みの勤務も表示されなくなり、元に戻せません。\n\n${list}\n\nよろしいですか？`)) return;
+    removeStaff(targets.map(s => s.id));
+    renderStaff();
+    showToast(`${names.length}人を削除しました（${DB.staff.length}人になりました）`);
+  };
+  document.getElementById('setNightMaxBtn').onclick = () => {
+    const v = Math.max(0, Math.min(20, Math.round(Number(document.getElementById('selNightMax').value) || 0)));
+    const targets = DB.staff.filter(s => sel.has(s.id));
+    targets.forEach(s => { s.nightMax = v; });
+    scheduleSave();
+    renderStaff();
+    showToast(`${targets.length}人の夜勤上限を${v}回にしました`);
+  };
   document.getElementById('bulkAddBtn').onclick = () => {
     const names = document.getElementById('bulkNames').value.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
     if (!names.length) { showToast('名前を1行に1人ずつ入れてください', 'error'); return; }
