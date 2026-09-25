@@ -113,6 +113,13 @@
   table.grid td.cell.pto::after {
     content: '★'; position: absolute; top: 0; right: 1px; font-size: 8px; color: #b8860b;
   }
+  .req-input {
+    width: 30px; padding: 2px 0; text-align: center; font-size: 12px; font-weight: 700; border: 1px solid transparent;
+    background: transparent; -moz-appearance: textfield;
+  }
+  .req-input::-webkit-outer-spin-button, .req-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .req-input.off { border-color: #e0a36b; background: #fff7ef; }
+  .req-input.custom { border-color: var(--navy); background: #e8f0f8; color: var(--navy); }
   table.grid td.cell.swap-sel { box-shadow: inset 0 0 0 3px #ff9800; }
   .btn:disabled { opacity: 0.45; cursor: default; }
   table.grid td.cell.bad { box-shadow: inset 0 0 0 2px var(--red); }
@@ -1049,8 +1056,21 @@ function offTarget(staff, y, m) {
     ? Number(S.offTargetOverride) : offDayCountOfMonth(y, m);
   return Math.max(0, base + (Number(staff.offAdjust) || 0));
 }
-function reqDay(y, m, d) {
+// 日勤の必要人数。土日祝は日によって4〜6人とばらつくので、日ごとに入れた
+// 人数（months[月].reqDay）があればそれを使い、なければ設定の基本の人数を使う。
+function reqDayDefault(y, m, d) {
   return isOffDay(y, m, d) ? DB.settings.reqDayHoliday : DB.settings.reqDayWeekday;
+}
+function reqDay(y, m, d) {
+  const md = DB.months[monthKey(y, m)];
+  const v = md && md.reqDay && md.reqDay[d];
+  return typeof v === 'number' ? v : reqDayDefault(y, m, d);
+}
+function setReqDay(y, m, d, v) {
+  const md = monthData(y, m);
+  if (!md.reqDay) md.reqDay = {};
+  if (v === null || v === reqDayDefault(y, m, d)) delete md.reqDay[d];
+  else md.reqDay[d] = v;
 }
 
 // ============================================================
@@ -1142,7 +1162,7 @@ function crewCheck(ids) {
 // ============================================================
 // 月データ
 // ============================================================
-// months[YYYY-MM] = { cells: {id: {day: code}}, pto: {id: {day: '公'|'有'}}, auto: {id: {day: true}} }
+// months[YYYY-MM] = { cells: {id: {day: code}}, pto: {id: {day: '公'|'有'}}, auto: {id: {day: true}}, reqDay: {day: 日勤の必要人数} }
 function monthData(y, m) {
   const key = monthKey(y, m);
   if (!DB.months[key]) DB.months[key] = { cells: {}, pto: {}, auto: {} };
@@ -1540,6 +1560,8 @@ function autoGenerateOnce(y, m) {
         const d = Number(k);
         const surplus = dayCount[d] - reqDay(y, m, d);
         let val = surplus * 3 + runAround(s.id, d) * 0.8 + Math.random() * 0.8;
+        // 土日祝は入力した人数（4〜6人など）に近づける。余った人手は平日の日勤に回す
+        if (isOffDay(y, m, d) && surplus > 0) val += 30;
         if (cells[s.id][d - 1] === '公' || cells[s.id][d + 1] === '公') val += 0.4;
         if (isOffDay(y, m, d) && !s.weekendOff) val += (wkExpected(s) - wkOff(s)) * 0.8;
         if (val > bestVal) { bestVal = val; best = d; }
@@ -1699,7 +1721,8 @@ function confirmAuto() {
 function clearMonth() {
   if (!confirm(`${view.y}年${view.m}月の勤務と休み希望をすべて消します。よろしいですか？`)) return;
   pushHistory();
-  DB.months[monthKey(view.y, view.m)] = { cells: {}, pto: {}, auto: {} };
+  // 日ごとに入れた日勤の必要人数は勤務ではないので残す
+  DB.months[monthKey(view.y, view.m)] = { cells: {}, pto: {}, auto: {}, reqDay: monthData(view.y, view.m).reqDay || {} };
   scheduleSave();
   render();
 }
@@ -2024,7 +2047,16 @@ function renderGrid() {
   };
   const names = ids => ids.map(id => staffById(id).name).join('、');
   const countState = (have, need) => (have < need ? 'short' : have > need ? 'over' : 'ok');
-  body += sumRow('日勤（人数／必要）', day => [`${day.dayCount}`, countState(day.dayCount, day.req), `必要${day.req}人`], true);
+  // 日勤の必要人数を日ごとに入れる行（土日祝は4〜6人など日によって違うため）
+  let reqRow = '<tr class="sum sum-first"><td class="name-col">日勤 必要人数<div class="note" style="font-weight:400">土日祝は日ごとに入力</div></td>';
+  for (let d = 1; d <= n; d++) {
+    const v = reqDay(y, m, d);
+    const custom = md.reqDay && typeof md.reqDay[d] === 'number';
+    const off = isOffDay(y, m, d);
+    reqRow += `<td class="${dayCls(d)}" style="padding:1px"><input class="req-input${off ? ' off' : ''}${custom ? ' custom' : ''}" type="number" min="0" max="60" data-reqday="${d}" value="${v}" title="${m}/${d}の日勤の必要人数${custom ? '（この日だけ変更）' : '（基本の人数）'}"></td>`;
+  }
+  body += reqRow + '<td colspan="6"></td></tr>';
+  body += sumRow('日勤（人数／必要）', day => [`${day.dayCount}`, countState(day.dayCount, day.req), `必要${day.req}人`]);
   [['準夜帯', 'eve', 'eveCheck', S.reqEve], ['深夜帯', 'late', 'lateCheck', S.reqLate]].forEach(([nm, key, ck, req]) => {
     body += sumRow(`${nm} 人数（必要${req}）`, day => [`${day[key].length}`, countState(day[key].length, req), names(day[key])]);
     body += sumRow(`${nm} うち中堅以上`, day => [`${day[ck].vet}`, day[ck].vet < S.minVet ? 'short' : 'ok', `中堅以上 ${day[ck].vet}人`]);
@@ -2090,6 +2122,17 @@ function renderGrid() {
       if (view.pen === 'SWAP') handleSwap(id, d);
       else if (view.pen) { pushHistory(); if (!applyCode(id, d, view.pen)) HISTORY.pop(); renderGrid(); }
       else openPicker(id, d);
+    };
+  });
+  document.querySelectorAll('input[data-reqday]').forEach(inp => {
+    inp.onclick = e => e.stopPropagation();
+    inp.onchange = () => {
+      const d = Number(inp.dataset.reqday);
+      const v = inp.value === '' ? null : Math.max(0, Math.min(60, Math.round(Number(inp.value) || 0)));
+      pushHistory();
+      setReqDay(y, m, d, v);
+      scheduleSave();
+      renderGrid();
     };
   });
   document.querySelectorAll('thead th[data-day], tr.sum td[data-day]').forEach(th => {
@@ -2359,7 +2402,7 @@ function renderSettings() {
       <div class="panel">
         <h3>必要人数</h3>
         ${num('reqDayWeekday', 0, 60, '平日の日勤')}
-        ${num('reqDayHoliday', 0, 60, '土日祝の日勤')}
+        ${num('reqDayHoliday', 0, 60, '土日祝の日勤（基本）', '日ごとの人数は勤務表の「日勤 必要人数」の行で入れます（4〜6人など）')}
         ${num('reqEve', 0, 20, '準夜帯', '準夜（3交代）＋夜勤（2交代）の合計')}
         ${num('reqLate', 0, 20, '深夜帯', '深夜（3交代）＋前日からの夜勤（2交代）の合計')}
         ${chk('countShort', '時短勤務の人を日勤の人数に含める')}
@@ -2455,6 +2498,8 @@ function renderGuide() {
         <li><b>深夜帯</b>＝その日の「深」（3交代の深夜）＋<b>前日</b>の「夜」の人数（2交代の夜勤は日付をまたいで深夜帯も担当するため）</li>
         <li>夜勤回数は、準夜・深夜を1回、2交代の夜勤を2回と数えます。</li>
       </ul>
+      <h3>日勤の必要人数</h3>
+      <p>平日と土日祝の基本の人数は「設定」で決めます。土日祝は日によって4〜6人などばらつくので、勤務表の<b>「日勤 必要人数」</b>の行に日ごとの人数を直接入れてください（オレンジの枠が土日祝、青くなったマスは基本から変えた日です）。空欄にすると基本の人数に戻ります。夜勤は準夜帯${S.reqEve}人・深夜帯${S.reqLate}人です。</p>
       <h3>時短勤務</h3>
       <p>勤務形態を「時短勤務」にすると、勤務日は「短」（時短日勤）になり、夜勤には入りません。日勤の人数に含めるかは「設定」で選べます。土日祝を休みにしたい人は、スタッフ画面の「土日祝休み」にチェックを入れてください。</p>
       <h3>一人ひとりの約束ごと（スタッフ →「詳細」）</h3>
@@ -2552,6 +2597,7 @@ function buildWardWorkbook(y, m) {
     r++;
   });
   const sumRows = [
+    ['日勤 必要人数', day => [day.req, false]],
     ['日勤', day => [day.dayCount, day.dayCount < day.req]],
     ['準夜帯', day => [day.eve.length, day.eve.length < S.reqEve]],
     ['準夜帯 中堅以上', day => [day.eveCheck.vet, day.eveCheck.vet < S.minVet]],
