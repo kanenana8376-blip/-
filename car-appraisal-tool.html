@@ -318,11 +318,7 @@
 
     <div class="field">
       <label for="grade">グレード</label>
-      <select id="grade">
-        <option value="low">廉価グレード</option>
-        <option value="standard" selected>標準グレード</option>
-        <option value="high">上位グレード（本革・ナビ・先進安全装備など）</option>
-      </select>
+      <select id="grade"></select>
     </div>
 
     <div class="row2">
@@ -413,123 +409,118 @@
 <script>
   const CAR_DB = {
     "トヨタ": [
-      { name: "パッソ", category: "コンパクト", price: 150 },
-      { name: "ヴィッツ", category: "コンパクト", price: 160 },
-      { name: "ヤリス", category: "コンパクト", price: 180 },
-      { name: "カローラ", category: "セダン", price: 210 },
-      { name: "マークX", category: "セダン", price: 280 },
-      { name: "プリウス", category: "コンパクト", price: 280 },
-      { name: "プリウスPHV", category: "コンパクト", price: 330 },
-      { name: "アクア", category: "コンパクト", price: 210 },
-      { name: "シエンタ", category: "ミニバン", price: 220 },
-      { name: "ノア", category: "ミニバン", price: 300 },
-      { name: "ヴォクシー", category: "ミニバン", price: 310 },
-      { name: "アルファード", category: "ミニバン", price: 550 },
-      { name: "ハイエース", category: "ミニバン", price: 380 },
-      { name: "ライズ", category: "SUV", price: 200 },
-      { name: "C-HR", category: "SUV", price: 250 },
-      { name: "ハリアー", category: "SUV", price: 320 },
-      { name: "RAV4", category: "SUV", price: 320 },
-      { name: "ランドクルーザー", category: "SUV", price: 550 },
-      { name: "カローラクロス", category: "SUV", price: 250 },
-      { name: "クラウン", category: "セダン", price: 480 },
-      { name: "86", category: "スポーツ", price: 300 }
+      { name: "パッソ", category: "コンパクト", grades: [{ name: "X", price: 140 }, { name: "X Lパッケージ", price: 150 }, { name: "MODA", price: 160 }] },
+      { name: "ヴィッツ", category: "コンパクト", grades: [{ name: "B", price: 145 }, { name: "F", price: 160 }, { name: "U", price: 175 }] },
+      { name: "ヤリス", category: "コンパクト", grades: [{ name: "X", price: 165 }, { name: "G", price: 180 }, { name: "Z", price: 195 }] },
+      { name: "カローラ", category: "セダン", grades: [{ name: "X", price: 195 }, { name: "G", price: 210 }, { name: "Z", price: 225 }] },
+      { name: "マークX", category: "セダン", grades: [{ name: "250G", price: 260 }, { name: "250G Fパッケージ", price: 280 }, { name: "350S", price: 300 }] },
+      { name: "プリウス", category: "コンパクト", grades: [{ name: "U", price: 260 }, { name: "X", price: 280 }, { name: "Z", price: 300 }] },
+      { name: "プリウスPHV", category: "コンパクト", grades: [{ name: "G", price: 305 }, { name: "Z", price: 330 }] },
+      { name: "アクア", category: "コンパクト", grades: [{ name: "X", price: 195 }, { name: "G", price: 210 }, { name: "Z", price: 225 }] },
+      { name: "シエンタ", category: "ミニバン", grades: [{ name: "X", price: 200 }, { name: "G", price: 220 }, { name: "Z", price: 240 }] },
+      { name: "ノア", category: "ミニバン", grades: [{ name: "X", price: 275 }, { name: "G", price: 300 }, { name: "S-Z", price: 325 }] },
+      { name: "ヴォクシー", category: "ミニバン", grades: [{ name: "X", price: 285 }, { name: "G", price: 310 }, { name: "S-Z", price: 335 }] },
+      { name: "アルファード", category: "ミニバン", grades: [{ name: "X", price: 505 }, { name: "G", price: 550 }, { name: "Executive Lounge", price: 595 }] },
+      { name: "ハイエース", category: "ミニバン", grades: [{ name: "DX", price: 350 }, { name: "GL", price: 380 }, { name: "スーパーGL", price: 410 }] },
+      { name: "ライズ", category: "SUV", grades: [{ name: "X", price: 185 }, { name: "G", price: 200 }, { name: "Z", price: 215 }] },
+      { name: "C-HR", category: "SUV", grades: [{ name: "S", price: 230 }, { name: "G", price: 250 }, { name: "Z", price: 270 }] },
+      { name: "ハリアー", category: "SUV", grades: [{ name: "S", price: 295 }, { name: "G", price: 320 }, { name: "Z", price: 345 }] },
+      { name: "RAV4", category: "SUV", grades: [{ name: "X", price: 295 }, { name: "G", price: 320 }, { name: "Adventure", price: 345 }] },
+      { name: "ランドクルーザー", category: "SUV", grades: [{ name: "GX", price: 505 }, { name: "ZX", price: 550 }, { name: "GR SPORT", price: 595 }] },
+      { name: "ランドクルーザープラド", category: "SUV", grades: [{ name: "TX", price: 440 }, { name: "TX Lパッケージ", price: 480 }, { name: "TZ-G", price: 520 }] },
+      { name: "カローラクロス", category: "SUV", grades: [{ name: "X", price: 230 }, { name: "G", price: 250 }, { name: "Z", price: 270 }] },
+      { name: "クラウン", category: "セダン", grades: [{ name: "RS", price: 440 }, { name: "RS Advance", price: 480 }, { name: "G Advance", price: 520 }] },
+      { name: "86", category: "スポーツ", grades: [{ name: "GT", price: 275 }, { name: "GT Limited", price: 300 }, { name: "GR", price: 325 }] }
     ],
     "ホンダ": [
-      { name: "N-ONE", category: "軽自動車", price: 150 },
-      { name: "N-BOX", category: "軽自動車", price: 160 },
-      { name: "N-WGN", category: "軽自動車", price: 140 },
-      { name: "N-VAN", category: "軽自動車", price: 150 },
-      { name: "フィット", category: "コンパクト", price: 180 },
-      { name: "グレイス", category: "セダン", price: 200 },
-      { name: "インサイト", category: "セダン", price: 300 },
-      { name: "フリード", category: "ミニバン", price: 230 },
-      { name: "ステップワゴン", category: "ミニバン", price: 300 },
-      { name: "オデッセイ", category: "ミニバン", price: 380 },
-      { name: "ヴェゼル", category: "SUV", price: 260 },
-      { name: "CR-V", category: "SUV", price: 330 },
-      { name: "シビック", category: "セダン", price: 300 },
-      { name: "シビック タイプR", category: "スポーツ", price: 500 }
+      { name: "N-ONE", category: "軽自動車", grades: [{ name: "オリジナル", price: 140 }, { name: "プレミアム", price: 150 }, { name: "RS", price: 160 }] },
+      { name: "N-BOX", category: "軽自動車", grades: [{ name: "G", price: 145 }, { name: "L", price: 160 }, { name: "カスタムターボ", price: 175 }] },
+      { name: "N-WGN", category: "軽自動車", grades: [{ name: "G", price: 130 }, { name: "L", price: 140 }, { name: "カスタムターボ", price: 150 }] },
+      { name: "N-VAN", category: "軽自動車", grades: [{ name: "G", price: 140 }, { name: "L", price: 150 }, { name: "+STYLE FUN", price: 160 }] },
+      { name: "フィット", category: "コンパクト", grades: [{ name: "BASIC", price: 165 }, { name: "HOME", price: 180 }, { name: "RS", price: 195 }] },
+      { name: "グレイス", category: "セダン", grades: [{ name: "DX", price: 185 }, { name: "LX", price: 200 }, { name: "EX", price: 215 }] },
+      { name: "インサイト", category: "セダン", grades: [{ name: "LX", price: 275 }, { name: "EX", price: 300 }, { name: "EX Black Style", price: 325 }] },
+      { name: "フリード", category: "ミニバン", grades: [{ name: "AIR", price: 210 }, { name: "G", price: 230 }, { name: "クロスター", price: 250 }] },
+      { name: "ステップワゴン", category: "ミニバン", grades: [{ name: "AIR", price: 275 }, { name: "スパーダ", price: 300 }, { name: "スパーダ プレミアムライン", price: 325 }] },
+      { name: "オデッセイ", category: "ミニバン", grades: [{ name: "e:HEV RC", price: 350 }, { name: "e:HEV ABSOLUTE", price: 380 }, { name: "e:HEV ABSOLUTE EX", price: 410 }] },
+      { name: "ヴェゼル", category: "SUV", grades: [{ name: "G", price: 240 }, { name: "X", price: 260 }, { name: "Z", price: 280 }] },
+      { name: "CR-V", category: "SUV", grades: [{ name: "EX", price: 305 }, { name: "e:HEV X", price: 330 }, { name: "Z", price: 355 }] },
+      { name: "シビック", category: "セダン", grades: [{ name: "LX", price: 275 }, { name: "EX", price: 300 }, { name: "e:HEV EX", price: 325 }] },
+      { name: "シビック タイプR", category: "スポーツ", grades: [{ name: "標準", price: 460 }, { name: "Limited Edition", price: 540 }] }
     ],
     "日産": [
-      { name: "デイズ", category: "軽自動車", price: 150 },
-      { name: "ルークス", category: "軽自動車", price: 170 },
-      { name: "ノート", category: "コンパクト", price: 200 },
-      { name: "リーフ", category: "コンパクト", price: 330 },
-      { name: "ジューク", category: "SUV", price: 220 },
-      { name: "セレナ", category: "ミニバン", price: 300 },
-      { name: "エルグランド", category: "ミニバン", price: 400 },
-      { name: "エクストレイル", category: "SUV", price: 300 },
-      { name: "キックス", category: "SUV", price: 250 },
-      { name: "アリア", category: "SUV", price: 500 },
-      { name: "スカイライン", category: "セダン", price: 400 },
-      { name: "シルビア", category: "スポーツ", price: 300 },
-      { name: "フェアレディZ", category: "スポーツ", price: 550 },
-      { name: "GT-R", category: "スポーツ", price: 1050 }
+      { name: "デイズ", category: "軽自動車", grades: [{ name: "S", price: 140 }, { name: "X", price: 150 }, { name: "ハイウェイスターX", price: 160 }] },
+      { name: "ルークス", category: "軽自動車", grades: [{ name: "S", price: 155 }, { name: "X", price: 170 }, { name: "ハイウェイスターX", price: 185 }] },
+      { name: "ノート", category: "コンパクト", grades: [{ name: "S", price: 185 }, { name: "X", price: 200 }, { name: "G", price: 215 }] },
+      { name: "リーフ", category: "コンパクト", grades: [{ name: "S", price: 305 }, { name: "X", price: 330 }, { name: "G", price: 355 }] },
+      { name: "ジューク", category: "SUV", grades: [{ name: "15RX", price: 200 }, { name: "16GT", price: 220 }, { name: "NISMO", price: 240 }] },
+      { name: "セレナ", category: "ミニバン", grades: [{ name: "X", price: 275 }, { name: "G", price: 300 }, { name: "ハイウェイスターV", price: 325 }] },
+      { name: "エルグランド", category: "ミニバン", grades: [{ name: "X", price: 370 }, { name: "250XL", price: 400 }, { name: "ハイウェイスタープレミアム", price: 430 }] },
+      { name: "エクストレイル", category: "SUV", grades: [{ name: "S", price: 275 }, { name: "X", price: 300 }, { name: "G", price: 325 }] },
+      { name: "キックス", category: "SUV", grades: [{ name: "X", price: 230 }, { name: "G", price: 250 }, { name: "オーテック", price: 270 }] },
+      { name: "アリア", category: "SUV", grades: [{ name: "B6", price: 460 }, { name: "B9", price: 500 }, { name: "B6 e-4ORCE Limited", price: 540 }] },
+      { name: "スカイライン", category: "セダン", grades: [{ name: "GT", price: 370 }, { name: "GT タイプSP", price: 400 }, { name: "400R", price: 430 }] },
+      { name: "シルビア", category: "スポーツ", grades: [{ name: "Q's", price: 275 }, { name: "spec-R", price: 300 }, { name: "オーテックバージョン", price: 325 }] },
+      { name: "フェアレディZ", category: "スポーツ", grades: [{ name: "バージョンST", price: 505 }, { name: "バージョンT", price: 550 }, { name: "NISMO", price: 595 }] },
+      { name: "GT-R", category: "スポーツ", grades: [{ name: "ピュアエディション", price: 965 }, { name: "プレミアムエディション", price: 1050 }, { name: "NISMO", price: 1135 }] }
     ],
     "スズキ": [
-      { name: "アルト", category: "軽自動車", price: 120 },
-      { name: "ワゴンR", category: "軽自動車", price: 140 },
-      { name: "スペーシア", category: "軽自動車", price: 160 },
-      { name: "ハスラー", category: "軽自動車", price: 150 },
-      { name: "エブリイ", category: "軽自動車", price: 150 },
-      { name: "ジムニー", category: "SUV", price: 180 },
-      { name: "クロスビー", category: "SUV", price: 200 },
-      { name: "スイフト", category: "コンパクト", price: 170 }
+      { name: "アルト", category: "軽自動車", grades: [{ name: "A", price: 110 }, { name: "L", price: 120 }, { name: "S", price: 130 }] },
+      { name: "ワゴンR", category: "軽自動車", grades: [{ name: "FA", price: 130 }, { name: "FX", price: 140 }, { name: "ハイブリッドFZ", price: 150 }] },
+      { name: "スペーシア", category: "軽自動車", grades: [{ name: "HYBRID G", price: 145 }, { name: "HYBRID MZ", price: 160 }, { name: "カスタムZ", price: 175 }] },
+      { name: "ハスラー", category: "軽自動車", grades: [{ name: "G", price: 140 }, { name: "X", price: 150 }, { name: "Jスタイル", price: 160 }] },
+      { name: "エブリイ", category: "軽自動車", grades: [{ name: "PA", price: 140 }, { name: "PC", price: 150 }, { name: "ジョインターボ", price: 160 }] },
+      { name: "ジムニー", category: "SUV", grades: [{ name: "XG", price: 165 }, { name: "XL", price: 180 }, { name: "XC", price: 195 }] },
+      { name: "クロスビー", category: "SUV", grades: [{ name: "HYBRID MX", price: 185 }, { name: "HYBRID ML", price: 200 }, { name: "HYBRID MZ", price: 215 }] },
+      { name: "スイフト", category: "コンパクト", grades: [{ name: "XG", price: 155 }, { name: "XL", price: 170 }, { name: "ハイブリッドMZ", price: 185 }] }
     ],
     "ダイハツ": [
-      { name: "ミライース", category: "軽自動車", price: 120 },
-      { name: "タント", category: "軽自動車", price: 150 },
-      { name: "ムーヴ", category: "軽自動車", price: 140 },
-      { name: "キャスト", category: "軽自動車", price: 150 },
-      { name: "ロッキー", category: "SUV", price: 200 }
+      { name: "ミライース", category: "軽自動車", grades: [{ name: "B", price: 110 }, { name: "X", price: 120 }, { name: "G", price: 130 }] },
+      { name: "タント", category: "軽自動車", grades: [{ name: "X", price: 140 }, { name: "カスタムX", price: 150 }, { name: "カスタムRS", price: 160 }] },
+      { name: "ムーヴ", category: "軽自動車", grades: [{ name: "X", price: 130 }, { name: "Xリミテッド", price: 140 }, { name: "カスタムX", price: 150 }] },
+      { name: "キャスト", category: "軽自動車", grades: [{ name: "スタイル", price: 140 }, { name: "アクティバ", price: 150 }, { name: "アクティバG", price: 160 }] },
+      { name: "ロッキー", category: "SUV", grades: [{ name: "X", price: 185 }, { name: "プレミアム", price: 200 }, { name: "プレミアムG", price: 215 }] }
     ],
     "マツダ": [
-      { name: "MAZDA2", category: "コンパクト", price: 190 },
-      { name: "アテンザ / MAZDA6", category: "セダン", price: 300 },
-      { name: "CX-3", category: "SUV", price: 220 },
-      { name: "CX-5", category: "SUV", price: 300 },
-      { name: "CX-30", category: "SUV", price: 260 },
-      { name: "CX-8", category: "SUV", price: 320 },
-      { name: "ロードスター", category: "スポーツ", price: 280 }
+      { name: "MAZDA2", category: "コンパクト", grades: [{ name: "15C", price: 175 }, { name: "15S", price: 190 }, { name: "XD", price: 205 }] },
+      { name: "アテンザ / MAZDA6", category: "セダン", grades: [{ name: "20S", price: 275 }, { name: "25S", price: 300 }, { name: "XD", price: 325 }] },
+      { name: "CX-3", category: "SUV", grades: [{ name: "15S", price: 200 }, { name: "XD", price: 220 }, { name: "XD Lパッケージ", price: 240 }] },
+      { name: "CX-5", category: "SUV", grades: [{ name: "25S", price: 275 }, { name: "XD", price: 300 }, { name: "25S Lパッケージ", price: 325 }] },
+      { name: "CX-30", category: "SUV", grades: [{ name: "20S", price: 240 }, { name: "XD", price: 260 }, { name: "20S Lパッケージ", price: 280 }] },
+      { name: "CX-8", category: "SUV", grades: [{ name: "25S", price: 295 }, { name: "XD", price: 320 }, { name: "25S Lパッケージ", price: 345 }] },
+      { name: "ロードスター", category: "スポーツ", grades: [{ name: "S", price: 260 }, { name: "S Lパッケージ", price: 280 }, { name: "RS", price: 300 }] }
     ],
     "スバル": [
-      { name: "インプレッサ", category: "セダン", price: 240 },
-      { name: "レガシィ", category: "セダン", price: 320 },
-      { name: "XV / クロストレック", category: "SUV", price: 260 },
-      { name: "フォレスター", category: "SUV", price: 300 },
-      { name: "レヴォーグ", category: "セダン", price: 320 },
-      { name: "BRZ", category: "スポーツ", price: 300 }
+      { name: "インプレッサ", category: "セダン", grades: [{ name: "1.6i", price: 220 }, { name: "2.0i-L", price: 240 }, { name: "STI Sport", price: 260 }] },
+      { name: "レガシィ", category: "セダン", grades: [{ name: "GT", price: 295 }, { name: "GT-H", price: 320 }, { name: "リミテッド", price: 345 }] },
+      { name: "XV / クロストレック", category: "SUV", grades: [{ name: "X", price: 240 }, { name: "プレミアム", price: 260 }, { name: "リミテッド", price: 280 }] },
+      { name: "フォレスター", category: "SUV", grades: [{ name: "X-BREAK", price: 275 }, { name: "Advance", price: 300 }, { name: "Sport", price: 325 }] },
+      { name: "レヴォーグ", category: "セダン", grades: [{ name: "GT", price: 295 }, { name: "GT-H", price: 320 }, { name: "STI Sport", price: 345 }] },
+      { name: "BRZ", category: "スポーツ", grades: [{ name: "R", price: 275 }, { name: "RS", price: 300 }, { name: "GT", price: 325 }] }
     ],
     "三菱": [
-      { name: "eKワゴン", category: "軽自動車", price: 150 },
-      { name: "ミラージュ", category: "コンパクト", price: 150 },
-      { name: "RVR", category: "SUV", price: 250 },
-      { name: "デリカD:5", category: "ミニバン", price: 350 },
-      { name: "アウトランダーPHEV", category: "SUV", price: 450 }
+      { name: "eKワゴン", category: "軽自動車", grades: [{ name: "M", price: 140 }, { name: "G", price: 150 }, { name: "Gセーフティパッケージ", price: 160 }] },
+      { name: "ミラージュ", category: "コンパクト", grades: [{ name: "M", price: 140 }, { name: "G", price: 150 }, { name: "GLX", price: 160 }] },
+      { name: "RVR", category: "SUV", grades: [{ name: "M", price: 230 }, { name: "G", price: 250 }, { name: "Gプレミアムパッケージ", price: 270 }] },
+      { name: "デリカD:5", category: "ミニバン", grades: [{ name: "M", price: 320 }, { name: "G", price: 350 }, { name: "ジャスパー", price: 380 }] },
+      { name: "アウトランダーPHEV", category: "SUV", grades: [{ name: "M", price: 415 }, { name: "G", price: 450 }, { name: "P", price: 485 }] }
     ],
     "レクサス": [
-      { name: "IS", category: "セダン", price: 400 },
-      { name: "ES", category: "セダン", price: 500 },
-      { name: "UX", category: "SUV", price: 350 },
-      { name: "NX", category: "SUV", price: 500 },
-      { name: "RX", category: "SUV", price: 650 },
-      { name: "LS", category: "セダン", price: 900 }
+      { name: "IS", category: "セダン", grades: [{ name: "300", price: 370 }, { name: "300 Fスポーツ", price: 400 }, { name: "350", price: 430 }] },
+      { name: "ES", category: "セダン", grades: [{ name: "250", price: 460 }, { name: "250 Fスポーツ", price: 500 }, { name: "300h", price: 540 }] },
+      { name: "UX", category: "SUV", grades: [{ name: "250h", price: 320 }, { name: "250h Fスポーツ", price: 350 }, { name: "300e", price: 380 }] },
+      { name: "NX", category: "SUV", grades: [{ name: "250", price: 460 }, { name: "350h", price: 500 }, { name: "350h Fスポーツ", price: 540 }] },
+      { name: "RX", category: "SUV", grades: [{ name: "350", price: 600 }, { name: "350h", price: 650 }, { name: "500h Fスポーツ", price: 700 }] },
+      { name: "LS", category: "セダン", grades: [{ name: "500", price: 830 }, { name: "500h", price: 900 }, { name: "500h Fスポーツ", price: 970 }] }
     ],
     "輸入車": [
-      { name: "フォルクスワーゲン ゴルフ", category: "輸入車", price: 350 },
-      { name: "MINI クーパー", category: "輸入車", price: 320 },
-      { name: "BMW 3シリーズ", category: "輸入車", price: 550 },
-      { name: "メルセデスベンツ Cクラス", category: "輸入車", price: 550 },
-      { name: "アウディA4", category: "輸入車", price: 500 },
-      { name: "ボルボ XC60", category: "輸入車", price: 550 }
+      { name: "フォルクスワーゲン ゴルフ", category: "輸入車", grades: [{ name: "TSI Life", price: 320 }, { name: "TSI Style", price: 350 }, { name: "GTI", price: 380 }] },
+      { name: "MINI クーパー", category: "輸入車", grades: [{ name: "One", price: 295 }, { name: "Cooper", price: 320 }, { name: "Cooper S", price: 345 }] },
+      { name: "BMW 3シリーズ", category: "輸入車", grades: [{ name: "318i", price: 505 }, { name: "320i", price: 550 }, { name: "330e", price: 595 }] },
+      { name: "メルセデスベンツ Cクラス", category: "輸入車", grades: [{ name: "C180", price: 505 }, { name: "C200", price: 550 }, { name: "C200 4MATIC", price: 595 }] },
+      { name: "アウディA4", category: "輸入車", grades: [{ name: "35 TFSI", price: 460 }, { name: "40 TFSI", price: 500 }, { name: "45 TFSI quattro", price: 540 }] },
+      { name: "ボルボ XC60", category: "輸入車", grades: [{ name: "B5 Momentum", price: 505 }, { name: "B5 Inscription", price: 550 }, { name: "Recharge T6", price: 595 }] }
     ]
-  };
-
-  const GRADE_INFO = {
-    "low": 0.92,
-    "standard": 1.00,
-    "high": 1.08
   };
 
   const COLOR_DB = [
@@ -662,6 +653,7 @@
 
   const makerSelect = document.getElementById("makerSelect");
   const modelSelect = document.getElementById("modelSelect");
+  const gradeSelect = document.getElementById("grade");
   const yearInput = document.getElementById("year");
 
   const currentYear = new Date().getFullYear();
@@ -674,6 +666,22 @@
     makerSelect.appendChild(opt);
   });
 
+  function currentModel() {
+    const models = CAR_DB[makerSelect.value] || [];
+    return models.find(m => m.name === modelSelect.value);
+  }
+
+  function populateGrades() {
+    gradeSelect.innerHTML = "";
+    const model = currentModel();
+    (model ? model.grades : []).forEach(g => {
+      const opt = document.createElement("option");
+      opt.value = g.name;
+      opt.textContent = `${g.name}（${fmt(g.price)}万円）`;
+      gradeSelect.appendChild(opt);
+    });
+  }
+
   function populateModels() {
     modelSelect.innerHTML = "";
     const models = CAR_DB[makerSelect.value] || [];
@@ -683,8 +691,10 @@
       opt.textContent = `${m.name}（${m.category}）`;
       modelSelect.appendChild(opt);
     });
+    populateGrades();
   }
   makerSelect.addEventListener("change", populateModels);
+  modelSelect.addEventListener("change", populateGrades);
   populateModels();
 
   const color1Select = document.getElementById("color1");
@@ -730,7 +740,9 @@
     const model = (CAR_DB[maker] || []).find(m => m.name === modelName);
     if (!model) return false;
 
-    const grade = document.getElementById("grade").value;
+    const gradeName = gradeSelect.value;
+    const gradeObj = (model.grades || []).find(g => g.name === gradeName);
+    if (!gradeObj) return false;
     const year = parseInt(yearInput.value, 10);
     const mileage = parseFloat(document.getElementById("mileage").value);
     const repair = document.getElementById("repair").value;
@@ -748,8 +760,8 @@
     const age = Math.max(0, currentYear - year);
     const info = CATEGORY_INFO[model.category];
 
-    // 0. グレード
-    const gradePrice = model.price * GRADE_INFO[grade];
+    // 0. グレード（車種ごとの実グレードに応じた新車価格）
+    const gradePrice = gradeObj.price;
 
     // 1. 経年劣化
     const ageFactor = Math.max(info.floor, Math.pow(info.rate, age));
@@ -792,7 +804,7 @@
 
     const table = document.getElementById("breakdownTable");
     table.innerHTML = "";
-    addRow(table, `新車価格の目安（${model.category}・${grade === "low" ? "廉価" : grade === "high" ? "上位" : "標準"}グレード）`, `${fmt(gradePrice)} 万円`);
+    addRow(table, `新車価格の目安（${model.category}・${gradeName}グレード）`, `${fmt(gradePrice)} 万円`);
     addRow(table, `経過年数 ${age}年による減価`, `${fmt(afterAge)} 万円`);
     addRow(table, `走行距離による調整（${mileageRatio >= 0 ? "+" : ""}${(mileageRatio * 100).toFixed(1)}%）`,
       `<span class="${mileageRatio >= 0 ? "plus" : "minus"}">${fmt(afterMileage)} 万円</span>`);
@@ -837,7 +849,7 @@
     document.getElementById("quoteHeader").innerHTML = `
       <div class="quote-title">概算見積書</div>
       <div>発行日：${dateStr}</div>
-      <div>車両：${maker} ${modelName}（${grade === "low" ? "廉価" : grade === "high" ? "上位" : "標準"}グレード）／初度登録 ${year}年／走行距離 ${fmt(mileage)}km</div>
+      <div>車両：${maker} ${modelName}（${gradeName}グレード）／初度登録 ${year}年／走行距離 ${fmt(mileage)}km</div>
       <div>修復歴：${repair === "yes" ? "あり" : "なし"}／ボディカラー：${colorLabel}／車検残り：${shaken}ヶ月</div>
     `;
 
