@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-10-01T14:12:12.751Z",
+  "fetchedAt": "2026-10-01T14:15:49.170Z",
   "sources": [
     {
       "id": "saitama-city",
@@ -280,12 +280,6 @@
       "ok": true,
       "files": 4,
       "errors": []
-    },
-    {
-      "id": "fixed-okekitaina-kodomo",
-      "area": "okekitaina",
-      "ok": false,
-      "error": "HTTP 404"
     },
     {
       "id": "okekitaina-ishikai",
