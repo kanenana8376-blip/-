@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-10-01T13:39:27.849Z",
+  "fetchedAt": "2026-10-01T13:44:01.024Z",
   "sources": [
     {
       "id": "saitama-city",
@@ -53,16 +53,14 @@
     {
       "id": "hiki",
       "area": "hiki",
-      "ok": true,
-      "files": 1,
-      "errors": []
+      "ok": false,
+      "error": "fetch failed"
     },
     {
       "id": "sokayashio",
       "area": "koshigaya",
-      "ok": true,
-      "files": 1,
-      "errors": []
+      "ok": false,
+      "error": "fetch failed"
     },
     {
       "id": "kasukabe",
