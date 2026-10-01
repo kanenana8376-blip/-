@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "fixed-kumagaya",
+    "area": "kumagaya",
+    "name": "熊谷市 休日・夜間急患診療所",
+    "url": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyujituyakan.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyujituyakan.html",
+      "sha256": "9364458dc09c52b5ef3ece545f856fc0ab140e54c8ff00a8c3f5aef4b07186e3"
+    }
+  ],
+  "errors": []
+}

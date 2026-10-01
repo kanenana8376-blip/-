@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "hiki",
+    "area": "hiki",
+    "name": "比企医師会 休日在宅当番",
+    "url": "https://hiki-ishikai.com/kyuujitsu/"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://hiki-ishikai.com/kyuujitsu/",
+      "sha256": "a0aac05352c6f002bcf7bc211f64af51416d9a5d6e1c3ddba49829a5f9280f86"
+    }
+  ],
+  "errors": []
+}

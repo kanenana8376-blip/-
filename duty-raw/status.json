@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-10-01T13:44:01.024Z",
+  "fetchedAt": "2026-10-01T13:45:55.870Z",
   "sources": [
     {
       "id": "saitama-city",
@@ -53,14 +53,16 @@
     {
       "id": "hiki",
       "area": "hiki",
-      "ok": false,
-      "error": "fetch failed"
+      "ok": true,
+      "files": 1,
+      "errors": []
     },
     {
       "id": "sokayashio",
       "area": "koshigaya",
-      "ok": false,
-      "error": "fetch failed"
+      "ok": true,
+      "files": 1,
+      "errors": []
     },
     {
       "id": "kasukabe",
@@ -102,6 +104,83 @@
       "area": "chichibu",
       "ok": true,
       "files": 2,
+      "errors": []
+    },
+    {
+      "id": "fixed-kawaguchi-kodomo",
+      "area": "kawaguchi",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-asaka-qqk",
+      "area": "asaka",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-asaka-night",
+      "area": "asaka",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-higashimatsuyama",
+      "area": "hiki",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-koshigaya",
+      "area": "koshigaya",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-soka-kodomo",
+      "area": "koshigaya",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-soka-hospital",
+      "area": "koshigaya",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-kasukabe-kodomo",
+      "area": "kasukabe",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-kumagaya",
+      "area": "kumagaya",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-fukaya",
+      "area": "kumagaya",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-fukaya-ishikai",
+      "area": "kumagaya",
+      "ok": true,
+      "files": 1,
       "errors": []
     }
   ]

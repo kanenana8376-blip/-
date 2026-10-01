@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "fixed-asaka-night",
+    "area": "asaka",
+    "name": "朝霞地区医師会 夜間診療所",
+    "url": "https://www.asakamed.com/about/night.php"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.asakamed.com/about/night.php",
+      "sha256": "7ae5209749cea2b675cc1ff8a86584fc4fbbffdaed5dd0bbeff352f4b5b00f7c"
+    }
+  ],
+  "errors": []
+}

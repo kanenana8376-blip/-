@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "fixed-kasukabe-kodomo",
+    "area": "kasukabe",
+    "name": "春日部市小児救急夜間診療所",
+    "url": "https://www.city.kasukabe.lg.jp/soshikikarasagasu/kenkoka/gyomuannai/5/1/1/4239.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.kasukabe.lg.jp/soshikikarasagasu/kenkoka/gyomuannai/5/1/1/4239.html",
+      "sha256": "ef99138bf0202eca221c52924445e288e510f64d66cfefb074b00accc7575a6f"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "fixed-koshigaya",
+    "area": "koshigaya",
+    "name": "越谷市夜間急患診療所",
+    "url": "https://www.city.koshigaya.saitama.jp/toiawase/shisetsu/hokeniryo/yakankyuukan.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.koshigaya.saitama.jp/toiawase/shisetsu/hokeniryo/yakankyuukan.html",
+      "sha256": "9325df101cbc4585d29ed92587470f6862a13cae0e90741ae6b8a646db039030"
+    }
+  ],
+  "errors": []
+}

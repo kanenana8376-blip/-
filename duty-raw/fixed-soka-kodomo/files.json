@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "fixed-soka-kodomo",
+    "area": "koshigaya",
+    "name": "草加市子ども急病夜間クリニック",
+    "url": "https://www.city.soka.saitama.jp/cont/s1510/010/004/009/PAGE000000000000076899.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.soka.saitama.jp/cont/s1510/010/004/009/PAGE000000000000076899.html",
+      "sha256": "7f8e6ccfe1e83d2feeff84db9f15de19a5d81c63059bd3f2a894563fe1d3e509"
+    }
+  ],
+  "errors": []
+}

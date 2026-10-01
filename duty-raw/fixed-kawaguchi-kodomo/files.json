@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "fixed-kawaguchi-kodomo",
+    "area": "kawaguchi",
+    "name": "川口市 小児夜間救急診療について",
+    "url": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html",
+      "sha256": "3c6cf53799133969e4c19c03dde72c5225e55a1fe7845cb5e36ae63e5b041ae1"
+    }
+  ],
+  "errors": []
+}
