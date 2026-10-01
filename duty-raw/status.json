@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-10-01T14:00:27.628Z",
+  "fetchedAt": "2026-10-01T14:12:12.751Z",
   "sources": [
     {
       "id": "saitama-city",
@@ -53,14 +53,16 @@
     {
       "id": "hiki",
       "area": "hiki",
-      "ok": false,
-      "error": "fetch failed"
+      "ok": true,
+      "files": 1,
+      "errors": []
     },
     {
       "id": "sokayashio",
       "area": "soka",
-      "ok": false,
-      "error": "fetch failed"
+      "ok": true,
+      "files": 1,
+      "errors": []
     },
     {
       "id": "kasukabe",
@@ -288,8 +290,9 @@
     {
       "id": "okekitaina-ishikai",
       "area": "okekitaina",
-      "ok": false,
-      "error": "fetch failed"
+      "ok": true,
+      "files": 1,
+      "errors": []
     },
     {
       "id": "ina",
@@ -309,7 +312,7 @@
       "id": "fixed-misato-kodomo",
       "area": "misato",
       "ok": true,
-      "files": 2,
+      "files": 4,
       "errors": []
     },
     {
@@ -350,8 +353,9 @@
     {
       "id": "gyoda-hp",
       "area": "gyoda",
-      "ok": false,
-      "error": "fetch failed"
+      "ok": true,
+      "files": 1,
+      "errors": []
     },
     {
       "id": "fixed-hasuda",

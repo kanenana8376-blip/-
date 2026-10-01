@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "okekitaina-ishikai",
+    "area": "okekitaina",
+    "name": "桶川北本伊奈地区医師会 救急",
+    "url": "https://okekitaina-ishikai.com/medical-search/first-aid/"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://okekitaina-ishikai.com/medical-search/first-aid/",
+      "sha256": "11b1e9de2a4bec87b546023ea8fbfc182e67f5f95c4687bfd3d7c27cf9d2acaa"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "gyoda-hp",
+    "area": "gyoda",
+    "name": "行田総合病院 休日急患診療のご案内",
+    "url": "https://gyoda-hp.or.jp/jyusin/kyujitsu/"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://gyoda-hp.or.jp/jyusin/kyujitsu/",
+      "sha256": "c28cbf9f49efb683904f4f108b1a1db629af7d6617921779f2b11466d89c534d"
+    }
+  ],
+  "errors": []
+}
