@@ -9,7 +9,8 @@
     "id": "kawaguchi",
     "area": "kawaguchi",
     "name": "川口市 夜間救急診療・日曜祝日当番医",
-    "url": "https://www.city.kawaguchi.lg.jp/kosodate_gakkou/kodomonoiryo_kenko/iryou/17296.html"
+    "url": "https://www.city.kawaguchi.lg.jp/kosodate_gakkou/kodomonoiryo_kenko/iryou/17296.html",
+    "follow": "当番"
   },
   {
     "id": "warabitoda",
@@ -33,13 +34,15 @@
     "id": "tokorozawa",
     "area": "tokorozawa",
     "name": "所沢市 休日急患当番医",
-    "url": "https://www.city.tokorozawa.saitama.jp/kenko/kenkoiryo/kinkyu/kyujitukyukantobaninogoannai.html"
+    "url": "https://www.city.tokorozawa.saitama.jp/kenko/kenkoiryo/kinkyu/kyujitukyukantobaninogoannai.html",
+    "follow": "小児科日曜日"
   },
   {
     "id": "kawagoe",
     "area": "kawagoe",
     "name": "川越市 休日・夜間診療",
-    "url": "https://www.city.kawagoe.saitama.jp/kurashi/anshin/1001530/1001531/index.html"
+    "url": "https://www.city.kawagoe.saitama.jp/kurashi/anshin/1001530/1001531/index.html",
+    "follow": "夜間休日診療所"
   },
   {
     "id": "hiki",
@@ -57,7 +60,8 @@
     "id": "kasukabe",
     "area": "kasukabe",
     "name": "春日部市 休日当番医",
-    "url": "https://www.city.kasukabe.lg.jp/anshin_anzen/kyukyu_kyumei/kyujitsutobani/index.html"
+    "url": "https://www.city.kasukabe.lg.jp/anshin_anzen/kyukyu_kyumei/kyujitsutobani/index.html",
+    "follow": "休日当番医"
   },
   {
     "id": "kuki",

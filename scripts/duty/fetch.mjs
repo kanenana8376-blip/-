@@ -20,6 +20,7 @@ const SOURCES = JSON.parse(await readFile(path.join(HERE, "sources.json"), "utf8
 const USER_AGENT = "saitama-emergency-tool/1.0 (daily on-duty clinic list; +https://github.com/kanenana8376-blip/-)";
 const TIMEOUT_MS = 30000;
 const MAX_PDFS_PER_SOURCE = 6;
+const MAX_PAGES_PER_SOURCE = 10;
 const MAX_BYTES = 15 * 1024 * 1024;
 // PDFのうち、当番表らしいものだけを取りに行く
 const PDF_HINT = /当番|休日|夜間|急患|救急|輪番|toban|touban|kyujitsu|kyuujitu|kyujitu|yakan|kyukan|kyuukan/i;
@@ -84,7 +85,8 @@ export function htmlToText(html) {
     .join("\n") + "\n";
 }
 
-export function pdfLinks(html, baseUrl) {
+// 同じサイト内へのリンク {url, label} をすべて返す
+function sameSiteLinks(html, baseUrl) {
   const base = new URL(baseUrl);
   const links = [];
   const re = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
@@ -92,13 +94,28 @@ export function pdfLinks(html, baseUrl) {
   while ((m = re.exec(html))) {
     let url;
     try { url = new URL(decodeEntities(m[1]), base); } catch { continue; }
-    if (!/\.pdf($|\?)/i.test(url.pathname + url.search)) continue;
     if (url.hostname !== base.hostname) continue;
+    url.hash = "";
     const label = decodeEntities(m[2].replace(/<[^>]+>/g, "")).replace(/\s+/g, " ").trim();
-    if (!PDF_HINT.test(label) && !PDF_HINT.test(url.pathname)) continue;
     if (!links.some(l => l.url === url.href)) links.push({ url: url.href, label });
   }
-  return links.slice(0, MAX_PDFS_PER_SOURCE);
+  return links;
+}
+const isPdf = url => /\.pdf($|\?)/i.test(new URL(url).pathname + new URL(url).search);
+
+export function pdfLinks(html, baseUrl) {
+  return sameSiteLinks(html, baseUrl)
+    .filter(l => isPdf(l.url) && (PDF_HINT.test(l.label) || PDF_HINT.test(new URL(l.url).pathname)))
+    .slice(0, MAX_PDFS_PER_SOURCE);
+}
+
+// sources.json の follow（リンク文字の正規表現）に合うHTMLページへのリンク
+export function followLinks(html, baseUrl, follow) {
+  if (!follow) return [];
+  const re = new RegExp(follow);
+  return sameSiteLinks(html, baseUrl)
+    .filter(l => !isPdf(l.url) && re.test(l.label) && l.url !== baseUrl)
+    .slice(0, MAX_PAGES_PER_SOURCE);
 }
 
 async function pdfToText(buf) {
@@ -125,8 +142,29 @@ async function fetchSource(src) {
   await writeFile(path.join(dir, "page.txt"), `# ${src.name}\n# ${page.finalUrl}\n\n${pageText}`);
   files.push({ file: "page.txt", url: page.finalUrl, sha256: sha256(pageText) });
 
+  // follow に合うリンク先のページも取得し、そこからリンクされたPDFも集める
+  const pdfs = pdfLinks(html, page.finalUrl);
+  let p = 0;
+  for (const link of followLinks(html, page.finalUrl, src.follow)) {
+    p += 1;
+    await sleep(1000);
+    try {
+      const sub = await get(link.url);
+      const subHtml = decodeHtml(sub.buf, sub.type);
+      const text = htmlToText(subHtml);
+      const name = `link-${p}.txt`;
+      await writeFile(path.join(dir, name), `# ${link.label}\n# ${sub.finalUrl}\n\n${text}`);
+      files.push({ file: name, url: sub.finalUrl, label: link.label, sha256: sha256(text) });
+      for (const l of pdfLinks(subHtml, sub.finalUrl)) {
+        if (!pdfs.some(x => x.url === l.url)) pdfs.push(l);
+      }
+    } catch (e) {
+      errors.push(`${link.url}: ${e.message}`);
+    }
+  }
+
   let n = 0;
-  for (const link of pdfLinks(html, page.finalUrl)) {
+  for (const link of pdfs.slice(0, MAX_PDFS_PER_SOURCE)) {
     n += 1;
     await sleep(1000);
     try {
