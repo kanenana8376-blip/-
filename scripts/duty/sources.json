@@ -52,7 +52,7 @@
   },
   {
     "id": "sokayashio",
-    "area": "koshigaya",
+    "area": "soka",
     "name": "草加八潮医師会 休日当番医・小児夜間診療",
     "url": "https://sokayashio-med.or.jp/toban/"
   },
@@ -125,13 +125,13 @@
   },
   {
     "id": "fixed-soka-kodomo",
-    "area": "koshigaya",
+    "area": "soka",
     "name": "草加市子ども急病夜間クリニック",
     "url": "https://www.city.soka.saitama.jp/cont/s1510/010/004/009/PAGE000000000000076899.html"
   },
   {
     "id": "fixed-soka-hospital",
-    "area": "koshigaya",
+    "area": "soka",
     "name": "草加市立病院 子ども急病夜間クリニック",
     "url": "https://www.soka-city-hospital.jp/m04/kodomo99.html"
   },
@@ -149,14 +149,201 @@
   },
   {
     "id": "fixed-fukaya",
-    "area": "kumagaya",
+    "area": "fukaya",
     "name": "深谷市 休日・夜間診療",
     "url": "https://www.city.fukaya.saitama.jp/soshiki/fukushikenko/hokensenta/tanto/kyukyuiryokikan/13452.html"
   },
   {
     "id": "fixed-fukaya-ishikai",
-    "area": "kumagaya",
+    "area": "fukaya",
     "name": "深谷寄居医師会 休日診療所を受診される方へ",
     "url": "https://www.fukaya-osato.saitama.med.or.jp/clinic/index.html"
+  },
+  {
+    "id": "fixed-sayama",
+    "area": "sayama",
+    "name": "狭山市急患センターのご案内",
+    "url": "https://www.city.sayama.saitama.jp/fukushi/hokenyobou/kyujitsusinryou/268000kyuukan_annai.html"
+  },
+  {
+    "id": "fixed-iruma",
+    "area": "sayama",
+    "name": "入間市夜間診療所",
+    "url": "https://www.city.iruma.saitama.jp/soshiki/kenkokanrika/7/157.html"
+  },
+  {
+    "id": "iruma",
+    "area": "sayama",
+    "name": "入間市 休日当番病院",
+    "url": "https://www.city.iruma.saitama.jp/soshiki/kenkokanrika/7/156.html"
+  },
+  {
+    "id": "fixed-hanno",
+    "area": "hanno",
+    "name": "飯能地区医師会 休祝日・夜間診療所",
+    "url": "https://hannomed.or.jp/yakan/"
+  },
+  {
+    "id": "fixed-hidaka",
+    "area": "hanno",
+    "name": "日高市 休日夜間診療所",
+    "url": "https://www.city.hidaka.lg.jp/health_welfare/12/iryou/3531.html"
+  },
+  {
+    "id": "fixed-sakado",
+    "area": "sakado",
+    "name": "坂戸鶴ヶ島医師会立休日急患診療所",
+    "url": "https://www.city.sakado.lg.jp/site/sakado-kosodate/516.html"
+  },
+  {
+    "id": "fixed-tsurugashima",
+    "area": "sakado",
+    "name": "鶴ヶ島市 休日急患診療・救急電話相談",
+    "url": "https://www.city.tsurugashima.lg.jp/page/page001081.html"
+  },
+  {
+    "id": "moroyama",
+    "area": "sakado",
+    "name": "毛呂山町・越生町 休日当番医（在宅当番医）",
+    "url": "https://www.town.moroyama.saitama.jp/soshikikarasagasu/hokencenter/iryo_kenko/kyuukyuu_moshimonotoki/2920.html"
+  },
+  {
+    "id": "fixed-fujimino",
+    "area": "fujimi",
+    "name": "ふじみ野市 救急医療体制・救急医療機関",
+    "url": "https://www.city.fujimino.saitama.jp/soshikiichiran/hokencenter/kenkosuishingakari/iryoukikann/2120.html"
+  },
+  {
+    "id": "fixed-higashiiruma",
+    "area": "fujimi",
+    "name": "東入間医師会 夜間休日診療所",
+    "url": "http://fujiminoishikai.sakura.ne.jp/yakan2/"
+  },
+  {
+    "id": "fixed-konosu",
+    "area": "konosu",
+    "name": "鴻巣市夜間診療所",
+    "url": "https://www.city.kounosu.saitama.jp/page/1563.html"
+  },
+  {
+    "id": "konosu",
+    "area": "konosu",
+    "name": "鴻巣市 休日当番医・当番薬局",
+    "url": "https://www.city.kounosu.saitama.jp/page/1565.html"
+  },
+  {
+    "id": "kitaadachi",
+    "area": "konosu",
+    "name": "北足立郡市医師会 休日・夜間",
+    "url": "https://www.kitaadachi.saitama.med.or.jp/kyuyakan.html"
+  },
+  {
+    "id": "okegawa",
+    "area": "okekitaina",
+    "name": "桶川市 休日当番医・救急医療",
+    "url": "https://www.city.okegawa.lg.jp/soshiki/kenkofukushi/kenkozoushin/kyujitsutoban/1260.html"
+  },
+  {
+    "id": "fixed-okekitaina-kodomo",
+    "area": "okekitaina",
+    "name": "北本市 小児の初期救急（桶川・北本・伊奈地区）",
+    "url": "https://www.city.kitamoto.lg.jp/soshiki/kenkosuishin/kenko/gyomu/g2/1416918043610.html"
+  },
+  {
+    "id": "okekitaina-ishikai",
+    "area": "okekitaina",
+    "name": "桶川北本伊奈地区医師会 救急",
+    "url": "https://okekitaina-ishikai.com/medical-search/first-aid/"
+  },
+  {
+    "id": "ina",
+    "area": "okekitaina",
+    "name": "伊奈町 急病のときは",
+    "url": "https://www.town.saitama-ina.lg.jp/0000007188.html"
+  },
+  {
+    "id": "fixed-misato",
+    "area": "misato",
+    "name": "三郷市医師会立休日診療所",
+    "url": "https://www.city.misato.lg.jp/soshiki/ikiikikenko/kenkosuishin/11/4817.html"
+  },
+  {
+    "id": "fixed-misato-kodomo",
+    "area": "misato",
+    "name": "三郷市 小児時間外診療",
+    "url": "https://www.city.misato.lg.jp/soshiki/ikiikikenko/kenkosuishin/11/1530.html"
+  },
+  {
+    "id": "yoshikawa",
+    "area": "misato",
+    "name": "吉川市 急病の時は",
+    "url": "https://www.city.yoshikawa.saitama.jp/index.cfm/24,0,137,767,html",
+    "follow": "休日|小児|夜間|当番"
+  },
+  {
+    "id": "kazo",
+    "area": "kazo",
+    "name": "加須市 休日・夜間救急診療",
+    "url": "https://www.city.kazo.lg.jp/soshiki/kenkou/kyukyu/14267.html"
+  },
+  {
+    "id": "kazo-kodomo",
+    "area": "kazo",
+    "name": "加須市 休日小児科診療",
+    "url": "https://www.city.kazo.lg.jp/soshiki/kenkou/iryou/2707.html"
+  },
+  {
+    "id": "hanyu",
+    "area": "kazo",
+    "name": "羽生市 休日当番医",
+    "url": "https://www.city.hanyu.lg.jp/docs/2015032600027/"
+  },
+  {
+    "id": "gyoda",
+    "area": "gyoda",
+    "name": "行田市 休日急患診療・救急相談",
+    "url": "https://www.city.gyoda.lg.jp/soshiki/kenkouhukushibu/kenko/gyomu/anzen_anshin/shobo_kyukyu/1893.html"
+  },
+  {
+    "id": "gyoda-hp",
+    "area": "gyoda",
+    "name": "行田総合病院 休日急患診療のご案内",
+    "url": "https://gyoda-hp.or.jp/jyusin/kyujitsu/"
+  },
+  {
+    "id": "fixed-hasuda",
+    "area": "hasuda",
+    "name": "蓮田市 休日急患診療",
+    "url": "https://www.city.hasuda.saitama.jp/kenko/kenko/otona-kenko/kyukyu/kyujitsushinryo.html"
+  },
+  {
+    "id": "fixed-shiraoka",
+    "area": "hasuda",
+    "name": "白岡市休日診療事業",
+    "url": "https://www.city.shiraoka.lg.jp/soshiki/kenkofukushibu/kenkozoshinka/2/kyuukyuu/1127.html"
+  },
+  {
+    "id": "satte",
+    "area": "satte",
+    "name": "幸手市 休日当番医・小児休日診療・夜間救急病院",
+    "url": "https://www.city.satte.lg.jp/soshiki/kenkouzoushin/2/1334.html"
+  },
+  {
+    "id": "sugito",
+    "area": "satte",
+    "name": "杉戸町 休日診療当番医",
+    "url": "https://www.town.sugito.lg.jp/page/1387.html"
+  },
+  {
+    "id": "fixed-hiki-kodomo",
+    "area": "hiki",
+    "name": "比企地区こども夜間救急センター",
+    "url": "https://www.city.higashimatsuyama.lg.jp/soshiki/34/2652.html"
+  },
+  {
+    "id": "jibika",
+    "area": "all",
+    "name": "埼玉県 耳鼻咽喉科 休日救急診療",
+    "url": "https://www.pref.saitama.lg.jp/a0703/jibika.html"
   }
 ]
