@@ -195,7 +195,7 @@
   <section class="panel" aria-label="検索条件">
     <h2>どこで・だれが・いつ</h2>
     <div class="field">
-      <label for="area">地域</label>
+      <label for="area">お住まい・いる場所の市町村</label>
       <select id="area"></select>
     </div>
     <div class="field">
@@ -262,21 +262,52 @@
 // ---------------------------------------------------------------
 const DATA_DATE = "2026-10-01";
 
+// 地域のまとまり（休日・夜間の急患診療を一緒に担っている市町村）。
+// near は、その地域で診療中のところがないときに一緒に見せる近くの地域。
 const AREAS = [
-  { id: "saitama",   name: "さいたま市" },
-  { id: "kawaguchi", name: "川口市・蕨市・戸田市" },
-  { id: "ageo",      name: "上尾市・桶川市・伊奈町" },
-  { id: "asaka",     name: "朝霞市・志木市・和光市・新座市" },
-  { id: "tokorozawa",name: "所沢市・狭山市・入間市" },
-  { id: "kawagoe",   name: "川越市" },
-  { id: "hiki",      name: "東松山市・比企郡" },
-  { id: "koshigaya", name: "越谷市・草加市・八潮市・三郷市" },
-  { id: "kasukabe",  name: "春日部市" },
-  { id: "kuki",      name: "久喜市・加須市・幸手市" },
-  { id: "kumagaya",  name: "熊谷市・深谷市・寄居町" },
-  { id: "honjo",     name: "本庄市・児玉郡" },
-  { id: "chichibu",  name: "秩父市・秩父郡" },
+  { id: "saitama",    towns: ["さいたま市"], near: ["kawaguchi", "ageo", "hasuda", "koshigaya", "asaka"] },
+  { id: "kawaguchi",  towns: ["川口市", "蕨市", "戸田市"], near: ["saitama", "soka", "asaka"] },
+  { id: "asaka",      towns: ["朝霞市", "志木市", "和光市", "新座市"], near: ["tokorozawa", "fujimi", "kawaguchi", "saitama"] },
+  { id: "fujimi",     towns: ["富士見市", "ふじみ野市", "三芳町"], near: ["kawagoe", "asaka", "tokorozawa"] },
+  { id: "tokorozawa", towns: ["所沢市"], near: ["sayama", "asaka", "fujimi"] },
+  { id: "sayama",     towns: ["狭山市", "入間市"], near: ["tokorozawa", "hanno", "kawagoe"] },
+  { id: "hanno",      towns: ["飯能市", "日高市"], near: ["sayama", "sakado"] },
+  { id: "kawagoe",    towns: ["川越市"], near: ["fujimi", "sakado", "sayama", "ageo", "hiki"] },
+  { id: "sakado",     towns: ["坂戸市", "鶴ヶ島市", "毛呂山町", "越生町"], near: ["kawagoe", "hanno", "hiki"] },
+  { id: "ageo",       towns: ["上尾市"], near: ["saitama", "okekitaina", "hasuda", "kawagoe"] },
+  { id: "okekitaina", towns: ["桶川市", "北本市", "伊奈町"], near: ["ageo", "konosu", "hasuda"] },
+  { id: "konosu",     towns: ["鴻巣市"], near: ["okekitaina", "gyoda", "kumagaya", "hiki"] },
+  { id: "koshigaya",  towns: ["越谷市"], near: ["soka", "kasukabe", "misato", "saitama"] },
+  { id: "soka",       towns: ["草加市", "八潮市"], near: ["koshigaya", "kawaguchi", "misato"] },
+  { id: "misato",     towns: ["三郷市", "吉川市", "松伏町"], near: ["soka", "koshigaya"] },
+  { id: "kasukabe",   towns: ["春日部市"], near: ["koshigaya", "kuki", "satte", "hasuda"] },
+  { id: "hasuda",     towns: ["蓮田市", "白岡市"], near: ["saitama", "kuki", "ageo", "kasukabe"] },
+  { id: "kuki",       towns: ["久喜市", "宮代町"], near: ["hasuda", "kasukabe", "satte", "kazo"] },
+  { id: "satte",      towns: ["幸手市", "杉戸町"], near: ["kuki", "kasukabe"] },
+  { id: "kazo",       towns: ["加須市", "羽生市"], near: ["kuki", "gyoda"] },
+  { id: "gyoda",      towns: ["行田市"], near: ["kumagaya", "kazo", "konosu"] },
+  { id: "hiki",       towns: ["東松山市", "滑川町", "嵐山町", "小川町", "川島町", "吉見町", "鳩山町", "ときがわ町", "東秩父村"], near: ["sakado", "kawagoe", "kumagaya", "konosu"] },
+  { id: "kumagaya",   towns: ["熊谷市"], near: ["fukaya", "gyoda", "konosu", "hiki"] },
+  { id: "fukaya",     towns: ["深谷市", "寄居町"], near: ["kumagaya", "honjo"] },
+  { id: "honjo",      towns: ["本庄市", "美里町", "神川町", "上里町"], near: ["fukaya"] },
+  { id: "chichibu",   towns: ["秩父市", "横瀬町", "皆野町", "長瀞町", "小鹿野町"], near: ["hiki", "fukaya"] },
 ];
+// 市町村の選択肢の並び（県の地域区分ごと）
+const TOWN_GROUPS = [
+  ["さいたま・南部", ["さいたま市", "川口市", "蕨市", "戸田市"]],
+  ["南西部", ["朝霞市", "志木市", "和光市", "新座市", "富士見市", "ふじみ野市", "三芳町"]],
+  ["西部", ["所沢市", "狭山市", "入間市", "飯能市", "日高市", "川越市", "坂戸市", "鶴ヶ島市", "毛呂山町", "越生町"]],
+  ["県央", ["上尾市", "桶川市", "北本市", "伊奈町", "鴻巣市"]],
+  ["東部", ["越谷市", "草加市", "八潮市", "三郷市", "吉川市", "松伏町", "春日部市", "蓮田市", "白岡市", "久喜市", "宮代町", "幸手市", "杉戸町"]],
+  ["利根", ["加須市", "羽生市", "行田市"]],
+  ["比企", ["東松山市", "滑川町", "嵐山町", "小川町", "川島町", "吉見町", "鳩山町", "ときがわ町", "東秩父村"]],
+  ["北部", ["熊谷市", "深谷市", "寄居町", "本庄市", "美里町", "神川町", "上里町"]],
+  ["秩父", ["秩父市", "横瀬町", "皆野町", "長瀞町", "小鹿野町"]],
+];
+const TOWN_AREA = Object.fromEntries(AREAS.flatMap(a => a.towns.map(t => [t, a.id])));
+const areaById = id => AREAS.find(a => a.id === id);
+const areaName = id => (areaById(id) || { towns: ["埼玉県"] }).towns.join("・");
+
 
 const FACILITIES = [
   {
@@ -512,7 +543,7 @@ const FACILITIES = [
   },
   {
     name: "草加市子ども急病夜間クリニック",
-    area: "koshigaya",
+    area: "soka",
     address: "草加市草加2-21-1（草加市立病院 心臓・脳血管センター1階）",
     tel: "048-954-6401",
     depts: ["小児科"],
@@ -526,7 +557,7 @@ const FACILITIES = [
   },
   {
     name: "八潮市立休日診療所",
-    area: "koshigaya",
+    area: "soka",
     address: "八潮市中央1-2-1（八潮市立保健センター内）",
     tel: "048-995-3383",
     depts: ["内科", "小児科"],
@@ -567,7 +598,7 @@ const FACILITIES = [
   },
   {
     name: "深谷寄居医師会 休日診療所",
-    area: "kumagaya",
+    area: "fukaya",
     address: "深谷市国済寺319-3",
     tel: "048-573-7723",
     depts: ["内科", "小児科"],
@@ -582,7 +613,7 @@ const FACILITIES = [
   },
   {
     name: "深谷寄居医師会 こども夜間診療所",
-    area: "kumagaya",
+    area: "fukaya",
     address: "深谷市国済寺319-3",
     tel: "048-573-7723",
     depts: ["小児科"],
@@ -776,10 +807,14 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;"
 
 function initArea() {
   const sel = $("area");
-  sel.innerHTML = `<option value="">地域を選んでください</option>` +
-    AREAS.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join("") +
-    `<option value="all">すべての地域</option>`;
-  try { const saved = localStorage.getItem("er-area"); if (saved) sel.value = saved; } catch (e) {}
+  sel.innerHTML = `<option value="">市町村を選んでください</option>` +
+    TOWN_GROUPS.map(([label, towns]) => `<optgroup label="${esc(label)}">` +
+      towns.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join("") + `</optgroup>`).join("") +
+    `<option value="all">県内すべて</option>`;
+  try {
+    const saved = localStorage.getItem("er-town");
+    if (saved && (saved === "all" || TOWN_AREA[saved])) sel.value = saved;
+  } catch (e) {}
 }
 
 // ---------------------------------------------------------------
@@ -841,9 +876,8 @@ function card(fac, st, dept) {
     : fac.verified ? `<span class="badge ok">公式情報で確認（${esc(fac.verified)}時点）</span>`
     : `<span class="badge warn">未確認の情報</span>`;
   const deptBadges = fac.depts.map(d => `<span class="badge">${esc(d)}</span>`).join("");
-  const areaName = (AREAS.find(a => a.id === fac.area) || {}).name || "埼玉県";
   const mapQ = encodeURIComponent(fac.address && !fac.address.startsWith("場所は") && fac.address.length > 4
-    ? fac.address : `${fac.name} ${areaName.split("・")[0]}`);
+    ? fac.address : `${fac.name} ${(areaById(fac.area) || { towns: ["埼玉県"] }).towns[0]}`);
   return `
   <div class="card ${cls}">
     <h3>${esc(fac.name)}</h3>
@@ -861,7 +895,8 @@ function card(fac, st, dept) {
 }
 
 function render() {
-  const area = $("area").value;
+  const town = $("area").value;
+  const area = town === "all" ? "all" : (TOWN_AREA[town] || "");
   const who = getVal("who");
   let dept = getVal("dept");
   // 子どもの内科系は小児科で探す
@@ -869,15 +904,16 @@ function render() {
   const t = targetTime();
   const hm = `${t.getHours()}:${String(t.getMinutes()).padStart(2, "0")}`;
   $("nowline").textContent = `${dayLabel(t)} ${hm} の時点で表示しています`;
-  try { localStorage.setItem("er-area", area); } catch (e) {}
+  try { localStorage.setItem("er-town", town); } catch (e) {}
 
   const out = $("results");
   if (!area) {
-    out.innerHTML = `<div class="empty">地域を選ぶと、受診できる急患診療所が表示されます。</div>`;
+    out.innerHTML = `<div class="empty">市町村を選ぶと、受診できる急患診療所が表示されます。</div>`;
     return;
   }
 
-  const list = FACILITIES.concat(dutyFacilities()).filter(f => (area === "all" || f.area === area) && f.depts.includes(dept));
+  const all = FACILITIES.concat(dutyFacilities()).filter(f => f.depts.includes(dept));
+  const list = all.filter(f => area === "all" || f.area === area);
   const open = [], later = [], unknown = [];
   for (const f of list) {
     if (!f.slots.length) { unknown.push([f, { state: "unknown" }]); continue; }
@@ -888,12 +924,24 @@ function render() {
   }
   later.sort((a, b) => a[1].from - b[1].from);
 
-  let html = dutyStatusHtml(t, area);
+  let html = area === "all" ? "" : `<div class="duty-info">${esc(areaName(area))}の急患診療所・当番医を表示しています。</div>`;
+  html += dutyStatusHtml(t, area);
   html += `<h2 class="group-title"><span class="dot" style="background:var(--green)"></span>いま診療中（${open.length}件）</h2>`;
   html += open.length ? open.map(([f, s]) => card(f, s, dept)).join("")
     : `<div class="empty">この条件で、いま診療中の急患診療所は見つかりませんでした。<br>
         <b>#7119</b>（子どもは <b>#8000</b>）に電話すると、いま受診できる医療機関を案内してもらえます。<br>
         <a href="https://99.pref.saitama.lg.jp/" target="_blank" rel="noopener">埼玉県救急医療情報システム</a>でも当番医を確認できます。</div>`;
+  // 地域内に診療中のところがなければ、近くの地域で診療中のところも見せる
+  if (!open.length && area !== "all") {
+    const near = (areaById(area).near || []);
+    const nearOpen = all.filter(f => near.includes(f.area))
+      .map(f => [f, f.slots.length ? statusAt(f, dept, t) : { state: "unknown" }])
+      .filter(([, st]) => st.state === "open");
+    if (nearOpen.length) {
+      html += `<h2 class="group-title"><span class="dot" style="background:var(--green)"></span>近くの地域でいま診療中（${nearOpen.length}件）</h2>`;
+      html += nearOpen.map(([f, st]) => card(f, st, dept)).join("");
+    }
+  }
   if (later.length) {
     html += `<h2 class="group-title"><span class="dot" style="background:#d9a400"></span>このあと今日開く（${later.length}件）</h2>`;
     html += later.map(([f, s]) => card(f, s, dept)).join("");
