@@ -169,6 +169,14 @@ async function fetchInto(src, dir) {
   const errors = [];
 
   const page = await get(src.url);
+  // 情報元そのものがPDFのときは、文字に変換して pdf-1.txt に保存するだけ
+  if (isPdf(src.url) || /application\/pdf/i.test(page.type)) {
+    const text = await pdfToText(page.buf);
+    await writeFile(path.join(dir, "pdf-1.txt"), `# ${src.name}\n# ${page.finalUrl}\n\n${text}`);
+    files.push({ file: "pdf-1.txt", url: page.finalUrl, label: src.name, sha256: sha256(text) });
+    await writeFile(path.join(dir, "files.json"), JSON.stringify({ source: src, files, errors }, null, 2) + "\n");
+    return { files, errors };
+  }
   const html = decodeHtml(page.buf, page.type);
   const pageText = htmlToText(html);
   await writeFile(path.join(dir, "page.txt"), `# ${src.name}\n# ${page.finalUrl}\n\n${pageText}`);
