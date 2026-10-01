@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-10-01T13:28:35.526Z",
+  "fetchedAt": "2026-10-01T13:32:19.973Z",
   "sources": [
     {
       "id": "saitama-city",
@@ -12,7 +12,7 @@
       "id": "kawaguchi",
       "area": "kawaguchi",
       "ok": true,
-      "files": 1,
+      "files": 4,
       "errors": []
     },
     {
@@ -40,14 +40,14 @@
       "id": "tokorozawa",
       "area": "tokorozawa",
       "ok": true,
-      "files": 1,
+      "files": 3,
       "errors": []
     },
     {
       "id": "kawagoe",
       "area": "kawagoe",
       "ok": true,
-      "files": 1,
+      "files": 3,
       "errors": []
     },
     {
@@ -68,7 +68,7 @@
       "id": "kasukabe",
       "area": "kasukabe",
       "ok": true,
-      "files": 1,
+      "files": 6,
       "errors": []
     },
     {

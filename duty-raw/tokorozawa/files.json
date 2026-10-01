@@ -3,13 +3,26 @@
     "id": "tokorozawa",
     "area": "tokorozawa",
     "name": "所沢市 休日急患当番医",
-    "url": "https://www.city.tokorozawa.saitama.jp/kenko/kenkoiryo/kinkyu/kyujitukyukantobaninogoannai.html"
+    "url": "https://www.city.tokorozawa.saitama.jp/kenko/kenkoiryo/kinkyu/kyujitukyukantobaninogoannai.html",
+    "follow": "小児科日曜日"
   },
   "files": [
     {
       "file": "page.txt",
       "url": "https://www.city.tokorozawa.saitama.jp/kenko/kenkoiryo/kinkyu/kyujitukyukantobaninogoannai.html",
       "sha256": "7981c62dcc1486382f108c77728a028681a2e2d7f38148d1c9f555e62882a502"
+    },
+    {
+      "file": "link-1.txt",
+      "url": "https://www.city.tokorozawa.saitama.jp/kenko/kenkoiryo/kinkyu/syonikanitiyou.html",
+      "label": "小児科日曜日・祝休日診療のご案内（所沢市医師会）",
+      "sha256": "311a436254b1f6cc92c99d96c798ba4179527c548115b2baf2bc5ca33f89f209"
+    },
+    {
+      "file": "link-2.txt",
+      "url": "https://www.city.tokorozawa.saitama.jp/kenko/kenkoiryo/kinkyu/syonikanichiyokyukanyakansinryo.html",
+      "label": "小児夜間診療、小児深夜帯初期救急診療、小児科日曜日・休日急患診療のご案内（市民医療センター）",
+      "sha256": "c25f7bc254cb0f68b4f33dd1c92e04e7c2078488ff4cbb69e530afb2042ebf2d"
     }
   ],
   "errors": []

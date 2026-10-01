@@ -3,13 +3,44 @@
     "id": "kasukabe",
     "area": "kasukabe",
     "name": "春日部市 休日当番医",
-    "url": "https://www.city.kasukabe.lg.jp/anshin_anzen/kyukyu_kyumei/kyujitsutobani/index.html"
+    "url": "https://www.city.kasukabe.lg.jp/anshin_anzen/kyukyu_kyumei/kyujitsutobani/index.html",
+    "follow": "休日当番医"
   },
   "files": [
     {
       "file": "page.txt",
       "url": "https://www.city.kasukabe.lg.jp/anshin_anzen/kyukyu_kyumei/kyujitsutobani/index.html",
       "sha256": "df66c6075c585bd1a7d101d4e7c7e8e8fbc81ac6f06e5fa2e998a60670758e65"
+    },
+    {
+      "file": "link-1.txt",
+      "url": "https://www.city.kasukabe.lg.jp/anshin_anzen/kyukyu_kyumei/kyujitsutobani/13580.html",
+      "label": "春日部市休日当番医・休日当番薬局（10月4日）",
+      "sha256": "315da6b98ab7f368bedc6e59f25c02cf67613223199a3e7cef925b934b3ac6d3"
+    },
+    {
+      "file": "link-2.txt",
+      "url": "https://www.city.kasukabe.lg.jp/anshin_anzen/kyukyu_kyumei/kyujitsutobani/13572.html",
+      "label": "春日部市休日当番医・休日当番薬局（10月11日）",
+      "sha256": "44c96d42686f4924e4dfcbb1d66532f4a67892b21ab7094c3067c82758a6b0e6"
+    },
+    {
+      "file": "link-3.txt",
+      "url": "https://www.city.kasukabe.lg.jp/anshin_anzen/kyukyu_kyumei/kyujitsutobani/15881.html",
+      "label": "春日部市休日当番医・休日当番薬局（10月12日）",
+      "sha256": "befcd5a72034918f18fbce5e16ce78cc21113498f06b7bb5f6b99c81e3e4e58d"
+    },
+    {
+      "file": "link-4.txt",
+      "url": "https://www.city.kasukabe.lg.jp/anshin_anzen/kyukyu_kyumei/kyujitsutobani/13579.html",
+      "label": "春日部市休日当番医・休日当番薬局（10月18日）",
+      "sha256": "ebe03446a0468bd4b93c28760e2fc3ca4be8a94023b614eb2a4ba304b855fc27"
+    },
+    {
+      "file": "link-5.txt",
+      "url": "https://www.city.kasukabe.lg.jp/anshin_anzen/kyukyu_kyumei/kyujitsutobani/34386.html",
+      "label": "春日部市休日当番医・休日当番薬局（10月25日）",
+      "sha256": "b8f9940b1ff1cd496fb548162b09dd5a78f4a772fcf83e807864182db0038bc9"
     }
   ],
   "errors": []
