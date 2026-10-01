@@ -13,6 +13,7 @@ import hiki from "./hiki.mjs";
 import honjo from "./honjo.mjs";
 import kasukabe from "./kasukabe.mjs";
 import kawaguchi from "./kawaguchi.mjs";
+import kawaguchiKodomo from "./kawaguchi-kodomo.mjs";
 import kuki from "./kuki.mjs";
 import sokayashio from "./sokayashio.mjs";
 import tokorozawa from "./tokorozawa.mjs";
@@ -24,6 +25,7 @@ export default {
   "honjo": honjo,
   "kasukabe": kasukabe,
   "kawaguchi": kawaguchi,
+  "fixed-kawaguchi-kodomo": kawaguchiKodomo,
   "kuki": kuki,
   "sokayashio": sokayashio,
   "tokorozawa": tokorozawa,

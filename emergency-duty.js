@@ -2,7 +2,7 @@
 // このファイルは scripts/duty/build.mjs が自動で書き出す。手で直さないこと。
 // 形式の説明は emergency-duty-update.md を参照。
 window.DUTY_DATA = {
-  "updatedAt": "2026-10-01T22:45:55+09:00",
+  "updatedAt": "2026-10-01T22:48:09+09:00",
   "areas": [
     "kawaguchi",
     "asaka",
@@ -82,6 +82,48 @@ window.DUTY_DATA = {
     ]
   },
   "entries": [
+    {
+      "area": "kawaguchi",
+      "date": "2026-10-01",
+      "name": "川口市立医療センター",
+      "address": "川口市西新井宿180",
+      "tel": "048-287-2525",
+      "depts": [
+        "小児科"
+      ],
+      "start": "23:00",
+      "end": "08:00",
+      "note": "川口市こども夜間救急診療所が閉まった後の、子どもの夜間救急の当番病院です。入院患者の診療中で待つことがあります。受診前に必ず電話を。",
+      "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
+    },
+    {
+      "area": "kawaguchi",
+      "date": "2026-10-02",
+      "name": "埼玉協同病院",
+      "address": "川口市木曽呂1317",
+      "tel": "0570-00-4771",
+      "depts": [
+        "小児科"
+      ],
+      "start": "23:00",
+      "end": "08:00",
+      "note": "川口市こども夜間救急診療所が閉まった後の、子どもの夜間救急の当番病院です。入院患者の診療中で待つことがあります。受診前に必ず電話を。",
+      "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
+    },
+    {
+      "area": "kawaguchi",
+      "date": "2026-10-03",
+      "name": "川口市立医療センター",
+      "address": "川口市西新井宿180",
+      "tel": "048-287-2525",
+      "depts": [
+        "小児科"
+      ],
+      "start": "22:00",
+      "end": "08:00",
+      "note": "川口市こども夜間救急診療所が閉まった後の、子どもの夜間救急の当番病院です。入院患者の診療中で待つことがあります。受診前に必ず電話を。",
+      "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
+    },
     {
       "area": "chichibu",
       "date": "2026-10-04",
@@ -434,6 +476,62 @@ window.DUTY_DATA = {
       "end": "17:00",
       "note": "住所・電話番号は情報元に載っていません。受診前に医療機関へ電話で確認を。",
       "source": "https://sokayashio-med.or.jp/toban/"
+    },
+    {
+      "area": "kawaguchi",
+      "date": "2026-10-04",
+      "name": "川口市立医療センター",
+      "address": "川口市西新井宿180",
+      "tel": "048-287-2525",
+      "depts": [
+        "小児科"
+      ],
+      "start": "22:00",
+      "end": "08:00",
+      "note": "川口市こども夜間救急診療所が閉まった後の、子どもの夜間救急の当番病院です。入院患者の診療中で待つことがあります。受診前に必ず電話を。",
+      "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
+    },
+    {
+      "area": "kawaguchi",
+      "date": "2026-10-05",
+      "name": "川口市立医療センター",
+      "address": "川口市西新井宿180",
+      "tel": "048-287-2525",
+      "depts": [
+        "小児科"
+      ],
+      "start": "23:00",
+      "end": "08:00",
+      "note": "川口市こども夜間救急診療所が閉まった後の、子どもの夜間救急の当番病院です。入院患者の診療中で待つことがあります。受診前に必ず電話を。",
+      "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
+    },
+    {
+      "area": "kawaguchi",
+      "date": "2026-10-06",
+      "name": "済生会川口総合病院",
+      "address": "川口市西川口5-11-5",
+      "tel": "0570-08-1551",
+      "depts": [
+        "小児科"
+      ],
+      "start": "23:00",
+      "end": "08:00",
+      "note": "川口市こども夜間救急診療所が閉まった後の、子どもの夜間救急の当番病院です。入院患者の診療中で待つことがあります。受診前に必ず電話を。",
+      "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
+    },
+    {
+      "area": "kawaguchi",
+      "date": "2026-10-07",
+      "name": "川口市立医療センター",
+      "address": "川口市西新井宿180",
+      "tel": "048-287-2525",
+      "depts": [
+        "小児科"
+      ],
+      "start": "23:00",
+      "end": "08:00",
+      "note": "川口市こども夜間救急診療所が閉まった後の、子どもの夜間救急の当番病院です。入院患者の診療中で待つことがあります。受診前に必ず電話を。",
+      "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
     }
   ]
 };
