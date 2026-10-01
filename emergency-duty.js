@@ -2,7 +2,7 @@
 // このファイルは scripts/duty/build.mjs が自動で書き出す。手で直さないこと。
 // 形式の説明は emergency-duty-update.md を参照。
 window.DUTY_DATA = {
-  "updatedAt": "2026-10-01T23:15:49+09:00",
+  "updatedAt": "2026-10-01T23:16:41+09:00",
   "areas": [
     "kawaguchi",
     "asaka",
@@ -122,6 +122,20 @@ window.DUTY_DATA = {
     {
       "area": "misato",
       "date": "2026-10-01",
+      "name": "あおばファミリークリニック",
+      "address": "三郷市戸ヶ崎2-286-1",
+      "tel": "048-955-8621",
+      "depts": [
+        "小児科"
+      ],
+      "start": "19:00",
+      "end": "20:30",
+      "note": "子どもの夜間の初期救急の当番です。時間は受付時間です（診療は21時まで）。前もって電話で子どもの状態を伝えてから受診を。",
+      "source": "https://www.city.misato.lg.jp/material/files/group/24/r8syounijikanngai0508.pdf"
+    },
+    {
+      "area": "misato",
+      "date": "2026-10-01",
       "name": "津田医院",
       "address": "松伏町松伏3432",
       "tel": "048-993-3111",
@@ -150,6 +164,20 @@ window.DUTY_DATA = {
     {
       "area": "misato",
       "date": "2026-10-02",
+      "name": "たにぐちファミリークリニック",
+      "address": "三郷市仁蔵523-1",
+      "tel": "050-3146-7471",
+      "depts": [
+        "小児科"
+      ],
+      "start": "19:00",
+      "end": "20:30",
+      "note": "子どもの夜間の初期救急の当番です。時間は受付時間です（診療は21時まで）。前もって電話で子どもの状態を伝えてから受診を。",
+      "source": "https://www.city.misato.lg.jp/material/files/group/24/r8syounijikanngai0508.pdf"
+    },
+    {
+      "area": "misato",
+      "date": "2026-10-02",
       "name": "秋本小児科アレルギー科医院",
       "address": "吉川市保1-3-7 吉川医療ビル5階",
       "tel": "048-983-1515",
@@ -174,6 +202,20 @@ window.DUTY_DATA = {
       "end": "08:00",
       "note": "川口市こども夜間救急診療所が閉まった後の、子どもの夜間救急の当番病院です。入院患者の診療中で待つことがあります。受診前に必ず電話を。",
       "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
+    },
+    {
+      "area": "misato",
+      "date": "2026-10-03",
+      "name": "三郷市医師会立休日診療所",
+      "address": "三郷市半田1010",
+      "tel": "048-949-1000",
+      "depts": [
+        "小児科"
+      ],
+      "start": "19:00",
+      "end": "20:30",
+      "note": "子どもの夜間の初期救急。この日は休日診療所で診療します。時間は受付時間です（診療は21時まで）。予約制なので必ず電話を。",
+      "source": "https://www.city.misato.lg.jp/material/files/group/24/r8syounijikanngai0508.pdf"
     },
     {
       "area": "kawaguchi",
@@ -641,6 +683,20 @@ window.DUTY_DATA = {
     {
       "area": "misato",
       "date": "2026-10-05",
+      "name": "立澤外科胃腸科医院",
+      "address": "三郷市新和2-380",
+      "tel": "048-952-8171",
+      "depts": [
+        "小児科"
+      ],
+      "start": "19:00",
+      "end": "20:30",
+      "note": "子どもの夜間の初期救急の当番です。時間は受付時間です（診療は21時まで）。前もって電話で子どもの状態を伝えてから受診を。",
+      "source": "https://www.city.misato.lg.jp/material/files/group/24/r8syounijikanngai0508.pdf"
+    },
+    {
+      "area": "misato",
+      "date": "2026-10-05",
       "name": "埼葛クリニック",
       "address": "吉川市富新田245",
       "tel": "048-982-3211",
@@ -669,6 +725,20 @@ window.DUTY_DATA = {
     {
       "area": "misato",
       "date": "2026-10-06",
+      "name": "杉浦小児科",
+      "address": "三郷市中央1-3-1 エムズタウン三郷中央2階",
+      "tel": "048-952-2124",
+      "depts": [
+        "小児科"
+      ],
+      "start": "19:00",
+      "end": "20:30",
+      "note": "子どもの夜間の初期救急の当番です。時間は受付時間です（診療は21時まで）。前もって電話で子どもの状態を伝えてから受診を。",
+      "source": "https://www.city.misato.lg.jp/material/files/group/24/r8syounijikanngai0508.pdf"
+    },
+    {
+      "area": "misato",
+      "date": "2026-10-06",
       "name": "土屋医院",
       "address": "吉川市加藤664-1",
       "tel": "048-982-2156",
@@ -693,6 +763,20 @@ window.DUTY_DATA = {
       "end": "08:00",
       "note": "川口市こども夜間救急診療所が閉まった後の、子どもの夜間救急の当番病院です。入院患者の診療中で待つことがあります。受診前に必ず電話を。",
       "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
+    },
+    {
+      "area": "misato",
+      "date": "2026-10-07",
+      "name": "MCクリニック",
+      "address": "三郷市早稲田1-18-19 1階",
+      "tel": "048-959-2233",
+      "depts": [
+        "小児科"
+      ],
+      "start": "19:00",
+      "end": "20:30",
+      "note": "子どもの夜間の初期救急の当番です。時間は受付時間です（診療は21時まで）。前もって電話で子どもの状態を伝えてから受診を。",
+      "source": "https://www.city.misato.lg.jp/material/files/group/24/r8syounijikanngai0508.pdf"
     },
     {
       "area": "misato",

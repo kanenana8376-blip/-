@@ -15,6 +15,7 @@ import iruma from "./iruma.mjs";
 import jibika from "./jibika.mjs";
 import kazo from "./kazo.mjs";
 import kazoKodomo from "./kazo-kodomo.mjs";
+import misatoKodomo from "./misato-kodomo.mjs";
 import moroyama from "./moroyama.mjs";
 import yoshikawa from "./yoshikawa.mjs";
 import kasukabe from "./kasukabe.mjs";
@@ -33,6 +34,7 @@ export default {
   "jibika": jibika,
   "kazo": kazo,
   "kazo-kodomo": kazoKodomo,
+  "fixed-misato-kodomo": misatoKodomo,
   "moroyama": moroyama,
   "yoshikawa": yoshikawa,
   "kasukabe": kasukabe,
