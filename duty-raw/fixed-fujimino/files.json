@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "fixed-fujimino",
+    "area": "fujimi",
+    "name": "ふじみ野市 救急医療体制・救急医療機関",
+    "url": "https://www.city.fujimino.saitama.jp/soshikiichiran/hokencenter/kenkosuishingakari/iryoukikann/2120.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.fujimino.saitama.jp/soshikiichiran/hokencenter/kenkosuishingakari/iryoukikann/2120.html",
+      "sha256": "dfd6ba5495e7dc3d00edcb61a7262bbd6758bb9898c4caf24db9199cd7b21f3b"
+    }
+  ],
+  "errors": []
+}

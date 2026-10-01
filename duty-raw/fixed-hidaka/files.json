@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "fixed-hidaka",
+    "area": "hanno",
+    "name": "日高市 休日夜間診療所",
+    "url": "https://www.city.hidaka.lg.jp/health_welfare/12/iryou/3531.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.hidaka.lg.jp/health_welfare/12/iryou/3531.html",
+      "sha256": "a271f096cf3da0e24cc27dca8320021be6364e90326e5d94ccdc81204e846b1e"
+    }
+  ],
+  "errors": []
+}

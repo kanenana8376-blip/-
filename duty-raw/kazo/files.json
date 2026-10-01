@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "kazo",
+    "area": "kazo",
+    "name": "加須市 休日・夜間救急診療",
+    "url": "https://www.city.kazo.lg.jp/soshiki/kenkou/kyukyu/14267.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.kazo.lg.jp/soshiki/kenkou/kyukyu/14267.html",
+      "sha256": "a4df4e7add369811b7ad5a5d928e9e1dbbf1143f44ef887ec031959943e13852"
+    }
+  ],
+  "errors": []
+}

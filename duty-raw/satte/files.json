@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "satte",
+    "area": "satte",
+    "name": "幸手市 休日当番医・小児休日診療・夜間救急病院",
+    "url": "https://www.city.satte.lg.jp/soshiki/kenkouzoushin/2/1334.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.satte.lg.jp/soshiki/kenkouzoushin/2/1334.html",
+      "sha256": "a332975bc0dbc085f4afd1b7d4a3b6becdd084f594b3561eba04086553c0b774"
+    }
+  ],
+  "errors": []
+}

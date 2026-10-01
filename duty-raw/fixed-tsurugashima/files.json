@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "fixed-tsurugashima",
+    "area": "sakado",
+    "name": "鶴ヶ島市 休日急患診療・救急電話相談",
+    "url": "https://www.city.tsurugashima.lg.jp/page/page001081.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.tsurugashima.lg.jp/page/page001081.html",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    }
+  ],
+  "errors": []
+}

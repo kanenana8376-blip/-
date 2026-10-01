@@ -1,0 +1,22 @@
+{
+  "source": {
+    "id": "fixed-misato-kodomo",
+    "area": "misato",
+    "name": "三郷市 小児時間外診療",
+    "url": "https://www.city.misato.lg.jp/soshiki/ikiikikenko/kenkosuishin/11/1530.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.misato.lg.jp/soshiki/ikiikikenko/kenkosuishin/11/1530.html",
+      "sha256": "8806f3a1b7c214f5d06a37479e6d4cc5256e0a56e1dea77ded96803c66996587"
+    },
+    {
+      "file": "pdf-1.txt",
+      "url": "https://www.city.misato.lg.jp/material/files/group/24/08184674.pdf",
+      "label": "三郷市医師会立休日診療所(PDFファイル:73KB)",
+      "sha256": "ef6cbd2161eaea7943ce8693b9824d23d1793ffb1c0fca05b600d3899b44c977"
+    }
+  ],
+  "errors": []
+}

@@ -2,7 +2,7 @@
 // このファイルは scripts/duty/build.mjs が自動で書き出す。手で直さないこと。
 // 形式の説明は emergency-duty-update.md を参照。
 window.DUTY_DATA = {
-  "updatedAt": "2026-10-01T22:54:53+09:00",
+  "updatedAt": "2026-10-01T23:00:27+09:00",
   "areas": [
     "kawaguchi",
     "asaka",
@@ -18,24 +18,18 @@ window.DUTY_DATA = {
     "2026-10-01": [
       "kawaguchi",
       "tokorozawa",
-      "hiki",
-      "soka",
       "honjo",
       "chichibu"
     ],
     "2026-10-02": [
       "kawaguchi",
       "tokorozawa",
-      "hiki",
-      "soka",
       "honjo",
       "chichibu"
     ],
     "2026-10-03": [
       "kawaguchi",
       "tokorozawa",
-      "hiki",
-      "soka",
       "honjo",
       "chichibu"
     ],
@@ -43,8 +37,6 @@ window.DUTY_DATA = {
       "kawaguchi",
       "asaka",
       "tokorozawa",
-      "hiki",
-      "soka",
       "kasukabe",
       "kuki",
       "honjo",
@@ -53,8 +45,6 @@ window.DUTY_DATA = {
     "2026-10-05": [
       "kawaguchi",
       "asaka",
-      "hiki",
-      "soka",
       "kasukabe",
       "kuki",
       "honjo",
@@ -63,8 +53,6 @@ window.DUTY_DATA = {
     "2026-10-06": [
       "kawaguchi",
       "asaka",
-      "hiki",
-      "soka",
       "kasukabe",
       "kuki",
       "honjo",
@@ -73,8 +61,6 @@ window.DUTY_DATA = {
     "2026-10-07": [
       "kawaguchi",
       "asaka",
-      "hiki",
-      "soka",
       "kasukabe",
       "kuki",
       "honjo",
@@ -310,32 +296,6 @@ window.DUTY_DATA = {
       "source": "https://www.city.kuki.lg.jp/kenko/kenko_iryo/kyujitsu/1003818.html"
     },
     {
-      "area": "soka",
-      "date": "2026-10-04",
-      "name": "あい小児科",
-      "address": "草加市",
-      "depts": [
-        "内科"
-      ],
-      "start": "09:00",
-      "end": "12:00",
-      "note": "住所・電話番号は情報元に載っていません。受診前に医療機関へ電話で確認を。",
-      "source": "https://sokayashio-med.or.jp/toban/"
-    },
-    {
-      "area": "soka",
-      "date": "2026-10-04",
-      "name": "山崎クリニック",
-      "address": "草加市",
-      "depts": [
-        "外科"
-      ],
-      "start": "09:00",
-      "end": "12:00",
-      "note": "住所・電話番号は情報元に載っていません。受診前に医療機関へ電話で確認を。",
-      "source": "https://sokayashio-med.or.jp/toban/"
-    },
-    {
       "area": "tokorozawa",
       "date": "2026-10-04",
       "name": "柳内医院",
@@ -450,32 +410,6 @@ window.DUTY_DATA = {
       "end": "17:00",
       "note": "外科系の当番。診療科目：眼科。受付時間は医療機関により異なるので、必ず電話を。",
       "source": "https://www.city.kasukabe.lg.jp/anshin_anzen/kyukyu_kyumei/kyujitsutobani/13580.html"
-    },
-    {
-      "area": "soka",
-      "date": "2026-10-04",
-      "name": "あい小児科",
-      "address": "草加市",
-      "depts": [
-        "内科"
-      ],
-      "start": "14:00",
-      "end": "17:00",
-      "note": "住所・電話番号は情報元に載っていません。受診前に医療機関へ電話で確認を。",
-      "source": "https://sokayashio-med.or.jp/toban/"
-    },
-    {
-      "area": "soka",
-      "date": "2026-10-04",
-      "name": "草加松原整形外科医院",
-      "address": "草加市",
-      "depts": [
-        "外科"
-      ],
-      "start": "14:00",
-      "end": "17:00",
-      "note": "住所・電話番号は情報元に載っていません。受診前に医療機関へ電話で確認を。",
-      "source": "https://sokayashio-med.or.jp/toban/"
     },
     {
       "area": "kawaguchi",

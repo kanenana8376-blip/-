@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "fixed-higashiiruma",
+    "area": "fujimi",
+    "name": "東入間医師会 夜間休日診療所",
+    "url": "http://fujiminoishikai.sakura.ne.jp/yakan2/"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "http://fujiminoishikai.sakura.ne.jp/yakan2/",
+      "sha256": "b6987e306e398aa4375aecff1552ee71169a0da03bd62c4a0548de325fe7a105"
+    }
+  ],
+  "errors": []
+}

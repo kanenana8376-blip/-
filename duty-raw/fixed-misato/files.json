@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "fixed-misato",
+    "area": "misato",
+    "name": "三郷市医師会立休日診療所",
+    "url": "https://www.city.misato.lg.jp/soshiki/ikiikikenko/kenkosuishin/11/4817.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.misato.lg.jp/soshiki/ikiikikenko/kenkosuishin/11/4817.html",
+      "sha256": "dc3504c90e5311828cfd0c78ade1ac689d4237e617cc7540db70a446035ce59c"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,34 @@
+{
+  "source": {
+    "id": "okegawa",
+    "area": "okekitaina",
+    "name": "桶川市 休日当番医・救急医療",
+    "url": "https://www.city.okegawa.lg.jp/soshiki/kenkofukushi/kenkozoushin/kyujitsutoban/1260.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.okegawa.lg.jp/soshiki/kenkofukushi/kenkozoushin/kyujitsutoban/1260.html",
+      "sha256": "9aafc387c1164bdd1521b67ed620815dcb599518084dc985c3198cc0f2ea5618"
+    },
+    {
+      "file": "pdf-1.txt",
+      "url": "https://www.city.okegawa.lg.jp/material/files/group/28/Dr_Oct2026.pdf",
+      "label": "10月の当番医はこちら (PDFファイル: 56.9KB)",
+      "sha256": "e69b5a2ca22aad461a5010252c2733e2a94aa7a3b06bc7297a977ecdb7e620f9"
+    },
+    {
+      "file": "pdf-2.txt",
+      "url": "https://www.city.okegawa.lg.jp/material/files/group/28/Dr_Sep2026.pdf",
+      "label": "9月の当番医はこちら (PDFファイル: 54.6KB)",
+      "sha256": "e9d30dfdd1b3a8717d88cf4b400c963eea7f24dd5491b3ed318a2c0a87e66f43"
+    },
+    {
+      "file": "pdf-3.txt",
+      "url": "https://www.city.okegawa.lg.jp/material/files/group/28/R8DS.pdf",
+      "label": "4月からの休日当番薬局(桶川市薬剤師会提供) (PDFファイル: 138.6KB)",
+      "sha256": "f4af3e8bc05e3354f388d24d51909d567403c60ca50765e79419c208281eb98e"
+    }
+  ],
+  "errors": []
+}

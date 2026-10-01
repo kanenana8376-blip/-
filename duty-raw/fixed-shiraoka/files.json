@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "fixed-shiraoka",
+    "area": "hasuda",
+    "name": "白岡市休日診療事業",
+    "url": "https://www.city.shiraoka.lg.jp/soshiki/kenkofukushibu/kenkozoshinka/2/kyuukyuu/1127.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.shiraoka.lg.jp/soshiki/kenkofukushibu/kenkozoshinka/2/kyuukyuu/1127.html",
+      "sha256": "04fce30160beb2f45bfccb885e6bbb602aa335364d17685f6a943b0695f2a348"
+    }
+  ],
+  "errors": []
+}

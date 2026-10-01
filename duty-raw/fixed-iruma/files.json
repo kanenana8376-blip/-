@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "fixed-iruma",
+    "area": "sayama",
+    "name": "入間市夜間診療所",
+    "url": "https://www.city.iruma.saitama.jp/soshiki/kenkokanrika/7/157.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.iruma.saitama.jp/soshiki/kenkokanrika/7/157.html",
+      "sha256": "98bfb9fe8fb13c0d26ebb33143081c74b5f5e3903f437057041580727f7e9e1c"
+    }
+  ],
+  "errors": []
+}

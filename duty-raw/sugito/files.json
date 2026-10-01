@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "sugito",
+    "area": "satte",
+    "name": "杉戸町 休日診療当番医",
+    "url": "https://www.town.sugito.lg.jp/page/1387.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.town.sugito.lg.jp/page/1387.html",
+      "sha256": "1de757b6f5589811a0230db2333cbe7f49767e7f255fa361398d03e6fdef2bbe"
+    }
+  ],
+  "errors": []
+}

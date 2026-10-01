@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "gyoda",
+    "area": "gyoda",
+    "name": "行田市 休日急患診療・救急相談",
+    "url": "https://www.city.gyoda.lg.jp/soshiki/kenkouhukushibu/kenko/gyomu/anzen_anshin/shobo_kyukyu/1893.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.gyoda.lg.jp/soshiki/kenkouhukushibu/kenko/gyomu/anzen_anshin/shobo_kyukyu/1893.html",
+      "sha256": "99778becae1113fb89b904195108c2ef95bdbfd2f9845a6f0cbd05c606e5c2de"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,22 @@
+{
+  "source": {
+    "id": "moroyama",
+    "area": "sakado",
+    "name": "毛呂山町・越生町 休日当番医（在宅当番医）",
+    "url": "https://www.town.moroyama.saitama.jp/soshikikarasagasu/hokencenter/iryo_kenko/kyuukyuu_moshimonotoki/2920.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.town.moroyama.saitama.jp/soshikikarasagasu/hokencenter/iryo_kenko/kyuukyuu_moshimonotoki/2920.html",
+      "sha256": "05f7026f0acd885cc06c1e5ce08f8819e96a205015bce84405464efbecf150a6"
+    },
+    {
+      "file": "pdf-1.txt",
+      "url": "https://www.town.moroyama.saitama.jp/material/files/group/17/R8_toubani.pdf",
+      "label": "令和8年度 越生町・毛呂山町地区在宅当番医日程 (PDFファイル: 34.6KB)",
+      "sha256": "35189e73cf04b0d5f5affe3a64e14c7f8110e0a12dd52ce45dddfdc3417fc4b2"
+    }
+  ],
+  "errors": []
+}

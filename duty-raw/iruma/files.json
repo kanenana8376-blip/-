@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "iruma",
+    "area": "sayama",
+    "name": "入間市 休日当番病院",
+    "url": "https://www.city.iruma.saitama.jp/soshiki/kenkokanrika/7/156.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.iruma.saitama.jp/soshiki/kenkokanrika/7/156.html",
+      "sha256": "2c0d9af0809543db4972b37db0c8423657368d127dd593afed4b3a01edf76a99"
+    }
+  ],
+  "errors": []
+}
