@@ -92,5 +92,71 @@
     "area": "chichibu",
     "name": "秩父市 休日急患当番医療機関",
     "url": "https://www.city.chichibu.lg.jp/9070.html"
+  },
+  {
+    "id": "fixed-kawaguchi-kodomo",
+    "area": "kawaguchi",
+    "name": "川口市 小児夜間救急診療について",
+    "url": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
+  },
+  {
+    "id": "fixed-asaka-qqk",
+    "area": "asaka",
+    "name": "朝霞地区医師会 小児救急支援事業",
+    "url": "http://asaka-qqk.net/"
+  },
+  {
+    "id": "fixed-asaka-night",
+    "area": "asaka",
+    "name": "朝霞地区医師会 夜間診療所",
+    "url": "https://www.asakamed.com/about/night.php"
+  },
+  {
+    "id": "fixed-higashimatsuyama",
+    "area": "hiki",
+    "name": "東松山市休日夜間急患診療所",
+    "url": "https://www.city.higashimatsuyama.lg.jp/soshiki/34/2635.html"
+  },
+  {
+    "id": "fixed-koshigaya",
+    "area": "koshigaya",
+    "name": "越谷市夜間急患診療所",
+    "url": "https://www.city.koshigaya.saitama.jp/toiawase/shisetsu/hokeniryo/yakankyuukan.html"
+  },
+  {
+    "id": "fixed-soka-kodomo",
+    "area": "koshigaya",
+    "name": "草加市子ども急病夜間クリニック",
+    "url": "https://www.city.soka.saitama.jp/cont/s1510/010/004/009/PAGE000000000000076899.html"
+  },
+  {
+    "id": "fixed-soka-hospital",
+    "area": "koshigaya",
+    "name": "草加市立病院 子ども急病夜間クリニック",
+    "url": "https://www.soka-city-hospital.jp/m04/kodomo99.html"
+  },
+  {
+    "id": "fixed-kasukabe-kodomo",
+    "area": "kasukabe",
+    "name": "春日部市小児救急夜間診療所",
+    "url": "https://www.city.kasukabe.lg.jp/soshikikarasagasu/kenkoka/gyomuannai/5/1/1/4239.html"
+  },
+  {
+    "id": "fixed-kumagaya",
+    "area": "kumagaya",
+    "name": "熊谷市 休日・夜間急患診療所",
+    "url": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyujituyakan.html"
+  },
+  {
+    "id": "fixed-fukaya",
+    "area": "kumagaya",
+    "name": "深谷市 休日・夜間診療",
+    "url": "https://www.city.fukaya.saitama.jp/soshiki/fukushikenko/hokensenta/tanto/kyukyuiryokikan/13452.html"
+  },
+  {
+    "id": "fixed-fukaya-ishikai",
+    "area": "kumagaya",
+    "name": "深谷寄居医師会 休日診療所を受診される方へ",
+    "url": "https://www.fukaya-osato.saitama.med.or.jp/clinic/index.html"
   }
 ]

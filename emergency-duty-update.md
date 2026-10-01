@@ -45,6 +45,7 @@ GitHub Actions（`.github/workflows/update-duty.yml`）が毎日 5:00（日本�
 ## 情報元を追加・変更するとき
 
 `scripts/duty/sources.json` に `id`（英数字）、`area`（`emergency-tool.html` の地域ID）、`name`、`url` を書く。
+`id` が `fixed-` で始まるものは、曜日で決まっている急患診療所（`FACILITIES`）の公式ページ。読み取り処理はなく、内容が変わっていないかを確かめるために毎日保存している。
 URL が移転して取得に失敗するようになったら、`duty-raw/status.json` で分かる。自治体サイトの「休日当番医」ページを探して直す。
 
 ## 読み取り処理を追加するとき
