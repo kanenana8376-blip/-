@@ -9,6 +9,7 @@
 // 実物は duty-raw/<id>/ に毎日保存される。
 import asaka from "./asaka.mjs";
 import chichibu from "./chichibu.mjs";
+import fukaya from "./fukaya.mjs";
 import hiki from "./hiki.mjs";
 import honjo from "./honjo.mjs";
 import iruma from "./iruma.mjs";
@@ -16,7 +17,9 @@ import jibika from "./jibika.mjs";
 import kazo from "./kazo.mjs";
 import kazoKodomo from "./kazo-kodomo.mjs";
 import misatoKodomo from "./misato-kodomo.mjs";
+import kumagaya from "./kumagaya.mjs";
 import moroyama from "./moroyama.mjs";
+import sakadoEye from "./sakado-eye.mjs";
 import yoshikawa from "./yoshikawa.mjs";
 import kasukabe from "./kasukabe.mjs";
 import kawaguchi from "./kawaguchi.mjs";
@@ -28,6 +31,7 @@ import tokorozawa from "./tokorozawa.mjs";
 export default {
   "asaka": asaka,
   "chichibu-ishikai": chichibu,
+  "fixed-fukaya": fukaya,
   "hiki": hiki,
   "honjo": honjo,
   "iruma": iruma,
@@ -35,7 +39,9 @@ export default {
   "kazo": kazo,
   "kazo-kodomo": kazoKodomo,
   "fixed-misato-kodomo": misatoKodomo,
+  "kumagaya": kumagaya,
   "moroyama": moroyama,
+  "fixed-sakado": sakadoEye,
   "yoshikawa": yoshikawa,
   "kasukabe": kasukabe,
   "kawaguchi": kawaguchi,

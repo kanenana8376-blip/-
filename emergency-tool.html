@@ -1125,9 +1125,24 @@ function initArea() {
 // 毎日の当番情報（emergency-duty.js）
 // ---------------------------------------------------------------
 const DUTY = window.DUTY_DATA || null;
-function dutyFacilities() {
+function dutyFacilities(t) {
   if (!DUTY || !Array.isArray(DUTY.entries)) return [];
-  return DUTY.entries.map(e => ({
+  // 時間の決まっていない当番は、その日の分だけを「電話で確認が必要なもの」として出す
+  const day = ymd(t);
+  const allDay = DUTY.entries.filter(e => e.allDay && e.date === day).map(e => ({
+    name: e.name,
+    area: e.area,
+    address: e.address || "",
+    tel: e.tel || "",
+    depts: e.depts,
+    slots: [],
+    roster: true,
+    todayDuty: true,
+    hoursText: e.note || "",
+    source: e.source,
+    duty: true,
+  }));
+  return allDay.concat(DUTY.entries.filter(e => !e.allDay).map(e => ({
     name: e.name,
     area: e.area,
     address: e.address || "",
@@ -1137,7 +1152,7 @@ function dutyFacilities() {
     note: e.note || "",
     source: e.source,
     duty: true,
-  }));
+  })));
 }
 // 指定日・地域の当番情報を収録しているか
 function dutyCovered(date, area) {
@@ -1172,7 +1187,7 @@ function targetTime() {
 }
 
 function card(fac, st, dept) {
-  let cls = "unknown", badge = `<span class="badge">${fac.roster ? "日によって当番が変わる" : "時間は要確認"}</span>`;
+  let cls = "unknown", badge = `<span class="badge">${fac.todayDuty ? "この日の当番・時間は電話で確認" : fac.roster ? "日によって当番が変わる" : "時間は要確認"}</span>`;
   if (st.state === "open") { cls = "open"; badge = `<span class="badge st-open">診療中 〜${fmt(st.until)}</span>`; }
   else if (st.state === "later") { cls = "later"; badge = `<span class="badge st-later">${fmt(st.from)}から</span>`; }
   if (fac.duty) badge += `<span class="badge duty">当番</span>`;
@@ -1216,7 +1231,7 @@ function render() {
     return;
   }
 
-  const all = FACILITIES.concat(dutyFacilities()).filter(f => f.depts.includes(dept));
+  const all = FACILITIES.concat(dutyFacilities(t)).filter(f => f.depts.includes(dept));
   const list = all.filter(f => area === "all" || f.area === area || f.area === "all");
   const open = [], later = [], unknown = [];
   for (const f of list) {

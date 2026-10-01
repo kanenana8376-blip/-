@@ -2,7 +2,7 @@
 // このファイルは scripts/duty/build.mjs が自動で書き出す。手で直さないこと。
 // 形式の説明は emergency-duty-update.md を参照。
 window.DUTY_DATA = {
-  "updatedAt": "2026-10-01T23:20:10+09:00",
+  "updatedAt": "2026-10-01T23:22:52+09:00",
   "areas": [
     "kawaguchi",
     "asaka",
@@ -11,8 +11,10 @@ window.DUTY_DATA = {
     "soka",
     "kasukabe",
     "kuki",
+    "kumagaya",
     "honjo",
     "chichibu",
+    "fukaya",
     "sayama",
     "sakado",
     "misato",
@@ -25,6 +27,7 @@ window.DUTY_DATA = {
       "tokorozawa",
       "hiki",
       "soka",
+      "kumagaya",
       "honjo",
       "chichibu",
       "sakado",
@@ -37,6 +40,7 @@ window.DUTY_DATA = {
       "tokorozawa",
       "hiki",
       "soka",
+      "kumagaya",
       "honjo",
       "chichibu",
       "sakado",
@@ -49,6 +53,7 @@ window.DUTY_DATA = {
       "tokorozawa",
       "hiki",
       "soka",
+      "kumagaya",
       "honjo",
       "chichibu",
       "sakado",
@@ -64,8 +69,10 @@ window.DUTY_DATA = {
       "soka",
       "kasukabe",
       "kuki",
+      "kumagaya",
       "honjo",
       "chichibu",
+      "fukaya",
       "sayama",
       "sakado",
       "misato",
@@ -79,8 +86,10 @@ window.DUTY_DATA = {
       "soka",
       "kasukabe",
       "kuki",
+      "kumagaya",
       "honjo",
       "chichibu",
+      "fukaya",
       "sayama",
       "sakado",
       "misato",
@@ -94,8 +103,10 @@ window.DUTY_DATA = {
       "soka",
       "kasukabe",
       "kuki",
+      "kumagaya",
       "honjo",
       "chichibu",
+      "fukaya",
       "sayama",
       "sakado",
       "misato",
@@ -109,8 +120,10 @@ window.DUTY_DATA = {
       "soka",
       "kasukabe",
       "kuki",
+      "kumagaya",
       "honjo",
       "chichibu",
+      "fukaya",
       "sayama",
       "sakado",
       "misato",
@@ -162,6 +175,31 @@ window.DUTY_DATA = {
       "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
     },
     {
+      "area": "kumagaya",
+      "date": "2026-10-01",
+      "allDay": true,
+      "name": "埼玉慈恵病院",
+      "tel": "048-521-0321",
+      "depts": [
+        "内科",
+        "外科"
+      ],
+      "note": "大人の一般的な病気の、休日・夜間の当番病院（輪番）です。受付時間は書かれていないので、必ず電話で問い合わせてから。市の表は2022/12/26更新。",
+      "source": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyukyu.html"
+    },
+    {
+      "area": "kumagaya",
+      "date": "2026-10-01",
+      "allDay": true,
+      "name": "熊谷総合病院",
+      "tel": "048-521-0065",
+      "depts": [
+        "内科"
+      ],
+      "note": "脳の病気の、休日・夜間の当番病院です。片側の手足のまひ、ろれつが回らない、激しい頭痛などのときは迷わず119番を。市の表は2022/12/26更新。",
+      "source": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyukyu.html"
+    },
+    {
       "area": "misato",
       "date": "2026-10-02",
       "name": "たにぐちファミリークリニック",
@@ -204,6 +242,31 @@ window.DUTY_DATA = {
       "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
     },
     {
+      "area": "kumagaya",
+      "date": "2026-10-02",
+      "allDay": true,
+      "name": "熊谷外科病院",
+      "tel": "048-521-4115",
+      "depts": [
+        "内科",
+        "外科"
+      ],
+      "note": "大人の一般的な病気の、休日・夜間の当番病院（輪番）です。受付時間は書かれていないので、必ず電話で問い合わせてから。市の表は2022/12/26更新。",
+      "source": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyukyu.html"
+    },
+    {
+      "area": "kumagaya",
+      "date": "2026-10-02",
+      "allDay": true,
+      "name": "関東脳神経外科病院",
+      "tel": "048-521-3133",
+      "depts": [
+        "内科"
+      ],
+      "note": "脳の病気の、休日・夜間の当番病院です。片側の手足のまひ、ろれつが回らない、激しい頭痛などのときは迷わず119番を。市の表は2022/12/26更新。",
+      "source": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyukyu.html"
+    },
+    {
       "area": "misato",
       "date": "2026-10-03",
       "name": "三郷市医師会立休日診療所",
@@ -230,6 +293,31 @@ window.DUTY_DATA = {
       "end": "08:00",
       "note": "川口市こども夜間救急診療所が閉まった後の、子どもの夜間救急の当番病院です。入院患者の診療中で待つことがあります。受診前に必ず電話を。",
       "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
+    },
+    {
+      "area": "kumagaya",
+      "date": "2026-10-03",
+      "allDay": true,
+      "name": "熊谷総合病院",
+      "tel": "048-521-0065",
+      "depts": [
+        "内科",
+        "外科"
+      ],
+      "note": "大人の一般的な病気の、休日・夜間の当番病院（輪番）です。受付時間は書かれていないので、必ず電話で問い合わせてから。市の表は2022/12/26更新。",
+      "source": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyukyu.html"
+    },
+    {
+      "area": "kumagaya",
+      "date": "2026-10-03",
+      "allDay": true,
+      "name": "関東脳神経外科病院",
+      "tel": "048-521-3133",
+      "depts": [
+        "内科"
+      ],
+      "note": "脳の病気の、休日・夜間の当番病院です。片側の手足のまひ、ろれつが回らない、激しい頭痛などのときは迷わず119番を。市の表は2022/12/26更新。",
+      "source": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyukyu.html"
     },
     {
       "area": "all",
@@ -285,6 +373,20 @@ window.DUTY_DATA = {
       "end": "18:00",
       "note": "診療科目：内・呼。必ず電話で確認してから受診を。",
       "source": "https://chichibu-ishikai.jp/system/"
+    },
+    {
+      "area": "fukaya",
+      "date": "2026-10-04",
+      "name": "清水眼科医院",
+      "address": "寄居町大字寄居1057-3",
+      "tel": "048-581-0378",
+      "depts": [
+        "眼科"
+      ],
+      "start": "09:00",
+      "end": "12:00",
+      "note": "眼科の在宅当番医（日曜・祝日）。受診前に必ず電話で確認を。",
+      "source": "https://www.city.fukaya.saitama.jp/soshiki/fukushikenko/hokensenta/tanto/kyukyuiryokikan/13452.html"
     },
     {
       "area": "honjo",
@@ -596,6 +698,20 @@ window.DUTY_DATA = {
       "end": "17:00"
     },
     {
+      "area": "fukaya",
+      "date": "2026-10-04",
+      "name": "清水眼科医院",
+      "address": "寄居町大字寄居1057-3",
+      "tel": "048-581-0378",
+      "depts": [
+        "眼科"
+      ],
+      "start": "14:00",
+      "end": "16:00",
+      "note": "眼科の在宅当番医（日曜・祝日）。受診前に必ず電話で確認を。",
+      "source": "https://www.city.fukaya.saitama.jp/soshiki/fukushikenko/hokensenta/tanto/kyukyuiryokikan/13452.html"
+    },
+    {
       "area": "kasukabe",
       "date": "2026-10-04",
       "name": "みくに中央クリニック",
@@ -681,6 +797,31 @@ window.DUTY_DATA = {
       "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
     },
     {
+      "area": "kumagaya",
+      "date": "2026-10-04",
+      "allDay": true,
+      "name": "埼玉慈恵病院",
+      "tel": "048-521-0321",
+      "depts": [
+        "内科",
+        "外科"
+      ],
+      "note": "大人の一般的な病気の、休日・夜間の当番病院（輪番）です。受付時間は書かれていないので、必ず電話で問い合わせてから。市の表は2022/12/26更新。",
+      "source": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyukyu.html"
+    },
+    {
+      "area": "kumagaya",
+      "date": "2026-10-04",
+      "allDay": true,
+      "name": "関東脳神経外科病院",
+      "tel": "048-521-3133",
+      "depts": [
+        "内科"
+      ],
+      "note": "脳の病気の、休日・夜間の当番病院です。片側の手足のまひ、ろれつが回らない、激しい頭痛などのときは迷わず119番を。市の表は2022/12/26更新。",
+      "source": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyukyu.html"
+    },
+    {
       "area": "misato",
       "date": "2026-10-05",
       "name": "立澤外科胃腸科医院",
@@ -721,6 +862,31 @@ window.DUTY_DATA = {
       "end": "08:00",
       "note": "川口市こども夜間救急診療所が閉まった後の、子どもの夜間救急の当番病院です。入院患者の診療中で待つことがあります。受診前に必ず電話を。",
       "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
+    },
+    {
+      "area": "kumagaya",
+      "date": "2026-10-05",
+      "allDay": true,
+      "name": "熊谷外科病院",
+      "tel": "048-521-4115",
+      "depts": [
+        "内科",
+        "外科"
+      ],
+      "note": "大人の一般的な病気の、休日・夜間の当番病院（輪番）です。受付時間は書かれていないので、必ず電話で問い合わせてから。市の表は2022/12/26更新。",
+      "source": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyukyu.html"
+    },
+    {
+      "area": "kumagaya",
+      "date": "2026-10-05",
+      "allDay": true,
+      "name": "熊谷総合病院",
+      "tel": "048-521-0065",
+      "depts": [
+        "内科"
+      ],
+      "note": "脳の病気の、休日・夜間の当番病院です。片側の手足のまひ、ろれつが回らない、激しい頭痛などのときは迷わず119番を。市の表は2022/12/26更新。",
+      "source": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyukyu.html"
     },
     {
       "area": "misato",
@@ -765,6 +931,31 @@ window.DUTY_DATA = {
       "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
     },
     {
+      "area": "kumagaya",
+      "date": "2026-10-06",
+      "allDay": true,
+      "name": "熊谷総合病院",
+      "tel": "048-521-0065",
+      "depts": [
+        "内科",
+        "外科"
+      ],
+      "note": "大人の一般的な病気の、休日・夜間の当番病院（輪番）です。受付時間は書かれていないので、必ず電話で問い合わせてから。市の表は2022/12/26更新。",
+      "source": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyukyu.html"
+    },
+    {
+      "area": "kumagaya",
+      "date": "2026-10-06",
+      "allDay": true,
+      "name": "関東脳神経外科病院",
+      "tel": "048-521-3133",
+      "depts": [
+        "内科"
+      ],
+      "note": "脳の病気の、休日・夜間の当番病院です。片側の手足のまひ、ろれつが回らない、激しい頭痛などのときは迷わず119番を。市の表は2022/12/26更新。",
+      "source": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyukyu.html"
+    },
+    {
       "area": "misato",
       "date": "2026-10-07",
       "name": "MCクリニック",
@@ -805,6 +996,31 @@ window.DUTY_DATA = {
       "end": "08:00",
       "note": "川口市こども夜間救急診療所が閉まった後の、子どもの夜間救急の当番病院です。入院患者の診療中で待つことがあります。受診前に必ず電話を。",
       "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
+    },
+    {
+      "area": "kumagaya",
+      "date": "2026-10-07",
+      "allDay": true,
+      "name": "埼玉慈恵病院",
+      "tel": "048-521-0321",
+      "depts": [
+        "内科",
+        "外科"
+      ],
+      "note": "大人の一般的な病気の、休日・夜間の当番病院（輪番）です。受付時間は書かれていないので、必ず電話で問い合わせてから。市の表は2022/12/26更新。",
+      "source": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyukyu.html"
+    },
+    {
+      "area": "kumagaya",
+      "date": "2026-10-07",
+      "allDay": true,
+      "name": "関東脳神経外科病院",
+      "tel": "048-521-3133",
+      "depts": [
+        "内科"
+      ],
+      "note": "脳の病気の、休日・夜間の当番病院です。片側の手足のまひ、ろれつが回らない、激しい頭痛などのときは迷わず119番を。市の表は2022/12/26更新。",
+      "source": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyukyu.html"
     }
   ]
 };

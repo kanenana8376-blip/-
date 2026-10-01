@@ -32,7 +32,8 @@ export function checkEntry(e) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(e.date || "")) bad.push("date");
   if (!e.name || typeof e.name !== "string") bad.push("name");
   if (!Array.isArray(e.depts) || !e.depts.length || !e.depts.every(d => DEPTS.has(d))) bad.push("depts");
-  for (const k of ["start", "end"]) {
+  // allDay: 時間の決まっていない（電話で問い合わせる）当番。start/end は持たない
+  if (!e.allDay) for (const k of ["start", "end"]) {
     const m = /^(\d{2}):(\d{2})$/.exec(e[k] || "");
     if (!m || +m[1] > 23 || +m[2] > 59) bad.push(k);
   }

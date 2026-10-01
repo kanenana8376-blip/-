@@ -38,6 +38,9 @@ GitHub Actions（`.github/workflows/update-duty.yml`）が毎日 5:00（日本�
 | 吉川市・松伏町 | yoshikawa | 平日夜間の小児時間外診療の当番（受付19時〜21時） |
 | 三郷市 | fixed-misato-kodomo | 小児時間外（初期救急）診療当番表PDF（月〜土の夜、受付19時〜20時30分。曜日を暦と照合） |
 | 加須市 | kazo / kazo-kodomo | 休日当番病院（9時〜18時）、休日小児科診療（9時〜12時） |
+| 熊谷市 | kumagaya | 大人の一般的疾患・脳疾患の輪番病院（曜日・第n週で決まる。受付時間の記載がないので時間を決めない当番 allDay として14日分） |
+| 深谷市・寄居町 | fixed-fukaya | 眼科・耳鼻咽喉科在宅当番医（日曜・祝日、時間は当番ごと） |
+| 坂戸市・鶴ヶ島市 | fixed-sakado | 年度ごとの眼科在宅当番表PDF（9時〜17時） |
 | 県内全域 | jibika | 耳鼻咽喉科の休日救急診療（東地区・西地区、9時〜17時） |
 
 当番表の形が崩れていて確実に読み取れない地域（鴻巣・桶川北本伊奈・行田・羽生・幸手・杉戸）は、
@@ -70,7 +73,7 @@ URL が移転して取得に失敗するようになったら、`duty-raw/status
 |---|---|
 | `updatedAt` | 最後に更新した日時（日本時間） |
 | `coverage` | 日付ごとに、当番表を読み取れた地域ID |
-| `entries` | 当番医 1件 = 1日の1時間帯。`date`, `area`, `name`, `address`, `tel`, `depts`, `start`, `end`（`start` より前なら翌日まで）, `note`, `source` |
+| `entries` | 当番医 1件 = 1日の1時間帯（`allDay: true` は時間の決まっていない当番で、`start`/`end` を持たない）。`date`, `area`, `name`, `address`, `tel`, `depts`, `start`, `end`（`start` より前なら翌日まで）, `note`, `source` |
 
 ## 公開されている情報の範囲
 
