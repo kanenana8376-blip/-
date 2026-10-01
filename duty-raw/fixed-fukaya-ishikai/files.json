@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "fixed-fukaya-ishikai",
+    "area": "fukaya",
+    "name": "深谷寄居医師会 休日診療所を受診される方へ",
+    "url": "https://www.fukaya-osato.saitama.med.or.jp/clinic/index.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.fukaya-osato.saitama.med.or.jp/clinic/index.html",
+      "sha256": "8529b7f85bc6b819fb3115e90494f5cd07d442af36fa2a4c11e4f83639d60dfb"
+    }
+  ],
+  "errors": []
+}

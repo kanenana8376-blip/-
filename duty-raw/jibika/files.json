@@ -1,0 +1,28 @@
+{
+  "source": {
+    "id": "jibika",
+    "area": "all",
+    "name": "埼玉県 耳鼻咽喉科 休日救急診療",
+    "url": "https://www.pref.saitama.lg.jp/a0703/jibika.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.pref.saitama.lg.jp/a0703/jibika.html",
+      "sha256": "8e45f1eb39cbda86f6dc30b021ff61dfc3b4696e66804bb727e7ddaee1a76ddf"
+    },
+    {
+      "file": "pdf-1.txt",
+      "url": "https://www.pref.saitama.lg.jp/documents/77646/r08_04.pdf",
+      "label": "当番表（令和8年4月～令和8年9月）の当番表はこちら（PDF：145KB）",
+      "sha256": "594b5cc445d859c693be770a0ddf39c78db3e6dee15c8b395431edfc28a47cc0"
+    },
+    {
+      "file": "pdf-2.txt",
+      "url": "https://www.pref.saitama.lg.jp/documents/77646/r08_0201.pdf",
+      "label": "当番表（令和8年10月～令和9年3月）の当番表はこちら（PDF：147KB）",
+      "sha256": "6849a879e4434972f5e90b27c09bf3bdcb07cef2f121800dcb65853e6f1d1283"
+    }
+  ],
+  "errors": []
+}

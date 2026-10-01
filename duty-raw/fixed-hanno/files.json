@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "fixed-hanno",
+    "area": "hanno",
+    "name": "飯能地区医師会 休祝日・夜間診療所",
+    "url": "https://hannomed.or.jp/yakan/"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://hannomed.or.jp/yakan/",
+      "sha256": "ca65754378bbcac3f0267dfee4ab55510279bf1e60f139d72763562f114c3d48"
+    }
+  ],
+  "errors": []
+}

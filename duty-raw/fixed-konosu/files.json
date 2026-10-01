@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "fixed-konosu",
+    "area": "konosu",
+    "name": "鴻巣市夜間診療所",
+    "url": "https://www.city.kounosu.saitama.jp/page/1563.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.kounosu.saitama.jp/page/1563.html",
+      "sha256": "0b5f4e0075c72cf4b383a9751f543b110045b61f0e2452cc077ae9332830bb39"
+    }
+  ],
+  "errors": []
+}

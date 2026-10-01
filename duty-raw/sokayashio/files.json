@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "sokayashio",
+    "area": "soka",
+    "name": "草加八潮医師会 休日当番医・小児夜間診療",
+    "url": "https://sokayashio-med.or.jp/toban/"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://sokayashio-med.or.jp/toban/",
+      "sha256": "14e918ca3df5c996b039f3ed04c945ec1024d18e0a129965653352576af4edac"
+    }
+  ],
+  "errors": []
+}

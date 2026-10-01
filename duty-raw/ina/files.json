@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "ina",
+    "area": "okekitaina",
+    "name": "伊奈町 急病のときは",
+    "url": "https://www.town.saitama-ina.lg.jp/0000007188.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.town.saitama-ina.lg.jp/0000007188.html",
+      "sha256": "c44ac76ea40f611d36711e1a1b73e8895a5e006e4a4c9b6bf57c0da56394930e"
+    }
+  ],
+  "errors": []
+}

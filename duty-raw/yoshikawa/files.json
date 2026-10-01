@@ -1,0 +1,35 @@
+{
+  "source": {
+    "id": "yoshikawa",
+    "area": "misato",
+    "name": "吉川市 急病の時は",
+    "url": "https://www.city.yoshikawa.saitama.jp/index.cfm/24,0,137,767,html",
+    "follow": "休日|小児|夜間|当番"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.yoshikawa.saitama.jp/index.cfm/24,0,137,767,html",
+      "sha256": "eda9d8833c0001e033aa0322774ea53e4813fce1c41f53b43e9eb494aa0e0c4a"
+    },
+    {
+      "file": "link-1.txt",
+      "url": "https://www.city.yoshikawa.saitama.jp/index.cfm/24,439,137,767,html",
+      "label": "休日当番医診療(急患のみ)に関する情報",
+      "sha256": "ce8c723abc5b83d2b4c4822964437b176b51044e52bdeb4c03acd7dabfa18d2e"
+    },
+    {
+      "file": "link-2.txt",
+      "url": "https://www.city.yoshikawa.saitama.jp/index.cfm/24,447,137,767,html",
+      "label": "小児の初期救急に関する情報（10月の情報を更新）",
+      "sha256": "62733b1752508f23234f66166ebcda1b16df7944d9292378bdcc14fc6bfaf4a9"
+    },
+    {
+      "file": "link-3.txt",
+      "url": "https://www.city.yoshikawa.saitama.jp/index.cfm/24,16905,137,767,html",
+      "label": "小児時間外（初期救急）診療機関の連絡先",
+      "sha256": "855a91a2e9f402d9a1a8992d9cbb76e30d1da32160ae7628e821d69e83cd548d"
+    }
+  ],
+  "errors": []
+}

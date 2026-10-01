@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "fixed-asaka-qqk",
+    "area": "asaka",
+    "name": "朝霞地区医師会 小児救急支援事業",
+    "url": "http://asaka-qqk.net/"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "http://asaka-qqk.net/",
+      "sha256": "73f6df953097db95f949e7babbc89b27f0fae8c5f48c50206f83f3d74a219af2"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "fixed-fukaya",
+    "area": "fukaya",
+    "name": "深谷市 休日・夜間診療",
+    "url": "https://www.city.fukaya.saitama.jp/soshiki/fukushikenko/hokensenta/tanto/kyukyuiryokikan/13452.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.fukaya.saitama.jp/soshiki/fukushikenko/hokensenta/tanto/kyukyuiryokikan/13452.html",
+      "sha256": "be085344abd5769f77d5ddc88676060efca9c1a83a3b39dbcaeea5fbb6020d4f"
+    }
+  ],
+  "errors": []
+}

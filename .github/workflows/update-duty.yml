@@ -1,0 +1,88 @@
+name: 当番医データの毎日更新
+
+on:
+  schedule:
+    # 毎日 5:00（日本時間）。GitHub の混雑で数十分遅れることがある
+    - cron: "0 20 * * *"
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/duty/**"
+      - ".github/workflows/update-duty.yml"
+      - "emergency-tool.html"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-duty
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: PDF変換ツールを入れる
+        run: sudo apt-get update -q && sudo apt-get install -y -q poppler-utils
+
+      - name: 当番表を取得する
+        run: node scripts/duty/fetch.mjs
+
+      - name: 当番医データを作る
+        run: node scripts/duty/build.mjs
+
+      - name: 変更があればコミットする
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add duty-raw emergency-duty.js
+          if git diff --cached --quiet; then
+            echo "変更なし"
+            exit 0
+          fi
+          git commit -m "当番医データを更新（$(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M')）"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+  # 既定のブランチのときだけ、ツールと当番医データを GitHub Pages に公開する。
+  # 公開するのは emergency-tool.html（index.html として）と emergency-duty.js だけ。
+  # リポジトリの Settings → Pages → Source を「GitHub Actions」にしておく必要がある。
+  deploy:
+    needs: update
+    if: github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # update ジョブがコミットした最新の当番医データを取り込む
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: 公開するファイルをまとめる
+        run: |
+          mkdir _site
+          cp emergency-tool.html _site/index.html
+          cp emergency-duty.js _site/emergency-duty.js
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

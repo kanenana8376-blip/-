@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "warabitoda",
+    "area": "kawaguchi",
+    "name": "蕨戸田市医師会 救急医療体制",
+    "url": "http://warabitoda-med.or.jp/emergency-medical-system/"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "http://warabitoda-med.or.jp/emergency-medical-system/",
+      "sha256": "32c771b4525094b2eedcb22c84ca73d2ff0ce0c1dc418229234529b8119e6162"
+    }
+  ],
+  "errors": []
+}

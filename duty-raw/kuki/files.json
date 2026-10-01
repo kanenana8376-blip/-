@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "kuki",
+    "area": "kuki",
+    "name": "久喜市 休日診療のお知らせ",
+    "url": "https://www.city.kuki.lg.jp/kenko/kenko_iryo/kyujitsu/1003818.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.kuki.lg.jp/kenko/kenko_iryo/kyujitsu/1003818.html",
+      "sha256": "4fd95f54503c5449499c4556376bc5603fb7d3efd3f8505823901963c50d93a9"
+    }
+  ],
+  "errors": []
+}

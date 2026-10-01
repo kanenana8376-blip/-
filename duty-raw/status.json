@@ -1,0 +1,403 @@
+{
+  "fetchedAt": "2026-10-01T15:27:27.685Z",
+  "sources": [
+    {
+      "id": "saitama-city",
+      "area": "saitama",
+      "ok": true,
+      "files": 6,
+      "errors": []
+    },
+    {
+      "id": "kawaguchi",
+      "area": "kawaguchi",
+      "ok": true,
+      "files": 4,
+      "errors": []
+    },
+    {
+      "id": "warabitoda",
+      "area": "kawaguchi",
+      "ok": false,
+      "error": "fetch failed"
+    },
+    {
+      "id": "ageo",
+      "area": "ageo",
+      "ok": true,
+      "files": 2,
+      "errors": []
+    },
+    {
+      "id": "asaka",
+      "area": "asaka",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "tokorozawa",
+      "area": "tokorozawa",
+      "ok": true,
+      "files": 3,
+      "errors": []
+    },
+    {
+      "id": "kawagoe",
+      "area": "kawagoe",
+      "ok": true,
+      "files": 3,
+      "errors": []
+    },
+    {
+      "id": "hiki",
+      "area": "hiki",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "sokayashio",
+      "area": "soka",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "kasukabe",
+      "area": "kasukabe",
+      "ok": true,
+      "files": 6,
+      "errors": []
+    },
+    {
+      "id": "kuki",
+      "area": "kuki",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "kumagaya",
+      "area": "kumagaya",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "honjo",
+      "area": "honjo",
+      "ok": true,
+      "files": 2,
+      "errors": []
+    },
+    {
+      "id": "chichibu-ishikai",
+      "area": "chichibu",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "chichibu-city",
+      "area": "chichibu",
+      "ok": true,
+      "files": 2,
+      "errors": []
+    },
+    {
+      "id": "fixed-kawaguchi-kodomo",
+      "area": "kawaguchi",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-asaka-qqk",
+      "area": "asaka",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-asaka-night",
+      "area": "asaka",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-higashimatsuyama",
+      "area": "hiki",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-koshigaya",
+      "area": "koshigaya",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-soka-kodomo",
+      "area": "soka",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-soka-hospital",
+      "area": "soka",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-kasukabe-kodomo",
+      "area": "kasukabe",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-kumagaya",
+      "area": "kumagaya",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-fukaya",
+      "area": "fukaya",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-fukaya-ishikai",
+      "area": "fukaya",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-sayama",
+      "area": "sayama",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-iruma",
+      "area": "sayama",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "iruma",
+      "area": "sayama",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-hanno",
+      "area": "hanno",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-hidaka",
+      "area": "hanno",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-sakado",
+      "area": "sakado",
+      "ok": true,
+      "files": 2,
+      "errors": []
+    },
+    {
+      "id": "fixed-tsurugashima",
+      "area": "sakado",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "moroyama",
+      "area": "sakado",
+      "ok": true,
+      "files": 2,
+      "errors": []
+    },
+    {
+      "id": "fixed-fujimino",
+      "area": "fujimi",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-higashiiruma",
+      "area": "fujimi",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-konosu",
+      "area": "konosu",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "konosu",
+      "area": "konosu",
+      "ok": true,
+      "files": 3,
+      "errors": []
+    },
+    {
+      "id": "kitaadachi",
+      "area": "konosu",
+      "ok": true,
+      "files": 7,
+      "errors": []
+    },
+    {
+      "id": "okegawa",
+      "area": "okekitaina",
+      "ok": true,
+      "files": 4,
+      "errors": []
+    },
+    {
+      "id": "okekitaina-ishikai",
+      "area": "okekitaina",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "ina",
+      "area": "okekitaina",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-misato",
+      "area": "misato",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-misato-kodomo",
+      "area": "misato",
+      "ok": true,
+      "files": 4,
+      "errors": []
+    },
+    {
+      "id": "yoshikawa",
+      "area": "misato",
+      "ok": true,
+      "files": 4,
+      "errors": []
+    },
+    {
+      "id": "kazo",
+      "area": "kazo",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "kazo-kodomo",
+      "area": "kazo",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "hanyu",
+      "area": "kazo",
+      "ok": true,
+      "files": 2,
+      "errors": []
+    },
+    {
+      "id": "gyoda",
+      "area": "gyoda",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "gyoda-hp",
+      "area": "gyoda",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-hasuda",
+      "area": "hasuda",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-shiraoka",
+      "area": "hasuda",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "satte",
+      "area": "satte",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "sugito",
+      "area": "satte",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "fixed-hiki-kodomo",
+      "area": "hiki",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "jibika",
+      "area": "all",
+      "ok": true,
+      "files": 3,
+      "errors": []
+    },
+    {
+      "id": "fixed-fdma",
+      "area": "all",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    }
+  ]
+}

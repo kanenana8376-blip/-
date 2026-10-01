@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "fixed-hasuda",
+    "area": "hasuda",
+    "name": "蓮田市 休日急患診療",
+    "url": "https://www.city.hasuda.saitama.jp/kenko/kenko/otona-kenko/kyukyu/kyujitsushinryo.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.hasuda.saitama.jp/kenko/kenko/otona-kenko/kyukyu/kyujitsushinryo.html",
+      "sha256": "48a1651b19e48920e6e4bbe78b5ae643b3e96dc15a83d315531d79ad39150377"
+    }
+  ],
+  "errors": []
+}

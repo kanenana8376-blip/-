@@ -1,0 +1,22 @@
+{
+  "source": {
+    "id": "hanyu",
+    "area": "kazo",
+    "name": "羽生市 休日当番医",
+    "url": "https://www.city.hanyu.lg.jp/docs/2015032600027/"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.hanyu.lg.jp/docs/2015032600027/",
+      "sha256": "6aaba593cf9737265870314e4d18644142be9689e137757a509a8bda5d915a54"
+    },
+    {
+      "file": "pdf-1.txt",
+      "url": "https://www.city.hanyu.lg.jp/docs/2015032600027/file_contents/file_20267234114355_1.pdf",
+      "label": "2026(R8年度) 在宅当番医表[PDF：84.5KB]",
+      "sha256": "c747f81cf4e1827d5be2f90d5f56503ae8048495f6bc7ef5044a4509da3940f5"
+    }
+  ],
+  "errors": []
+}

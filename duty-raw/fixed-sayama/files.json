@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "fixed-sayama",
+    "area": "sayama",
+    "name": "狭山市急患センターのご案内",
+    "url": "https://www.city.sayama.saitama.jp/fukushi/hokenyobou/kyujitsusinryou/268000kyuukan_annai.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.sayama.saitama.jp/fukushi/hokenyobou/kyujitsusinryou/268000kyuukan_annai.html",
+      "sha256": "b4cf2cacb162bb02d49832852ea394751242d6460931254c59de74b8eaa71ec5"
+    }
+  ],
+  "errors": []
+}

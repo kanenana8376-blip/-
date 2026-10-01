@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "fixed-higashimatsuyama",
+    "area": "hiki",
+    "name": "東松山市休日夜間急患診療所",
+    "url": "https://www.city.higashimatsuyama.lg.jp/soshiki/34/2635.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.higashimatsuyama.lg.jp/soshiki/34/2635.html",
+      "sha256": "56e50b59a6ddcc6af489aeeddb87521bdd02d7dd850fc716771befc106464647"
+    }
+  ],
+  "errors": []
+}

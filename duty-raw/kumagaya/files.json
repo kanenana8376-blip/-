@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "kumagaya",
+    "area": "kumagaya",
+    "name": "熊谷市 救急医療ガイド",
+    "url": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyukyu.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyukyu.html",
+      "sha256": "8204e6188ac9809e45e8e024dbe6f1e88f2e4d602f058be4beda83bd45cb5b6a"
+    }
+  ],
+  "errors": []
+}

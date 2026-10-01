@@ -1,0 +1,29 @@
+{
+  "source": {
+    "id": "kawagoe",
+    "area": "kawagoe",
+    "name": "川越市 休日・夜間診療",
+    "url": "https://www.city.kawagoe.saitama.jp/kurashi/anshin/1001530/1001531/index.html",
+    "follow": "夜間休日診療所"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.kawagoe.saitama.jp/kurashi/anshin/1001530/1001531/index.html",
+      "sha256": "07f9f86a26405046afdae140552baaaf2f4374afa8d38c5322b1d3c86fc17c32"
+    },
+    {
+      "file": "link-1.txt",
+      "url": "https://www.city.kawagoe.saitama.jp/kurashi/anshin/1001530/1001531/1001533.html",
+      "label": "川越市医師会夜間休日診療所（内科・小児科）",
+      "sha256": "586c32dd0b01f6f401986b040f43e143085ecf9d5126ef14d0b582a023ec57b9"
+    },
+    {
+      "file": "link-2.txt",
+      "url": "https://www.city.kawagoe.saitama.jp/kurashi/anshin/1001530/1001531/1001535.html",
+      "label": "川越市医師会夜間休日診療所と川越市予防歯科センターの案内図",
+      "sha256": "4648d39d8d33c9726a71ef3c98f17742d9d8fd1dea8c582b388fcc6051aa271b"
+    }
+  ],
+  "errors": []
+}

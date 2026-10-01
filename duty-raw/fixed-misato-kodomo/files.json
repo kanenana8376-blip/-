@@ -1,0 +1,35 @@
+{
+  "source": {
+    "id": "fixed-misato-kodomo",
+    "area": "misato",
+    "name": "三郷市 小児時間外診療",
+    "url": "https://www.city.misato.lg.jp/soshiki/ikiikikenko/kenkosuishin/11/1530.html",
+    "pdf": "^令和\\d+年\\d+月～"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.misato.lg.jp/soshiki/ikiikikenko/kenkosuishin/11/1530.html",
+      "sha256": "8806f3a1b7c214f5d06a37479e6d4cc5256e0a56e1dea77ded96803c66996587"
+    },
+    {
+      "file": "pdf-1.txt",
+      "url": "https://www.city.misato.lg.jp/material/files/group/24/49R8syounijikangai.pdf",
+      "label": "令和8年4月～9月 (PDFファイル: 103.4KB)",
+      "sha256": "160686ce05536835af5e4978642a088ebb65daaf60abb22d870225c87fe7916e"
+    },
+    {
+      "file": "pdf-2.txt",
+      "url": "https://www.city.misato.lg.jp/material/files/group/24/r8syounijikanngai0508.pdf",
+      "label": "令和8年10月～3月 (PDFファイル: 148.5KB)",
+      "sha256": "690eb49fa0a40d9e225b24f15a43a984b18123958563af7178b1572367591a17"
+    },
+    {
+      "file": "pdf-3.txt",
+      "url": "https://www.city.misato.lg.jp/material/files/group/24/08184674.pdf",
+      "label": "三郷市医師会立休日診療所(PDFファイル:73KB)",
+      "sha256": "ef6cbd2161eaea7943ce8693b9824d23d1793ffb1c0fca05b600d3899b44c977"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,22 @@
+{
+  "source": {
+    "id": "fixed-sakado",
+    "area": "sakado",
+    "name": "坂戸鶴ヶ島医師会立休日急患診療所",
+    "url": "https://www.city.sakado.lg.jp/site/sakado-kosodate/516.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.sakado.lg.jp/site/sakado-kosodate/516.html",
+      "sha256": "10b64bc2133aacee1b3a5d6e1d9d85a997e01c3893c6cdbcacb8337a9eb0e5f6"
+    },
+    {
+      "file": "pdf-1.txt",
+      "url": "https://www.city.sakado.lg.jp/uploaded/attachment/35305.pdf",
+      "label": "令和8年度眼科在宅当番表 [PDFファイル／63KB]",
+      "sha256": "d18e0ecb24b30f88e849e4a59cb0c213443fe933acdc2f96dabd092f28d15654"
+    }
+  ],
+  "errors": []
+}

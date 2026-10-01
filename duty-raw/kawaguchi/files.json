@@ -1,0 +1,35 @@
+{
+  "source": {
+    "id": "kawaguchi",
+    "area": "kawaguchi",
+    "name": "川口市 夜間救急診療・日曜祝日当番医",
+    "url": "https://www.city.kawaguchi.lg.jp/kosodate_gakkou/kodomonoiryo_kenko/iryou/17296.html",
+    "follow": "当番"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.kawaguchi.lg.jp/kosodate_gakkou/kodomonoiryo_kenko/iryou/17296.html",
+      "sha256": "15db8ffd21be3cffe201994bec200c34a15039c251fe3b0f6b4b70db26f66763"
+    },
+    {
+      "file": "link-1.txt",
+      "url": "https://www.city.kawaguchi.lg.jp/kosodate_gakkou/kodomonoiryo_kenko/iryou/index.html",
+      "label": "医療（小児夜間救急・日曜祝日当番医）",
+      "sha256": "9c81fd0729198518c1df597940e48b21f42e19e0bcc63fc99641ec47c901e7ea"
+    },
+    {
+      "file": "link-2.txt",
+      "url": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5637.html",
+      "label": "日曜祝日当番医当番表",
+      "sha256": "736fe3dddd66b45bcf6fb47de771ac9e434159e2ea20a6bb1d0820cb894a6003"
+    },
+    {
+      "file": "link-3.txt",
+      "url": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/1805.html",
+      "label": "当番医療機関などを電話でご案内します",
+      "sha256": "d3c6a72a80cda42810160e5b4b3bd512073c5a594a4a495e22bad8da93930850"
+    }
+  ],
+  "errors": []
+}

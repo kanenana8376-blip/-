@@ -1,0 +1,52 @@
+{
+  "source": {
+    "id": "kitaadachi",
+    "area": "konosu",
+    "name": "北足立郡市医師会 休日・夜間",
+    "url": "https://www.kitaadachi.saitama.med.or.jp/kyuyakan.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.kitaadachi.saitama.med.or.jp/kyuyakan.html",
+      "sha256": "b822ba09d8b548896f0792b106374a966897966906046ab2efead5add2f6cf17"
+    },
+    {
+      "file": "pdf-1.txt",
+      "url": "https://www.kitaadachi.saitama.med.or.jp/kyuyakan/kyujitsu/2019_kounosu-toubani.pdf",
+      "label": "令和元年",
+      "sha256": "206667e1bc8a63e1b8706a89d451534201a123978015b7bffcd334108dd32c17"
+    },
+    {
+      "file": "pdf-2.txt",
+      "url": "https://www.kitaadachi.saitama.med.or.jp/kyuyakan/kyujitsu/2020_kounosu-toubani.pdf",
+      "label": "令和2年",
+      "sha256": "ef6cbd2161eaea7943ce8693b9824d23d1793ffb1c0fca05b600d3899b44c977"
+    },
+    {
+      "file": "pdf-3.txt",
+      "url": "https://www.kitaadachi.saitama.med.or.jp/kyuyakan/kyujitsu/2021_kounosu-toubani.pdf",
+      "label": "令和3年",
+      "sha256": "b132936849dcc92332849a66c997208e079c071df1ba514b7678c440aac272f3"
+    },
+    {
+      "file": "pdf-4.txt",
+      "url": "https://www.kitaadachi.saitama.med.or.jp/kyuyakan/kyujitsu/2022_kounosu-toubani.pdf",
+      "label": "令和4年",
+      "sha256": "99bcb0121793db4560270f51d03b4636bc2f501ffa6ad2aede793f5b6cf1e482"
+    },
+    {
+      "file": "pdf-5.txt",
+      "url": "https://www.kitaadachi.saitama.med.or.jp/kyuyakan/kyujitsu/h30_kitaokeina-toubani.pdf",
+      "label": "平成30年",
+      "sha256": "83fd62f6e5ffb880b00ee7b0d680756fcabae737b5e88769e839ecfed52bcdd9"
+    },
+    {
+      "file": "pdf-6.txt",
+      "url": "https://www.kitaadachi.saitama.med.or.jp/kyuyakan/kyujitsu/2019_kitaokeina-toubani.pdf",
+      "label": "令和元年度",
+      "sha256": "34049e6d12cdd4d75934614e0921ebe6ab14b531862b4527d7af369f56d18ee0"
+    }
+  ],
+  "errors": []
+}

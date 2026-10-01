@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "kazo-kodomo",
+    "area": "kazo",
+    "name": "加須市 休日小児科診療",
+    "url": "https://www.city.kazo.lg.jp/soshiki/kenkou/iryou/2707.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.kazo.lg.jp/soshiki/kenkou/iryou/2707.html",
+      "sha256": "c3023ca43ae62aadf4b3ffbb0aff6e3476a3126ed2267beb535a661766fa3868"
+    }
+  ],
+  "errors": []
+}
