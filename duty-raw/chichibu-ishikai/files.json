@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "chichibu-ishikai",
+    "area": "chichibu",
+    "name": "秩父郡市医師会 休日急患当番病医院",
+    "url": "https://chichibu-ishikai.jp/system/"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://chichibu-ishikai.jp/system/",
+      "sha256": "83b54853ddec64efd7caad2914f3c7c65c158bfe3796770d11af1f79477b43d4"
+    }
+  ],
+  "errors": []
+}

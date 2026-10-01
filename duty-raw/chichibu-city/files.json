@@ -1,0 +1,22 @@
+{
+  "source": {
+    "id": "chichibu-city",
+    "area": "chichibu",
+    "name": "秩父市 休日急患当番医療機関",
+    "url": "https://www.city.chichibu.lg.jp/9070.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.chichibu.lg.jp/9070.html",
+      "sha256": "356029e853a0dcfbe3a68368a2527dc404c55c00940044c193cfebb2e62f09d3"
+    },
+    {
+      "file": "pdf-1.txt",
+      "url": "https://www.city.chichibu.lg.jp/secure/22176/R809kyuukyuutouban.pdf",
+      "label": "市報9月号「休日急患当番医療機関」のページ（929KB)",
+      "sha256": "83220220bc1d54d114f271ef9e8a4b8f5034c46551166bf53a3ba5c8c80aa677"
+    }
+  ],
+  "errors": []
+}

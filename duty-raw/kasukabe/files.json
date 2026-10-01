@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "kasukabe",
+    "area": "kasukabe",
+    "name": "春日部市 休日当番医",
+    "url": "https://www.city.kasukabe.lg.jp/anshin_anzen/kyukyu_kyumei/kyujitsutobani/index.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.kasukabe.lg.jp/anshin_anzen/kyukyu_kyumei/kyujitsutobani/index.html",
+      "sha256": "df66c6075c585bd1a7d101d4e7c7e8e8fbc81ac6f06e5fa2e998a60670758e65"
+    }
+  ],
+  "errors": []
+}

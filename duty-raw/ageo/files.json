@@ -1,0 +1,22 @@
+{
+  "source": {
+    "id": "ageo",
+    "area": "ageo",
+    "name": "上尾市医師会 平日夜間及び休日急患診療所",
+    "url": "https://www.ageomed.com/night.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.ageomed.com/night.html",
+      "sha256": "a2d21eab656e9f08f7ccb1ce25c3f2eee773c54466a7ab9c877bc1876bed489d"
+    },
+    {
+      "file": "pdf-1.txt",
+      "url": "https://www.ageomed.com/pdf/2026sc.pdf?20261120",
+      "label": "2026年度平日夜間・休日急患診療カレンダー",
+      "sha256": "0d9816aad7829ddecdbda0c79432e790fe2b0040736175cd796e016afdd8267a"
+    }
+  ],
+  "errors": []
+}

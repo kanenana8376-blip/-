@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "tokorozawa",
+    "area": "tokorozawa",
+    "name": "所沢市 休日急患当番医",
+    "url": "https://www.city.tokorozawa.saitama.jp/kenko/kenkoiryo/kinkyu/kyujitukyukantobaninogoannai.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.tokorozawa.saitama.jp/kenko/kenkoiryo/kinkyu/kyujitukyukantobaninogoannai.html",
+      "sha256": "7981c62dcc1486382f108c77728a028681a2e2d7f38148d1c9f555e62882a502"
+    }
+  ],
+  "errors": []
+}

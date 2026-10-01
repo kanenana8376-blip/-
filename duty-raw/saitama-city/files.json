@@ -1,0 +1,46 @@
+{
+  "source": {
+    "id": "saitama-city",
+    "area": "saitama",
+    "name": "さいたま市 休日・夜間救急診療",
+    "url": "https://www.city.saitama.lg.jp/002/001/017/006/p019179.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.saitama.lg.jp/002/001/017/006/p019179.html",
+      "sha256": "ef05ca98227c2fef920a65f9834ea695e8baacd1837e5215ae5895ed108739a3"
+    },
+    {
+      "file": "pdf-1.txt",
+      "url": "https://www.city.saitama.lg.jp/002/001/017/006/p019179_d/fil/kyuujitukyuukan.pdf",
+      "label": "さいたま市の休日・夜間救急診療",
+      "sha256": "9a8da55ab216043b784569268bc7e16eedac15a3a78549dfb1e8e4b1d387cff1"
+    },
+    {
+      "file": "pdf-2.txt",
+      "url": "https://www.city.saitama.lg.jp/002/001/017/006/p019179_d/fil/urawa-jisseki.pdf",
+      "label": "さいたま市浦和休日急患診療所／実績・月別患者数(R3～R7)",
+      "sha256": "57827d52a5e142f7c2e8c88eba3d5213aff84c067cb1289dc11f9911dc19e802"
+    },
+    {
+      "file": "pdf-3.txt",
+      "url": "https://www.city.saitama.lg.jp/002/001/017/006/p019179_d/fil/oomiya-jisseki.pdf",
+      "label": "さいたま市大宮休日夜間急患センター／実績・月別患者数(R3～R7)",
+      "sha256": "bbf9851f2ce6a676d4b7234f445c4c38f13daf769207e23a7963bb7333eeabaf"
+    },
+    {
+      "file": "pdf-4.txt",
+      "url": "https://www.city.saitama.lg.jp/002/001/017/006/p019179_d/fil/yono-jisseki.pdf",
+      "label": "さいたま市与野休日急患診療所／実績・月別患者数(R3～R7)",
+      "sha256": "cf088618adf401c44fc92f2b1ed580e5cc0894757add406eb58592497b9e7224"
+    },
+    {
+      "file": "pdf-5.txt",
+      "url": "https://www.city.saitama.lg.jp/002/001/017/006/p019179_d/fil/iwatuki-jisseki.pdf",
+      "label": "岩槻休日夜間急患診療所／実績・月別患者数(R3～R7)",
+      "sha256": "19d6f9322c5a68e44bc8efd54f252f203db1465c34e43962e86b1b03dc01f28b"
+    }
+  ],
+  "errors": []
+}

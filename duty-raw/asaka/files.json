@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "asaka",
+    "area": "asaka",
+    "name": "朝霞地区医師会 日曜・休日当番医",
+    "url": "https://www.asakamed.com/emergency/"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.asakamed.com/emergency/",
+      "sha256": "ef17728d750b427b6ea8534a69eda675d45f7216c868d48b5c3a2c1a30a97934"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "kawaguchi",
+    "area": "kawaguchi",
+    "name": "川口市 夜間救急診療・日曜祝日当番医",
+    "url": "https://www.city.kawaguchi.lg.jp/kosodate_gakkou/kodomonoiryo_kenko/iryou/17296.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.kawaguchi.lg.jp/kosodate_gakkou/kodomonoiryo_kenko/iryou/17296.html",
+      "sha256": "15db8ffd21be3cffe201994bec200c34a15039c251fe3b0f6b4b70db26f66763"
+    }
+  ],
+  "errors": []
+}

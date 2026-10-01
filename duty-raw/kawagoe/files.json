@@ -1,0 +1,16 @@
+{
+  "source": {
+    "id": "kawagoe",
+    "area": "kawagoe",
+    "name": "川越市 休日・夜間診療",
+    "url": "https://www.city.kawagoe.saitama.jp/kurashi/anshin/1001530/1001531/index.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.kawagoe.saitama.jp/kurashi/anshin/1001530/1001531/index.html",
+      "sha256": "07f9f86a26405046afdae140552baaaf2f4374afa8d38c5322b1d3c86fc17c32"
+    }
+  ],
+  "errors": []
+}

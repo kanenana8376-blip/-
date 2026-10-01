@@ -1,0 +1,110 @@
+{
+  "fetchedAt": "2026-10-01T13:28:35.526Z",
+  "sources": [
+    {
+      "id": "saitama-city",
+      "area": "saitama",
+      "ok": true,
+      "files": 6,
+      "errors": []
+    },
+    {
+      "id": "kawaguchi",
+      "area": "kawaguchi",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "warabitoda",
+      "area": "kawaguchi",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "ageo",
+      "area": "ageo",
+      "ok": true,
+      "files": 2,
+      "errors": []
+    },
+    {
+      "id": "asaka",
+      "area": "asaka",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "tokorozawa",
+      "area": "tokorozawa",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "kawagoe",
+      "area": "kawagoe",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "hiki",
+      "area": "hiki",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "sokayashio",
+      "area": "koshigaya",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "kasukabe",
+      "area": "kasukabe",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "kuki",
+      "area": "kuki",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "kumagaya",
+      "area": "kumagaya",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "honjo",
+      "area": "honjo",
+      "ok": true,
+      "files": 2,
+      "errors": []
+    },
+    {
+      "id": "chichibu-ishikai",
+      "area": "chichibu",
+      "ok": true,
+      "files": 1,
+      "errors": []
+    },
+    {
+      "id": "chichibu-city",
+      "area": "chichibu",
+      "ok": true,
+      "files": 2,
+      "errors": []
+    }
+  ]
+}

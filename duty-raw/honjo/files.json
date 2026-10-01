@@ -1,0 +1,22 @@
+{
+  "source": {
+    "id": "honjo",
+    "area": "honjo",
+    "name": "本庄市 休日・夜間診療",
+    "url": "https://www.city.honjo.lg.jp/soshiki/hoken/kenko/oshirase/kyuukan.html"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.city.honjo.lg.jp/soshiki/hoken/kenko/oshirase/kyuukan.html",
+      "sha256": "cdfae9e00cfad3f73012ac196a4c14e20e1783e4179be53b2f9ee0ba59bba067"
+    },
+    {
+      "file": "pdf-1.txt",
+      "url": "https://www.city.honjo.lg.jp/material/files/group/16/R8_zaitaku.pdf",
+      "label": "令和8年度在宅当番表 (PDFファイル: 60.2KB)",
+      "sha256": "8fa419fb61a0865481f47b282409f4aa295bc073b258aa8c48dc52fa61ff9ce9"
+    }
+  ],
+  "errors": []
+}
