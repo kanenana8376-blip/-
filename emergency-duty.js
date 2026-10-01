@@ -2,7 +2,7 @@
 // このファイルは scripts/duty/build.mjs が自動で書き出す。手で直さないこと。
 // 形式の説明は emergency-duty-update.md を参照。
 window.DUTY_DATA = {
-  "updatedAt": "2026-10-01T23:49:57+09:00",
+  "updatedAt": "2026-10-02T00:01:09+09:00",
   "areas": [
     "kawaguchi",
     "asaka",
@@ -22,19 +22,6 @@ window.DUTY_DATA = {
     "all"
   ],
   "coverage": {
-    "2026-10-01": [
-      "kawaguchi",
-      "tokorozawa",
-      "hiki",
-      "soka",
-      "kumagaya",
-      "honjo",
-      "chichibu",
-      "sakado",
-      "misato",
-      "kazo",
-      "all"
-    ],
     "2026-10-02": [
       "kawaguchi",
       "tokorozawa",
@@ -129,76 +116,26 @@ window.DUTY_DATA = {
       "misato",
       "kazo",
       "all"
+    ],
+    "2026-10-08": [
+      "kawaguchi",
+      "asaka",
+      "hiki",
+      "soka",
+      "kasukabe",
+      "kuki",
+      "kumagaya",
+      "honjo",
+      "chichibu",
+      "fukaya",
+      "sayama",
+      "sakado",
+      "misato",
+      "kazo",
+      "all"
     ]
   },
   "entries": [
-    {
-      "area": "misato",
-      "date": "2026-10-01",
-      "name": "あおばファミリークリニック",
-      "address": "三郷市戸ヶ崎2-286-1",
-      "tel": "048-955-8621",
-      "depts": [
-        "小児科"
-      ],
-      "start": "19:00",
-      "end": "20:30",
-      "note": "子どもの夜間の初期救急の当番です。時間は受付時間です（診療は21時まで）。前もって電話で子どもの状態を伝えてから受診を。",
-      "source": "https://www.city.misato.lg.jp/material/files/group/24/r8syounijikanngai0508.pdf"
-    },
-    {
-      "area": "misato",
-      "date": "2026-10-01",
-      "name": "津田医院",
-      "address": "松伏町松伏3432",
-      "tel": "048-993-3111",
-      "depts": [
-        "小児科"
-      ],
-      "start": "19:00",
-      "end": "21:00",
-      "note": "平日夜間の小児時間外（初期救急）診療。時間は受付時間です（診療は21時30分まで）。前もって電話で子どもの状態を伝えてから受診を。",
-      "source": "https://www.city.yoshikawa.saitama.jp/index.cfm/24,447,137,767,html"
-    },
-    {
-      "area": "kawaguchi",
-      "date": "2026-10-01",
-      "name": "川口市立医療センター",
-      "address": "川口市西新井宿180",
-      "tel": "048-287-2525",
-      "depts": [
-        "小児科"
-      ],
-      "start": "23:00",
-      "end": "08:00",
-      "note": "川口市こども夜間救急診療所が閉まった後の、子どもの夜間救急の当番病院です。入院患者の診療中で待つことがあります。受診前に必ず電話を。",
-      "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
-    },
-    {
-      "area": "kumagaya",
-      "date": "2026-10-01",
-      "allDay": true,
-      "name": "埼玉慈恵病院",
-      "tel": "048-521-0321",
-      "depts": [
-        "内科",
-        "外科"
-      ],
-      "note": "大人の一般的な病気の、休日・夜間の当番病院（輪番）です。受付時間は書かれていないので、必ず電話で問い合わせてから。市の表は2022/12/26更新。",
-      "source": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyukyu.html"
-    },
-    {
-      "area": "kumagaya",
-      "date": "2026-10-01",
-      "allDay": true,
-      "name": "熊谷総合病院",
-      "tel": "048-521-0065",
-      "depts": [
-        "内科"
-      ],
-      "note": "脳の病気の、休日・夜間の当番病院です。片側の手足のまひ、ろれつが回らない、激しい頭痛などのときは迷わず119番を。市の表は2022/12/26更新。",
-      "source": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyukyu.html"
-    },
     {
       "area": "misato",
       "date": "2026-10-02",
@@ -1016,6 +953,73 @@ window.DUTY_DATA = {
       "allDay": true,
       "name": "関東脳神経外科病院",
       "tel": "048-521-3133",
+      "depts": [
+        "内科"
+      ],
+      "note": "脳の病気の、休日・夜間の当番病院です。片側の手足のまひ、ろれつが回らない、激しい頭痛などのときは迷わず119番を。市の表は2022/12/26更新。",
+      "source": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyukyu.html"
+    },
+    {
+      "area": "misato",
+      "date": "2026-10-08",
+      "name": "かわぐち泌尿器・内科クリニック",
+      "address": "三郷市采女1-238-1",
+      "tel": "048-969-4353",
+      "depts": [
+        "小児科"
+      ],
+      "start": "19:00",
+      "end": "20:30",
+      "note": "子どもの夜間の初期救急の当番です。時間は受付時間です（診療は21時まで）。前もって電話で子どもの状態を伝えてから受診を。",
+      "source": "https://www.city.misato.lg.jp/material/files/group/24/r8syounijikanngai0508.pdf"
+    },
+    {
+      "area": "misato",
+      "date": "2026-10-08",
+      "name": "さくら医院",
+      "address": "吉川市中央3-16-12",
+      "tel": "048-982-5511",
+      "depts": [
+        "小児科"
+      ],
+      "start": "19:00",
+      "end": "21:00",
+      "note": "平日夜間の小児時間外（初期救急）診療。時間は受付時間です（診療は21時30分まで）。前もって電話で子どもの状態を伝えてから受診を。",
+      "source": "https://www.city.yoshikawa.saitama.jp/index.cfm/24,447,137,767,html"
+    },
+    {
+      "area": "kawaguchi",
+      "date": "2026-10-08",
+      "name": "川口市立医療センター",
+      "address": "川口市西新井宿180",
+      "tel": "048-287-2525",
+      "depts": [
+        "小児科"
+      ],
+      "start": "23:00",
+      "end": "08:00",
+      "note": "川口市こども夜間救急診療所が閉まった後の、子どもの夜間救急の当番病院です。入院患者の診療中で待つことがあります。受診前に必ず電話を。",
+      "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
+    },
+    {
+      "area": "kumagaya",
+      "date": "2026-10-08",
+      "allDay": true,
+      "name": "埼玉慈恵病院",
+      "tel": "048-521-0321",
+      "depts": [
+        "内科",
+        "外科"
+      ],
+      "note": "大人の一般的な病気の、休日・夜間の当番病院（輪番）です。受付時間は書かれていないので、必ず電話で問い合わせてから。市の表は2022/12/26更新。",
+      "source": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyukyu.html"
+    },
+    {
+      "area": "kumagaya",
+      "date": "2026-10-08",
+      "allDay": true,
+      "name": "熊谷総合病院",
+      "tel": "048-521-0065",
       "depts": [
         "内科"
       ],
