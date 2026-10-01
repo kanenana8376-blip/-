@@ -2,51 +2,21 @@
 // このファイルは scripts/duty/build.mjs が自動で書き出す。手で直さないこと。
 // 形式の説明は emergency-duty-update.md を参照。
 window.DUTY_DATA = {
-  "updatedAt": "2026-10-01T22:37:19+09:00",
+  "updatedAt": "2026-10-01T22:37:57+09:00",
   "areas": [
+    "kawaguchi",
     "asaka",
     "tokorozawa",
     "hiki",
     "koshigaya",
+    "kasukabe",
     "kuki",
     "honjo",
     "chichibu"
   ],
   "coverage": {
-    "2026-10-04": [
-      "asaka",
-      "tokorozawa",
-      "hiki",
-      "koshigaya",
-      "kuki",
-      "honjo",
-      "chichibu"
-    ],
-    "2026-10-05": [
-      "asaka",
-      "hiki",
-      "koshigaya",
-      "kuki",
-      "honjo",
-      "chichibu"
-    ],
-    "2026-10-06": [
-      "asaka",
-      "hiki",
-      "koshigaya",
-      "kuki",
-      "honjo",
-      "chichibu"
-    ],
-    "2026-10-07": [
-      "asaka",
-      "hiki",
-      "koshigaya",
-      "kuki",
-      "honjo",
-      "chichibu"
-    ],
     "2026-10-01": [
+      "kawaguchi",
       "tokorozawa",
       "hiki",
       "koshigaya",
@@ -54,6 +24,7 @@ window.DUTY_DATA = {
       "chichibu"
     ],
     "2026-10-02": [
+      "kawaguchi",
       "tokorozawa",
       "hiki",
       "koshigaya",
@@ -61,9 +32,51 @@ window.DUTY_DATA = {
       "chichibu"
     ],
     "2026-10-03": [
+      "kawaguchi",
       "tokorozawa",
       "hiki",
       "koshigaya",
+      "honjo",
+      "chichibu"
+    ],
+    "2026-10-04": [
+      "kawaguchi",
+      "asaka",
+      "tokorozawa",
+      "hiki",
+      "koshigaya",
+      "kasukabe",
+      "kuki",
+      "honjo",
+      "chichibu"
+    ],
+    "2026-10-05": [
+      "kawaguchi",
+      "asaka",
+      "hiki",
+      "koshigaya",
+      "kasukabe",
+      "kuki",
+      "honjo",
+      "chichibu"
+    ],
+    "2026-10-06": [
+      "kawaguchi",
+      "asaka",
+      "hiki",
+      "koshigaya",
+      "kasukabe",
+      "kuki",
+      "honjo",
+      "chichibu"
+    ],
+    "2026-10-07": [
+      "kawaguchi",
+      "asaka",
+      "hiki",
+      "koshigaya",
+      "kasukabe",
+      "kuki",
       "honjo",
       "chichibu"
     ]
@@ -110,6 +123,123 @@ window.DUTY_DATA = {
       "end": "12:00",
       "note": "外科系（切り傷・打撲など）の在宅当番医。当番は変わることがあるので、必ず電話で確認を。",
       "source": "https://www.city.honjo.lg.jp/material/files/group/16/R8_zaitaku.pdf"
+    },
+    {
+      "area": "kasukabe",
+      "date": "2026-10-04",
+      "name": "みくに中央クリニック",
+      "address": "春日部市中央1-56-18",
+      "tel": "048-737-5400",
+      "depts": [
+        "内科"
+      ],
+      "start": "09:00",
+      "end": "12:00",
+      "note": "内科系の当番。診療科目：内科。受付時間は医療機関により異なるので、必ず電話を。",
+      "source": "https://www.city.kasukabe.lg.jp/anshin_anzen/kyukyu_kyumei/kyujitsutobani/13580.html"
+    },
+    {
+      "area": "kasukabe",
+      "date": "2026-10-04",
+      "name": "宇野クリニック",
+      "address": "春日部市粕壁1-6-5-2階",
+      "tel": "048-760-3711",
+      "depts": [
+        "小児科",
+        "内科",
+        "外科"
+      ],
+      "start": "09:00",
+      "end": "12:00",
+      "note": "小児科系の当番。診療科目：内科、小児科、整形外科。受付時間は医療機関により異なるので、必ず電話を。",
+      "source": "https://www.city.kasukabe.lg.jp/anshin_anzen/kyukyu_kyumei/kyujitsutobani/13580.html"
+    },
+    {
+      "area": "kasukabe",
+      "date": "2026-10-04",
+      "name": "さだまつ眼科クリニック",
+      "address": "春日部市谷原新田2213-1",
+      "tel": "048-731-5040",
+      "depts": [
+        "外科",
+        "眼科"
+      ],
+      "start": "09:00",
+      "end": "12:00",
+      "note": "外科系の当番。診療科目：眼科。受付時間は医療機関により異なるので、必ず電話を。",
+      "source": "https://www.city.kasukabe.lg.jp/anshin_anzen/kyukyu_kyumei/kyujitsutobani/13580.html"
+    },
+    {
+      "area": "kawaguchi",
+      "date": "2026-10-04",
+      "name": "埼玉協同病院",
+      "address": "川口市木曽呂1317",
+      "tel": "0570-00-4771",
+      "depts": [
+        "外科",
+        "内科"
+      ],
+      "start": "09:00",
+      "end": "17:00",
+      "note": "診療科目：外・内・胃。途中に休憩時間があります。必ず事前に電話を。",
+      "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5637.html"
+    },
+    {
+      "area": "kawaguchi",
+      "date": "2026-10-04",
+      "name": "ひろ小児科ファミリークリニック",
+      "address": "川口市上青木3-3-1",
+      "tel": "048-266-1155",
+      "depts": [
+        "小児科"
+      ],
+      "start": "09:00",
+      "end": "17:00",
+      "note": "診療科目：小。途中に休憩時間があります。必ず事前に電話を。",
+      "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5637.html"
+    },
+    {
+      "area": "kawaguchi",
+      "date": "2026-10-04",
+      "name": "安行メディカルクリニック",
+      "address": "川口市安行藤八418",
+      "tel": "048-291-3568",
+      "depts": [
+        "内科",
+        "外科"
+      ],
+      "start": "09:00",
+      "end": "17:00",
+      "note": "診療科目：内・外・消。途中に休憩時間があります。必ず事前に電話を。",
+      "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5637.html"
+    },
+    {
+      "area": "kawaguchi",
+      "date": "2026-10-04",
+      "name": "さとう眼科医院",
+      "address": "川口市芝4-5-30",
+      "tel": "048-266-7359",
+      "depts": [
+        "眼科"
+      ],
+      "start": "09:00",
+      "end": "17:00",
+      "note": "診療科目：眼。途中に休憩時間があります。必ず事前に電話を。",
+      "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5637.html"
+    },
+    {
+      "area": "kawaguchi",
+      "date": "2026-10-04",
+      "name": "はしだ歯科医院",
+      "address": "川口市朝日2-6-12",
+      "tel": "048-226-4343",
+      "depts": [
+        "歯科"
+      ],
+      "start": "09:00",
+      "end": "17:00",
+      "note": "診療科目：歯。途中に休憩時間があります。必ず事前に電話を。",
+      "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5637.html"
     },
     {
       "area": "koshigaya",
@@ -233,6 +363,51 @@ window.DUTY_DATA = {
       "end": "16:00",
       "note": "当番の診療科目：耳、アレ（通常と異なる場合あり）",
       "source": "https://www.asakamed.com/emergency/"
+    },
+    {
+      "area": "kasukabe",
+      "date": "2026-10-04",
+      "name": "みくに中央クリニック",
+      "address": "春日部市中央1-56-18",
+      "tel": "048-737-5400",
+      "depts": [
+        "内科"
+      ],
+      "start": "14:00",
+      "end": "17:00",
+      "note": "内科系の当番。診療科目：内科。受付時間は医療機関により異なるので、必ず電話を。",
+      "source": "https://www.city.kasukabe.lg.jp/anshin_anzen/kyukyu_kyumei/kyujitsutobani/13580.html"
+    },
+    {
+      "area": "kasukabe",
+      "date": "2026-10-04",
+      "name": "宇野クリニック",
+      "address": "春日部市粕壁1-6-5-2階",
+      "tel": "048-760-3711",
+      "depts": [
+        "小児科",
+        "内科",
+        "外科"
+      ],
+      "start": "14:00",
+      "end": "17:00",
+      "note": "小児科系の当番。診療科目：内科、小児科、整形外科。受付時間は医療機関により異なるので、必ず電話を。",
+      "source": "https://www.city.kasukabe.lg.jp/anshin_anzen/kyukyu_kyumei/kyujitsutobani/13580.html"
+    },
+    {
+      "area": "kasukabe",
+      "date": "2026-10-04",
+      "name": "さだまつ眼科クリニック",
+      "address": "春日部市谷原新田2213-1",
+      "tel": "048-731-5040",
+      "depts": [
+        "外科",
+        "眼科"
+      ],
+      "start": "14:00",
+      "end": "17:00",
+      "note": "外科系の当番。診療科目：眼科。受付時間は医療機関により異なるので、必ず電話を。",
+      "source": "https://www.city.kasukabe.lg.jp/anshin_anzen/kyukyu_kyumei/kyujitsutobani/13580.html"
     },
     {
       "area": "koshigaya",

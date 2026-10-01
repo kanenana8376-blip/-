@@ -449,31 +449,37 @@ const FACILITIES = [
     source: "http://asaka-qqk.net/",
   },
   {
-    name: "所沢市市民医療センター（小児夜間診療）",
+    name: "所沢市市民医療センター（小児急患診療）",
     area: "tokorozawa",
     address: "所沢市上安松1224-1",
-    tel: "04-2992-1152",
+    tel: "04-2992-1151",
     depts: ["小児科"],
     slots: [
       { days: ["weekday"], start: "19:30", end: "22:15" },
       { days: ["sat", "kyujitsu"], start: "18:00", end: "20:45" },
+      // 深夜帯：火・水・金・土・日（祝休日でも実施）の夜間診療の後〜翌朝7時
+      { days: ["w2", "w3", "w5"], start: "22:15", end: "07:00" },
+      { days: ["d2", "d3", "d5"], also: ["kyujitsu"], start: "20:45", end: "07:00" },
+      { days: ["d6", "d0"], start: "20:45", end: "07:00" },
     ],
-    note: "深夜帯・日曜日の小児診療もあります（時間は要確認）。",
+    note: "時間は受付時間です。深夜帯（翌朝7時まで）は救急の場合に限り、来院前に必ず電話を。日曜・祝休日の昼間の小児科診療もあります（実施日は要確認）。",
+    verified: "2026-10-01",
     source: "https://www.city.tokorozawa.saitama.jp/kenko/kenkoiryo/kinkyu/syonikanichiyokyukanyakansinryo.html",
   },
   {
     name: "川越市医師会 夜間休日診療所",
     area: "kawagoe",
-    address: "",
-    tel: "",
+    address: "川越市小仙波町2-53-1 川越市医師会館1階",
+    tel: "049-222-3330",
     depts: ["内科", "小児科"],
     slots: [
       { days: ["daily"], start: "20:00", end: "22:00" },
       { days: ["kyujitsu"], start: "09:00", end: "11:00" },
       { days: ["kyujitsu"], start: "13:00", end: "15:00" },
     ],
-    note: "時間は受付時間です。住所・電話番号は未確認です。",
-    source: "https://www.kawagoe-med.jp/night_holiday/",
+    note: "時間は受付時間です。事前に電話を。天候などで臨時休診することがあります。年末年始は12/29〜1/3。",
+    verified: "2026-10-01",
+    source: "https://www.city.kawagoe.saitama.jp/kurashi/anshin/1001530/1001531/1001533.html",
   },
   {
     name: "東松山市休日夜間急患診療所（東松山医師会病院）",
@@ -649,12 +655,13 @@ function isNenmatsu(d, from = 29) {
   return (m === 12 && day >= from) || (m === 1 && day <= 3);
 }
 // その日に当てはまる区分（"weekday" / "sat" / "sun" / "holiday" / "nenmatsu" / "kyujitsu" /
-// 日曜・祝日・年末年始以外の曜日 "w1"〜"w6"）
+// 日曜・祝日・年末年始以外の曜日 "w1"〜"w6"、祝日かどうかに関係ない曜日 "d0"〜"d6"）
 function dayKinds(d, nenmatsuFrom) {
   const kinds = new Set(["daily"]);
   const wd = d.getDay();
   const holiday = HOLIDAYS.has(ymd(d));
   const nen = isNenmatsu(d, nenmatsuFrom);
+  kinds.add(`d${wd}`);
   if (holiday) kinds.add("holiday");
   if (nen) kinds.add("nenmatsu");
   if (wd === 0) kinds.add("sun");
@@ -681,7 +688,7 @@ const fmt = m => `${Math.floor(m / 60) % 24}:${String(m % 60).padStart(2, "0")}`
 function slotOnDay(slot, day, fac) {
   if (slot.dates) return slot.dates.includes(ymd(day));
   const kinds = dayKinds(day, fac.nenmatsuFrom);
-  return slot.days.some(x => kinds.has(x));
+  return slot.days.some(x => kinds.has(x)) && (slot.also || []).every(x => kinds.has(x));
 }
 function slotMatchesDept(slot, fac, dept) {
   return (slot.depts || fac.depts).includes(dept);
@@ -721,12 +728,14 @@ function statusAt(fac, dept, t) {
 const DAY_NAMES = {
   weekday: "平日", sat: "土曜", sun: "日曜", holiday: "祝日", nenmatsu: "年末年始", kyujitsu: "日曜・祝日・年末年始", daily: "毎日",
   w1: "月曜", w2: "火曜", w3: "水曜", w4: "木曜", w5: "金曜", w6: "土曜",
+  d0: "日曜", d1: "月曜", d2: "火曜", d3: "水曜", d4: "木曜", d5: "金曜", d6: "土曜",
 };
 function hoursSummary(fac) {
   if (!fac.slots.length) return fac.hoursText || "時間は要確認";
   return fac.slots.map(s => {
-    const d = s.dates ? s.dates.map(x => `${+x.slice(5, 7)}/${+x.slice(8)}`).join("・")
+    let d = s.dates ? s.dates.map(x => `${+x.slice(5, 7)}/${+x.slice(8)}`).join("・")
       : s.days.map(x => DAY_NAMES[x]).join("・");
+    if (s.also) d += `（${s.also.map(x => x === "kyujitsu" ? "祝日" : DAY_NAMES[x]).join("・")}の場合）`;
     const dep = s.depts ? `（${s.depts.join("・")}）` : "";
     const end = toMin(s.end) <= toMin(s.start) ? `翌${s.end}` : s.end;
     return `${d} ${s.start}〜${end}${dep}`;

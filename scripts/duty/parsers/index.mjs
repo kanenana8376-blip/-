@@ -11,6 +11,8 @@ import asaka from "./asaka.mjs";
 import chichibu from "./chichibu.mjs";
 import hiki from "./hiki.mjs";
 import honjo from "./honjo.mjs";
+import kasukabe from "./kasukabe.mjs";
+import kawaguchi from "./kawaguchi.mjs";
 import kuki from "./kuki.mjs";
 import sokayashio from "./sokayashio.mjs";
 import tokorozawa from "./tokorozawa.mjs";
@@ -20,6 +22,8 @@ export default {
   "chichibu-ishikai": chichibu,
   "hiki": hiki,
   "honjo": honjo,
+  "kasukabe": kasukabe,
+  "kawaguchi": kawaguchi,
   "kuki": kuki,
   "sokayashio": sokayashio,
   "tokorozawa": tokorozawa,
