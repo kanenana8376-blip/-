@@ -1,0 +1,17 @@
+{
+  "source": {
+    "id": "fixed-fdma",
+    "area": "all",
+    "name": "総務省消防庁 救急車を上手に使いましょう",
+    "url": "https://www.fdma.go.jp/publication/portal/post1.html",
+    "pdf": "救急車|日本語"
+  },
+  "files": [
+    {
+      "file": "page.txt",
+      "url": "https://www.fdma.go.jp/publication/portal/post1.html",
+      "sha256": "972c3cf6bc6e5ad0335f009336aa0c758b0263751bc2e252943b827c9f6af71b"
+    }
+  ],
+  "errors": []
+}

@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-10-01T14:27:19.601Z",
+  "fetchedAt": "2026-10-01T14:49:57.368Z",
   "sources": [
     {
       "id": "saitama-city",
@@ -391,6 +391,13 @@
       "area": "all",
       "ok": true,
       "files": 3,
+      "errors": []
+    },
+    {
+      "id": "fixed-fdma",
+      "area": "all",
+      "ok": true,
+      "files": 1,
       "errors": []
     }
   ]
