@@ -147,6 +147,25 @@
     padding: 5px 10px;
   }
   .actions a.tel { background: var(--navy); color: #fff; font-weight: 700; }
+  /* 症状から調べる */
+  .sx-grid { display: grid; gap: 12px; }
+  .chk { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chk label { border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-size: 13.5px; background: #fff; cursor: pointer; }
+  .chk input { margin-right: 4px; }
+  .chk label:has(input:checked) { background: #e8f0f8; border-color: var(--navy); }
+  .flags { border: 2px solid var(--red); border-radius: 8px; padding: 10px 12px; background: var(--red-bg); }
+  .flags .lbl { color: var(--red); }
+  .flags label { display: block; font-size: 14px; padding: 4px 0; }
+  .sx-result { border-radius: 10px; padding: 12px 14px; margin-top: 4px; font-size: 14px; }
+  .sx-result h3 { margin: 0 0 6px; font-size: 16px; }
+  .sx-result ul { margin: 6px 0 0; padding-left: 20px; font-size: 13.5px; }
+  .sx-result.l119 { background: var(--red); color: #fff; }
+  .sx-result.l119 a { color: #fff; }
+  .sx-result.lconsult { background: var(--amber-bg); color: var(--amber); border: 1px solid #f0d9a8; }
+  .sx-result.lgo { background: var(--green-bg); color: var(--green); border: 1px solid #bfe3cd; }
+  .sx-note { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .sx-call { display: inline-block; margin: 6px 6px 0 0; padding: 8px 14px; border-radius: 8px; font-weight: 700; text-decoration: none; background: #fff; color: var(--red); }
+  .lconsult .sx-call, .lgo .sx-call { background: var(--navy); color: #fff; }
   .empty {
     background: var(--panel);
     border: 1px dashed var(--line);
@@ -189,6 +208,56 @@
       #7119がつながらない電話：<a href="tel:0488244199">048-824-4199</a> ／ #8000：<a href="tel:0488337911">048-833-7911</a><br>
       チャットで相談：<a href="https://www.pref.saitama.lg.jp/a0703/aikyukyu.html" target="_blank" rel="noopener">埼玉県AI救急相談</a><br>
       心の急な不調（夜間・休日）：精神科救急情報センター <a href="tel:0487238699">048-723-8699</a>
+    </div>
+  </section>
+
+  <section class="panel" aria-label="症状から調べる" id="sx">
+    <h2>症状から、緊急度と診療科を調べる</h2>
+    <p class="sx-note" style="margin-top:-4px">診断ではありません。総務省消防庁「救急車を上手に使いましょう」の目安をもとに、行き先の考え方を示します。入力した内容は保存も送信もしません。</p>
+    <div class="sx-grid">
+      <div class="field">
+        <label for="sxAge">年齢</label>
+        <select id="sxAge">
+          <option value="">選んでください</option>
+          <option value="infant">生後3か月未満</option>
+          <option value="baby">3か月〜5歳</option>
+          <option value="kid">6歳〜中学生</option>
+          <option value="adult">高校生〜64歳</option>
+          <option value="senior">65歳以上</option>
+        </select>
+      </div>
+      <div class="field">
+        <span class="lbl">性別（妊娠の可能性の確認だけに使います）</span>
+        <div class="seg" id="sxSex">
+          <label><input type="radio" name="sxSex" value="m">男性</label>
+          <label><input type="radio" name="sxSex" value="f">女性</label>
+          <label><input type="radio" name="sxSex" value="" checked>答えない</label>
+        </div>
+      </div>
+      <div class="field">
+        <span class="lbl">持病・いまの状態（あてはまるものすべて）</span>
+        <div class="chk" id="sxHistory"></div>
+      </div>
+      <div class="field">
+        <label for="sxOnset">いつから</label>
+        <select id="sxOnset">
+          <option value="">選んでください</option>
+          <option value="now">いま・1時間以内に急に</option>
+          <option value="today">今日になってから</option>
+          <option value="yesterday">昨日から</option>
+          <option value="days">2〜3日前から</option>
+          <option value="long">それより前から</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="sxMain">いちばん困っている症状</label>
+        <select id="sxMain"></select>
+      </div>
+      <div class="field flags" id="sxFlagsBox" hidden>
+        <span class="lbl">次のどれかがあれば、迷わず119番です（あてはまるものに✓）</span>
+        <div id="sxFlags"></div>
+      </div>
+      <div id="sxResult" aria-live="polite"></div>
     </div>
   </section>
 
@@ -1275,8 +1344,173 @@ function render() {
   out.innerHTML = html;
 }
 
+// ---------------------------------------------------------------
+// 症状から調べる
+//   119番のサインは、総務省消防庁「救急車を上手に使いましょう」（duty-raw/fixed-fdma）に
+//   載っている「迷わず119番」の症状をもとにしている。
+//   どれか1つでも✓があれば119番。年齢・持病・妊娠で重くなりやすい人は #7119（子どもは #8000）への相談を先に勧める。
+// ---------------------------------------------------------------
+const SX_HISTORY = [
+  ["heart", "心臓の病気"], ["stroke", "脳卒中になったことがある"], ["diabetes", "糖尿病"],
+  ["kidney", "腎臓の病気・透析"], ["cancer", "がんの治療中"], ["blood", "血をサラサラにする薬を飲んでいる"],
+  ["immune", "免疫を弱める薬（ステロイドなど）"], ["pregnant", "妊娠中・妊娠の可能性"],
+];
+// 全部の症状に共通の119番のサイン
+const SX_COMMON = {
+  adult: ["意識がない・呼びかけへの反応がおかしい", "息が苦しい・呼吸がおかしい", "顔色が明らかに悪い", "けいれんが止まらない、止まっても意識が戻らない"],
+  child: ["意識がない・呼びかけへの反応がおかしい", "くちびるが紫色で、呼吸が弱い", "けいれんが止まらない、止まっても意識が戻らない", "ぐったりしていて、様子が明らかにおかしい"],
+};
+// dept: 大人の行き先（子どもは内科を小児科に読みかえる）
+const SX = [
+  { id: "fever", label: "熱がある", dept: "内科",
+    adult: ["急な高熱で、強い頭痛や首の後ろの痛みがある"],
+    child: ["生後3か月未満で、様子がおかしい"] },
+  { id: "head", label: "頭が痛い", dept: "内科",
+    adult: ["突然の激しい頭痛", "顔の半分が動きにくい・しびれる、ろれつが回らない", "急にふらついて支えなしで立てない", "物が二つに見える・視野が欠ける"],
+    child: ["頭を痛がって、けいれんがある", "頭を強くぶつけて、出血が止まらない・意識がない・けいれんがある"] },
+  { id: "chest", label: "胸・背中が痛い", dept: "内科",
+    adult: ["突然の激しい痛み", "胸の真ん中が締めつけられる・押される痛みが2〜3分以上続く", "痛む場所が移動する", "冷や汗を伴う"],
+    child: ["激しいせきやゼーゼーで、呼吸が苦しそう"] },
+  { id: "breath", label: "せき・息苦しい・ゼーゼーする", dept: "内科",
+    adult: ["急に息切れがして、呼吸がしにくい", "話せないほど苦しい"],
+    child: ["激しいせきやゼーゼーで、呼吸が苦しそう", "呼吸が弱い"] },
+  { id: "belly", label: "おなかが痛い", dept: "内科",
+    adult: ["突然の激しい腹痛", "激しい腹痛が続く", "血を吐いた", "便に血が混じる・真っ黒な便"],
+    child: ["激しいおなかの痛みで苦しがる", "吐くのが止まらない", "便に血が混じった"] },
+  { id: "vomit", label: "吐き気・吐く・下痢", dept: "内科",
+    adult: ["冷や汗を伴う強い吐き気", "血を吐いた"],
+    child: ["激しい下痢や吐くことで水分がとれず、意識がはっきりしない", "吐くのが止まらない"] },
+  { id: "dizzy", label: "めまい・ふらつき", dept: "内科",
+    adult: ["急にふらついて支えなしで立てない", "顔の半分が動きにくい・しびれる、ろれつが回らない", "物が二つに見える・視野が欠ける"],
+    child: [] },
+  { id: "numb", label: "手足のしびれ・力が入らない・ろれつが回らない", dept: "内科",
+    adult: ["突然、片方の腕や足に力が入らない・しびれる", "顔の半分が動きにくい、笑うと顔の片方がゆがむ", "ろれつが回らない・言葉が出ない"],
+    child: ["手足が硬直している"] },
+  { id: "seizure", label: "けいれん", dept: "内科",
+    adult: ["けいれんが止まらない", "けいれんが止まっても意識が戻らない"],
+    child: ["けいれんが止まらない", "けいれんが止まっても意識が戻らない"] },
+  { id: "injury", label: "けが・出血・骨折", dept: "外科",
+    adult: ["大量の出血を伴うけが", "交通事故や高い所から落ちた（強い衝撃）", "頭を強く打って、意識がおかしい・吐く"],
+    child: ["頭を強くぶつけて、出血が止まらない・意識がない・けいれんがある", "交通事故や高い所から落ちた（強い衝撃）"] },
+  { id: "burn", label: "やけど", dept: "外科",
+    adult: ["広い範囲のやけど", "顔や息の通り道（口・のど）のやけど"],
+    child: ["痛みのひどいやけど", "広い範囲のやけど"] },
+  { id: "swallow", label: "物をのどにつまらせた・変な物を飲みこんだ", dept: "内科",
+    adult: ["物がのどにつまって呼吸が苦しい", "変な物を飲みこんで、意識がない"],
+    child: ["物がのどにつまって呼吸が苦しい", "変な物を飲みこんで、意識がない"],
+    extra: "薬や洗剤などを飲みこんだときは「中毒110番」（大阪 072-727-2499、24時間）でも対処法を聞けます。" },
+  { id: "allergy", label: "じんましん・発疹・虫さされ", dept: "内科",
+    adult: ["全身にじんましんが出て、息苦しい・顔色が悪い"],
+    child: ["虫に刺されて全身にじんましんが出て、顔色が悪くなった"] },
+  { id: "ent", label: "耳・鼻・のどの痛み、鼻血", dept: "耳鼻咽喉科",
+    adult: ["のどが腫れて息が苦しい・つばも飲みこめない"],
+    child: ["のどが腫れて息が苦しい・つばも飲みこめない"] },
+  { id: "eye", label: "目の痛み・目にものが入った・見えにくい", dept: "眼科",
+    adult: ["急に片目が見えなくなった・視野が欠けた", "薬品が目に入った"],
+    child: ["薬品が目に入った"] },
+  { id: "tooth", label: "歯の痛み・歯のけが", dept: "歯科", adult: [], child: [] },
+  { id: "mind", label: "気持ちの不調（不安・眠れない・死にたい気持ち）", dept: null, adult: ["自分や他人を傷つけるおそれがある"], child: ["自分や他人を傷つけるおそれがある"] },
+];
+// 年齢・持病で重くなりやすい症状
+const SX_RISKY = ["fever", "head", "chest", "breath", "belly", "vomit", "dizzy", "numb"];
+
+function sxIsChild(age) { return ["infant", "baby", "kid"].includes(age); }
+
+function sxInit() {
+  $("sxHistory").innerHTML = SX_HISTORY.map(([v, l]) =>
+    `<label><input type="checkbox" value="${v}">${esc(l)}</label>`).join("");
+  $("sxMain").innerHTML = `<option value="">選んでください</option>` +
+    SX.map(x => `<option value="${x.id}">${esc(x.label)}</option>`).join("");
+  ["sxAge", "sxOnset", "sxMain"].forEach(id => $(id).addEventListener("change", () => { sxRenderFlags(); sxEvaluate(); }));
+  document.querySelectorAll("input[name=sxSex]").forEach(r => r.addEventListener("change", sxEvaluate));
+  $("sxHistory").addEventListener("change", sxEvaluate);
+  $("sxFlags").addEventListener("change", sxEvaluate);
+}
+
+function sxRenderFlags() {
+  const sym = SX.find(x => x.id === $("sxMain").value);
+  const age = $("sxAge").value;
+  if (!sym || !age) { $("sxFlagsBox").hidden = true; $("sxFlags").innerHTML = ""; return; }
+  const kind = sxIsChild(age) ? "child" : "adult";
+  const flags = [...new Set([...(sym[kind] || []), ...SX_COMMON[kind]])];
+  $("sxFlags").innerHTML = flags.map((f, i) => `<label><input type="checkbox" value="${i}"> ${esc(f)}</label>`).join("");
+  $("sxFlagsBox").hidden = false;
+}
+
+function sxEvaluate() {
+  const out = $("sxResult");
+  const age = $("sxAge").value, onset = $("sxOnset").value;
+  const sym = SX.find(x => x.id === $("sxMain").value);
+  if (!age || !sym) { out.innerHTML = ""; return; }
+  const sex = getVal("sxSex");
+  const history = [...$("sxHistory").querySelectorAll("input:checked")].map(i => i.value);
+  const flagged = [...$("sxFlags").querySelectorAll("input:checked")].map(i => i.parentElement.textContent.trim());
+  const child = sxIsChild(age);
+  const consultTel = child ? `<a class="sx-call" href="tel:%238000">#8000 に電話（子ども）</a>` : "";
+  let extra = sym.extra ? `<p class="sx-note" style="color:inherit">${esc(sym.extra)}</p>` : "";
+  // 性別は、妊娠の可能性を確かめてもらうためだけに使う
+  if (sex === "f" && age === "adult" && !history.includes("pregnant") && ["belly", "vomit", "fever"].includes(sym.id)) {
+    extra += `<p class="sx-note" style="color:inherit">妊娠の可能性がある場合は、上の「妊娠中・妊娠の可能性」にも✓を入れてください。</p>`;
+  }
+
+  // 1) 119番
+  if (flagged.length) {
+    out.innerHTML = `<div class="sx-result l119"><h3>いますぐ 119番 に電話してください</h3>
+      <a class="sx-call" href="tel:119">119番に電話</a>
+      <ul>${flagged.map(f => `<li>${esc(f)}</li>`).join("")}</ul>
+      <p class="sx-note" style="color:#fff">救急車を待つ間は、楽な姿勢で安静に。持病・飲んでいる薬・いつからかを伝えられるようにしておくと役立ちます。</p>${extra}</div>`;
+    return;
+  }
+  // 2) 心の不調は精神科救急情報センターへ
+  if (sym.id === "mind") {
+    out.innerHTML = `<div class="sx-result lconsult"><h3>埼玉県精神科救急情報センターに相談してください</h3>
+      <a class="sx-call" href="tel:0487238699">048-723-8699 に電話</a>
+      <p class="sx-note" style="color:inherit">平日17時〜翌8時30分、土日祝は8時30分〜翌8時30分。それ以外の時間は、お住まいの地域の保健所へ。</p></div>`;
+    return;
+  }
+  const dept = child && sym.dept === "内科" ? "小児科" : sym.dept;
+  // 3) 重くなりやすい人は、相談を先に
+  const reasons = [];
+  if (age === "infant") reasons.push("生後3か月未満の赤ちゃんは、急に悪くなることがあります。");
+  if (age === "senior" && SX_RISKY.includes(sym.id)) reasons.push("65歳以上の方は、症状が軽く見えても重い病気のことがあります。");
+  const hist = history.filter(h => h !== "pregnant");
+  if (hist.length && SX_RISKY.includes(sym.id)) reasons.push("持病や飲んでいる薬によって、重くなりやすいことがあります。");
+  if (history.includes("blood") && ["injury", "head"].includes(sym.id)) reasons.push("血をサラサラにする薬を飲んでいると、けがや頭を打ったときに出血が続きやすくなります。");
+  if (history.includes("pregnant") && ["belly", "fever", "vomit", "head"].includes(sym.id)) {
+    reasons.push("妊娠中は、まずかかっている産婦人科に電話で相談してください。");
+  }
+  if (onset === "now" && ["head", "chest", "belly", "numb", "dizzy"].includes(sym.id)) reasons.push("急に始まった強い症状は、重い病気のことがあります。");
+
+  sxApplyDept(dept, child);
+  const goText = `<p style="margin:6px 0 0">下の一覧を「${esc(dept)}」に切り替えました。いま受診できるところを確認し、<b>受診前に電話</b>してください。</p>
+    <a class="sx-call" href="#results" onclick="document.getElementById('results').scrollIntoView({behavior:'smooth'});return false;">受診できるところを見る</a>`;
+  if (reasons.length) {
+    out.innerHTML = `<div class="sx-result lconsult"><h3>受診の前に、まず ${child ? "#8000" : "#7119"} に相談してください</h3>
+      ${child ? consultTel : ""}<a class="sx-call" href="tel:%237119">#7119 に電話</a>
+      <ul>${reasons.map(r => `<li>${esc(r)}</li>`).join("")}</ul>${goText}${extra}</div>`;
+    return;
+  }
+  // 4) 急患診療所・当番医へ
+  const later = ["days", "long"].includes(onset)
+    ? `<p class="sx-note" style="color:inherit">数日前からの症状で急に悪くなっていなければ、診療時間内のかかりつけ医の受診も考えてください。</p>` : "";
+  out.innerHTML = `<div class="sx-result lgo"><h3>${esc(dept)}の急患診療所・当番医を受診できます</h3>
+    ${goText}${later}${extra}
+    <p class="sx-note" style="color:inherit">迷ったら #7119（子どもは #8000）に相談できます。症状が急に強くなったら119番を。</p></div>`;
+}
+
+// 症状から決まった診療科と、大人・子どもを検索条件に反映する
+function sxApplyDept(dept, child) {
+  // 小児科は「熱・腹痛など（内科）」＋子ども で探す（一覧は子どもの内科系を小児科として扱う）
+  const d = document.querySelector(`input[name=dept][value="${dept === "小児科" ? "内科" : dept}"]`);
+  if (d) d.checked = true;
+  const w = document.querySelector(`input[name=who][value="${child ? "child" : "adult"}"]`);
+  if (w) w.checked = true;
+  render();
+}
+
 function init() {
   initArea();
+  sxInit();
   $("ccList").innerHTML = CRITICAL_CARE.map(n => `<li>${esc(n)}</li>`).join("");
   $("dataDate").textContent = `掲載データの収集日：${DATA_DATE}`;
   document.querySelectorAll("input[name=when]").forEach(r => r.addEventListener("change", () => {
