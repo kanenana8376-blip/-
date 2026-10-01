@@ -1,0 +1,92 @@
+[
+  {
+    "id": "saitama-city",
+    "area": "saitama",
+    "name": "さいたま市 休日・夜間救急診療",
+    "url": "https://www.city.saitama.lg.jp/002/001/017/006/p019179.html"
+  },
+  {
+    "id": "kawaguchi",
+    "area": "kawaguchi",
+    "name": "川口市 夜間救急診療・日曜祝日当番医",
+    "url": "https://www.city.kawaguchi.lg.jp/kosodate_gakkou/kodomonoiryo_kenko/iryou/17296.html"
+  },
+  {
+    "id": "warabitoda",
+    "area": "kawaguchi",
+    "name": "蕨戸田市医師会 救急医療体制",
+    "url": "http://warabitoda-med.or.jp/emergency-medical-system/"
+  },
+  {
+    "id": "ageo",
+    "area": "ageo",
+    "name": "上尾市医師会 平日夜間及び休日急患診療所",
+    "url": "https://www.ageomed.com/night.html"
+  },
+  {
+    "id": "asaka",
+    "area": "asaka",
+    "name": "朝霞地区医師会 日曜・休日当番医",
+    "url": "https://www.asakamed.com/emergency/"
+  },
+  {
+    "id": "tokorozawa",
+    "area": "tokorozawa",
+    "name": "所沢市 休日急患当番医",
+    "url": "https://www.city.tokorozawa.saitama.jp/kenko/kenkoiryo/kinkyu/kyujitukyukantobaninogoannai.html"
+  },
+  {
+    "id": "kawagoe",
+    "area": "kawagoe",
+    "name": "川越市 休日・夜間診療",
+    "url": "https://www.city.kawagoe.saitama.jp/kurashi/anshin/1001530/1001531/index.html"
+  },
+  {
+    "id": "hiki",
+    "area": "hiki",
+    "name": "比企医師会 休日在宅当番",
+    "url": "https://hiki-ishikai.com/kyuujitsu/"
+  },
+  {
+    "id": "sokayashio",
+    "area": "koshigaya",
+    "name": "草加八潮医師会 休日当番医・小児夜間診療",
+    "url": "https://sokayashio-med.or.jp/toban/"
+  },
+  {
+    "id": "kasukabe",
+    "area": "kasukabe",
+    "name": "春日部市 休日当番医",
+    "url": "https://www.city.kasukabe.lg.jp/anshin_anzen/kyukyu_kyumei/kyujitsutobani/index.html"
+  },
+  {
+    "id": "kuki",
+    "area": "kuki",
+    "name": "久喜市 休日診療のお知らせ",
+    "url": "https://www.city.kuki.lg.jp/kenko/kenko_iryo/kyujitsu/1003818.html"
+  },
+  {
+    "id": "kumagaya",
+    "area": "kumagaya",
+    "name": "熊谷市 救急医療ガイド",
+    "url": "https://www.city.kumagaya.lg.jp/kurashi/bosai/shinryo/kyukyu.html"
+  },
+  {
+    "id": "honjo",
+    "area": "honjo",
+    "name": "本庄市 休日・夜間診療",
+    "url": "https://www.city.honjo.lg.jp/soshiki/hoken/kenko/oshirase/kyuukan.html"
+  },
+  {
+    "id": "chichibu-ishikai",
+    "area": "chichibu",
+    "name": "秩父郡市医師会 休日急患当番病医院",
+    "url": "https://chichibu-ishikai.jp/system/"
+  },
+  {
+    "id": "chichibu-city",
+    "area": "chichibu",
+    "name": "秩父市 休日急患当番医療機関",
+    "url": "https://www.city.chichibu.lg.jp/9070.html"
+  }
+]

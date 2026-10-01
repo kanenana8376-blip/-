@@ -1,0 +1,52 @@
+name: 当番医データの毎日更新
+
+on:
+  schedule:
+    # 毎日 5:00（日本時間）。GitHub の混雑で数十分遅れることがある
+    - cron: "0 20 * * *"
+  workflow_dispatch:
+  push:
+    branches: [claude/nice-meitner-gs3ha3]
+    paths:
+      - "scripts/duty/**"
+      - ".github/workflows/update-duty.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-duty
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: PDF変換ツールを入れる
+        run: sudo apt-get update -q && sudo apt-get install -y -q poppler-utils
+
+      - name: 当番表を取得する
+        run: node scripts/duty/fetch.mjs
+
+      - name: 当番医データを作る
+        run: node scripts/duty/build.mjs
+
+      - name: 変更があればコミットする
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add duty-raw emergency-duty.js
+          if git diff --cached --quiet; then
+            echo "変更なし"
+            exit 0
+          fi
+          git commit -m "当番医データを更新（$(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M')）"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
