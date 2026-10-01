@@ -6,10 +6,10 @@ on:
     - cron: "0 20 * * *"
   workflow_dispatch:
   push:
-    branches: [claude/nice-meitner-gs3ha3]
     paths:
       - "scripts/duty/**"
       - ".github/workflows/update-duty.yml"
+      - "emergency-tool.html"
 
 permissions:
   contents: write
@@ -50,3 +50,39 @@ jobs:
           git commit -m "当番医データを更新（$(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M')）"
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push origin "HEAD:${GITHUB_REF_NAME}"
+
+  # 既定のブランチのときだけ、ツールと当番医データを GitHub Pages に公開する。
+  # 公開するのは emergency-tool.html（index.html として）と emergency-duty.js だけ。
+  # リポジトリの Settings → Pages → Source を「GitHub Actions」にしておく必要がある。
+  deploy:
+    needs: update
+    if: github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # update ジョブがコミットした最新の当番医データを取り込む
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: 公開するファイルをまとめる
+        run: |
+          mkdir _site
+          cp emergency-tool.html _site/index.html
+          cp emergency-duty.js _site/emergency-duty.js
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
