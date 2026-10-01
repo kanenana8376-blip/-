@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>レシート家計簿</title>
+<style>
+  :root {
+    --navy: #1F4E79;
+    --navy-dark: #163a59;
+    --ink: #2c2c2a;
+    --muted: #6b6b68;
+    --line: #d8d6cd;
+    --bg: #f7f5f0;
+    --panel: #ffffff;
+    --accent: #c0392b;
+    --good: #1e7a46;
+    --teal: #0d9488;
+    --teal-dark: #0f766e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  header {
+    background: var(--navy);
+    color: #fff;
+    padding: 18px 20px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  header h1 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: 0.02em;
+  }
+  header .sub {
+    font-size: 12px;
+    color: #cfe0ee;
+    margin-top: 3px;
+  }
+  .icon-btn {
+    background: rgba(255,255,255,0.12);
+    border: none;
+    color: #fff;
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .icon-btn:hover { background: rgba(255,255,255,0.22); }
+
+  .container {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 18px 16px 60px;
+  }
+
+  .summary-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .summary-card .month-label {
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+  .summary-card .month-total {
+    font-size: 34px;
+    font-weight: 700;
+    color: var(--navy);
+    letter-spacing: 0.01em;
+    margin: 4px 0 2px;
+    font-variant-numeric: tabular-nums;
+  }
+  .summary-card .receipt-count {
+    font-size: 12.5px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .cat-bars {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .cat-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .cat-bar-row .cat-name {
+    width: 68px;
+    flex-shrink: 0;
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+  .cat-bar-track {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: #eceae3;
+    overflow: hidden;
+  }
+  .cat-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--teal);
+  }
+  .cat-bar-row .cat-sum {
+    width: 76px;
+    flex-shrink: 0;
+    text-align: right;
+    font-size: 11.5px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .btn-primary {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--teal);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 14.5px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .btn-primary:hover:not(:disabled) { background: var(--teal-dark); }
+  .btn-primary:disabled { opacity: 0.6; cursor: default; }
+  .btn-secondary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    border-radius: 10px;
+    padding: 14px 16px;
+    cursor: pointer;
+  }
+  .btn-secondary:hover:not(:disabled) { background: #f0efe9; }
+  .btn-secondary:disabled { opacity: 0.6; cursor: default; }
+
+  .message-box {
+    margin-top: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: #fdf3e0;
+    color: #7a5310;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .message-box svg { flex-shrink: 0; margin-top: 2px; }
+  .message-box.error { background: #fde8e8; color: #8a2a2a; }
+
+  .draft-card {
+    margin-top: 16px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px;
+  }
+  .draft-card .draft-label {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin: 0 0 12px;
+  }
+  .field { margin-bottom: 12px; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+  .field input[type="text"],
+  .field input[type="date"],
+  .field input[type="number"],
+  .field select {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 13.5px;
+    font-family: inherit;
+    background: #fff;
+    color: var(--ink);
+  }
+  .field input[type="number"] { font-variant-numeric: tabular-nums; }
+  .row2 { display: flex; gap: 10px; }
+  .row2 > .field { flex: 1; }
+
+  .items-box {
+    background: #f7f5f0;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+  }
+  .items-box .items-label {
+    font-size: 11.5px;
+    color: var(--muted);
+    margin: 0 0 6px;
+  }
+  .items-box ul { list-style: none; margin: 0; padding: 0; }
+  .items-box li {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 13px;
+    padding: 3px 0;
+  }
+  .items-box li .price { color: var(--muted); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+
+  .draft-buttons { display: flex; gap: 10px; margin-top: 4px; }
+  .btn-save {
+    flex: 1;
+    background: var(--navy);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .btn-save:hover { background: var(--navy-dark); }
+  .btn-cancel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .btn-cancel:hover { background: #f0efe9; }
+
+  .entries-section { margin-top: 26px; }
+  .entries-section h2 {
+    font-size: 13px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 10px;
+  }
+  .empty-entries {
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    padding: 40px 16px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13.5px;
+  }
+  .empty-entries svg { margin-bottom: 10px; opacity: 0.6; }
+  .entries-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .entries-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .entries-list li:last-child { border-bottom: none; }
+  .entry-main { min-width: 0; flex: 1; }
+  .entry-main .store {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .entry-main .meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 3px;
+  }
+  .entry-main .meta .date { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .cat-chip {
+    font-size: 10.5px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .entry-total {
+    flex-shrink: 0;
+    font-weight: 700;
+    font-size: 14.5px;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .entry-delete {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: #b7b4aa;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    display: flex;
+  }
+  .entry-delete:hover { background: #fde8e8; color: var(--accent); }
+
+  .loading-note { text-align: center; color: var(--muted); font-size: 13px; padding: 30px 0; }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(20,20,18,0.45);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 10;
+  }
+  .overlay:not([hidden]) { display: flex; }
+  .settings-panel {
+    background: var(--panel);
+    border-radius: 12px;
+    padding: 22px;
+    max-width: 400px;
+    width: 100%;
+  }
+  .settings-panel h2 {
+    font-size: 15px;
+    margin: 0 0 10px;
+    color: var(--ink);
+  }
+  .settings-panel .note {
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin: 0 0 14px;
+  }
+  .settings-panel input[type="password"] {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 13.5px;
+    font-family: inherit;
+    margin-bottom: 14px;
+  }
+  .settings-actions { display: flex; gap: 10px; }
+  .settings-actions button {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  #saveApiKeyBtn { background: var(--navy); color: #fff; border: none; font-weight: 700; }
+  #saveApiKeyBtn:hover { background: var(--navy-dark); }
+  #closeSettingsBtn { background: var(--panel); border: 1px solid var(--line); color: var(--muted); }
+  #closeSettingsBtn:hover { background: #f0efe9; }
+  .settings-status { font-size: 12px; margin: -6px 0 12px; }
+  .settings-status.saved { color: var(--good); }
+
+  .spin { animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>レシート家計簿</h1>
+    <div class="sub">スマホでレシートを撮るだけで自動記録</div>
+  </div>
+  <button id="settingsBtn" class="icon-btn" title="設定（APIキー）">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+  </button>
+</header>
+
+<div class="container">
+  <div class="summary-card">
+    <div class="month-label" id="monthLabel"></div>
+    <div class="month-total" id="monthTotal"></div>
+    <div class="receipt-count" id="receiptCount"></div>
+    <div class="cat-bars" id="catBars"></div>
+  </div>
+
+  <div class="actions">
+    <button id="captureBtn" class="btn-primary">
+      <svg id="captureIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+      <span id="captureLabel">レシートを撮る</span>
+    </button>
+    <button id="chooseBtn" class="btn-secondary" title="保存済みの画像から選ぶ">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+    </button>
+    <input type="file" id="captureInput" accept="image/*" capture="environment" hidden>
+    <input type="file" id="chooseInput" accept="image/*" hidden>
+  </div>
+
+  <div id="messageArea"></div>
+  <div id="draftSection"></div>
+
+  <div class="entries-section">
+    <h2>記録一覧</h2>
+    <div id="entriesArea"></div>
+  </div>
+</div>
+
+<div id="settingsOverlay" class="overlay" hidden>
+  <div class="settings-panel">
+    <h2>設定</h2>
+    <p class="note">レシートの自動読み取りには Anthropic API キーが必要です。キーはこの端末のブラウザ内にのみ保存され、読み取り時に Anthropic のサーバーへ直接送信されます（このツール以外には送信されません）。キーをお持ちでない場合は console.anthropic.com から取得できます。</p>
+    <div id="settingsStatus" class="settings-status"></div>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-...">
+    <div class="settings-actions">
+      <button id="saveApiKeyBtn">保存する</button>
+      <button id="closeSettingsBtn">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const CATEGORIES = ["食費", "日用品", "交通費", "医療費", "交際費", "衣類", "趣味・娯楽", "その他"];
+  const CATEGORY_STYLE = {
+    食費: { bg: "#ccfbf1", fg: "#0f766e" },
+    日用品: { bg: "#e0f2fe", fg: "#075985" },
+    交通費: { bg: "#e0e7ff", fg: "#3730a3" },
+    医療費: { bg: "#ffe4e6", fg: "#9f1239" },
+    交際費: { bg: "#fef3c7", fg: "#92400e" },
+    衣類: { bg: "#ede9fe", fg: "#5b21b6" },
+    "趣味・娯楽": { bg: "#ffedd5", fg: "#9a3412" },
+    その他: { bg: "#e2e8f0", fg: "#334155" }
+  };
+  const ENTRIES_KEY = "kakeibo:entries";
+  const API_KEY_STORAGE = "kakeibo:apiKey";
+  const MODEL = "claude-sonnet-5";
+
+  let entries = [];
+  let draft = null;
+  let reading = false;
+  let message = null; // { text, type: "warn" | "error" }
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    })[c]);
+  }
+  const yen = (n) => "¥" + (Number(n) || 0).toLocaleString("ja-JP");
+  const todayStr = () => new Date().toISOString().slice(0, 10);
+  const monthOf = (d) => (d || "").slice(0, 7);
+
+  function loadEntries() {
+    try {
+      const raw = localStorage.getItem(ENTRIES_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+  function saveEntries(next) {
+    entries = next;
+    try {
+      localStorage.setItem(ENTRIES_KEY, JSON.stringify(next));
+    } catch (e) {
+      setMessage("保存できませんでした。もう一度お試しください。", "error");
+    }
+  }
+  function loadApiKey() {
+    try { return localStorage.getItem(API_KEY_STORAGE) || ""; } catch (e) { return ""; }
+  }
+  function saveApiKey(key) {
+    try { localStorage.setItem(API_KEY_STORAGE, key); } catch (e) { /* ignore */ }
+  }
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result.split(",")[1]);
+      r.onerror = () => reject(new Error("read failed"));
+      r.readAsDataURL(file);
+    });
+  }
+
+  function setMessage(text, type) {
+    message = text ? { text, type: type || "warn" } : null;
+    renderMessage();
+  }
+
+  async function readReceipt(file) {
+    setMessage(null);
+    const apiKey = loadApiKey();
+    if (!apiKey) {
+      setMessage("読み取りには設定画面で Anthropic API キーを登録してください。", "warn");
+      openSettings();
+      return;
+    }
+    reading = true;
+    renderActions();
+    try {
+      const base64 = await fileToBase64(file);
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true"
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          max_tokens: 1000,
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "image",
+                  source: { type: "base64", media_type: file.type || "image/jpeg", data: base64 }
+                },
+                {
+                  type: "text",
+                  text: "この画像は日本のレシートです。内容を読み取り、JSONのみを返してください。前置き・説明・コードフェンスは一切不要です。\n\n形式:\n{\"date\":\"YYYY-MM-DD\",\"store\":\"店名\",\"total\":合計金額の数値,\"category\":\"カテゴリ\",\"items\":[{\"name\":\"品名\",\"price\":数値}]}\n\nカテゴリは次のいずれかから最も近いものを選ぶ: " + CATEGORIES.join(" / ") + "\n- total は税込の支払合計（数値のみ、カンマや円記号なし）\n- 日付が読み取れない場合は date を空文字にする\n- items は多くても15件まで。読み取れない場合は空配列\n- レシートではない、または全く読み取れない場合は {\"error\":\"not_receipt\"} のみを返す"
+                }
+              ]
+            }
+          ]
+        })
+      });
+      if (!res.ok) {
+        let detail = "";
+        try { detail = (await res.json()).error?.message || ""; } catch (e) { /* ignore */ }
+        if (res.status === 401) {
+          setMessage("APIキーが正しくありません。設定画面で確認してください。", "error");
+          openSettings();
+        } else {
+          setMessage("読み取りに失敗しました" + (detail ? "（" + detail + "）" : "") + "。もう一度お試しください。", "error");
+        }
+        reading = false;
+        renderActions();
+        return;
+      }
+      const data = await res.json();
+      const text = (data.content || [])
+        .filter((i) => i.type === "text")
+        .map((i) => i.text)
+        .join("\n");
+      const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
+
+      if (parsed.error) {
+        setMessage("レシートとして読み取れませんでした。明るい場所で、全体が入るように撮り直してください。", "warn");
+      } else {
+        draft = {
+          date: parsed.date || todayStr(),
+          store: typeof parsed.store === "string" ? parsed.store : "",
+          total: Number(parsed.total) || 0,
+          category: CATEGORIES.includes(parsed.category) ? parsed.category : "その他",
+          items: Array.isArray(parsed.items)
+            ? parsed.items.slice(0, 15).map((it) => ({
+                name: typeof it.name === "string" ? it.name : "",
+                price: Number(it.price) || 0
+              }))
+            : []
+        };
+        renderDraft();
+      }
+    } catch (err) {
+      setMessage("読み取りに失敗しました。通信状況を確認して、もう一度お試しください。", "error");
+    }
+    reading = false;
+    renderActions();
+  }
+
+  function saveDraft() {
+    if (!draft) return;
+    const next = [{ ...draft, id: Date.now() }, ...entries];
+    next.sort((a, b) => (a.date < b.date ? 1 : -1));
+    saveEntries(next);
+    draft = null;
+    setMessage(null);
+    renderAll();
+  }
+  function cancelDraft() {
+    draft = null;
+    renderDraft();
+  }
+  function removeEntry(id) {
+    saveEntries(entries.filter((e) => e.id !== id));
+    renderAll();
+  }
+
+  function openSettings() {
+    document.getElementById("apiKeyInput").value = loadApiKey();
+    document.getElementById("settingsStatus").textContent = "";
+    document.getElementById("settingsStatus").className = "settings-status";
+    document.getElementById("settingsOverlay").hidden = false;
+  }
+  function closeSettings() {
+    document.getElementById("settingsOverlay").hidden = true;
+  }
+
+  // ---- rendering ----
+
+  function renderSummary() {
+    const thisMonth = monthOf(todayStr());
+    const monthEntries = entries.filter((e) => monthOf(e.date) === thisMonth);
+    const monthTotal = monthEntries.reduce((s, e) => s + Number(e.total || 0), 0);
+
+    document.getElementById("monthLabel").textContent = Number(thisMonth.slice(5)) + "月の支出";
+    document.getElementById("monthTotal").textContent = yen(monthTotal);
+    document.getElementById("receiptCount").textContent = "レシート " + monthEntries.length + " 枚";
+
+    const byCategory = CATEGORIES.map((c) => ({
+      name: c,
+      sum: monthEntries.filter((e) => e.category === c).reduce((s, e) => s + Number(e.total || 0), 0)
+    })).filter((c) => c.sum > 0).sort((a, b) => b.sum - a.sum);
+    const maxCat = byCategory[0] ? byCategory[0].sum : 1;
+
+    document.getElementById("catBars").innerHTML = byCategory.slice(0, 5).map((c) => `
+      <div class="cat-bar-row">
+        <span class="cat-name">${escapeHtml(c.name)}</span>
+        <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${(c.sum / maxCat) * 100}%"></div></div>
+        <span class="cat-sum">${yen(c.sum)}</span>
+      </div>
+    `).join("");
+  }
+
+  function renderMessage() {
+    const area = document.getElementById("messageArea");
+    if (!message) { area.innerHTML = ""; return; }
+    area.innerHTML = `
+      <div class="message-box ${message.type === "error" ? "error" : ""}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        <span>${escapeHtml(message.text)}</span>
+      </div>
+    `;
+  }
+
+  function renderActions() {
+    const captureBtn = document.getElementById("captureBtn");
+    const chooseBtn = document.getElementById("chooseBtn");
+    captureBtn.disabled = reading;
+    chooseBtn.disabled = reading;
+    document.getElementById("captureIcon").outerHTML = reading
+      ? '<svg id="captureIcon" class="spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>'
+      : '<svg id="captureIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>';
+    document.getElementById("captureLabel").textContent = reading ? "読み取り中" : "レシートを撮る";
+  }
+
+  function renderDraft() {
+    const el = document.getElementById("draftSection");
+    if (!draft) { el.innerHTML = ""; return; }
+    el.innerHTML = `
+      <div class="draft-card">
+        <p class="draft-label">読み取った内容を確認してください</p>
+        <div class="field">
+          <label>日付</label>
+          <input type="date" id="draftDate" value="${escapeHtml(draft.date)}">
+        </div>
+        <div class="field">
+          <label>店名</label>
+          <input type="text" id="draftStore" value="${escapeHtml(draft.store)}" placeholder="店名を入力">
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>金額</label>
+            <input type="number" id="draftTotal" value="${draft.total}">
+          </div>
+          <div class="field">
+            <label>カテゴリ</label>
+            <select id="draftCategory">
+              ${CATEGORIES.map((c) => `<option ${c === draft.category ? "selected" : ""}>${escapeHtml(c)}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+        ${draft.items.length > 0 ? `
+          <div class="items-box">
+            <p class="items-label">読み取った品目</p>
+            <ul>
+              ${draft.items.map((it) => `<li><span>${escapeHtml(it.name)}</span><span class="price">${yen(it.price)}</span></li>`).join("")}
+            </ul>
+          </div>
+        ` : ""}
+        <div class="draft-buttons">
+          <button class="btn-save" id="draftSaveBtn">保存する</button>
+          <button class="btn-cancel" id="draftCancelBtn">取り消す</button>
+        </div>
+      </div>
+    `;
+    document.getElementById("draftDate").addEventListener("change", (e) => { draft.date = e.target.value; });
+    document.getElementById("draftStore").addEventListener("input", (e) => { draft.store = e.target.value; });
+    document.getElementById("draftTotal").addEventListener("input", (e) => { draft.total = Number(e.target.value); });
+    document.getElementById("draftCategory").addEventListener("change", (e) => { draft.category = e.target.value; });
+    document.getElementById("draftSaveBtn").addEventListener("click", saveDraft);
+    document.getElementById("draftCancelBtn").addEventListener("click", cancelDraft);
+  }
+
+  function renderEntries() {
+    const el = document.getElementById("entriesArea");
+    if (entries.length === 0) {
+      el.innerHTML = `
+        <div class="empty-entries">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2h16v20l-3-2-3 2-3-2-3 2-3-2-1 1z"></path><line x1="8" y1="7" x2="16" y2="7"></line><line x1="8" y1="11" x2="16" y2="11"></line></svg>
+          <p>レシートを撮ると、ここに記録がたまります</p>
+        </div>
+      `;
+      return;
+    }
+    el.innerHTML = `
+      <ul class="entries-list">
+        ${entries.map((e) => {
+          const style = CATEGORY_STYLE[e.category] || CATEGORY_STYLE["その他"];
+          return `
+            <li>
+              <div class="entry-main">
+                <div class="store">${escapeHtml(e.store || "店名なし")}</div>
+                <div class="meta">
+                  <span class="date">${escapeHtml(e.date)}</span>
+                  <span class="cat-chip" style="background:${style.bg};color:${style.fg}">${escapeHtml(e.category)}</span>
+                </div>
+              </div>
+              <span class="entry-total">${yen(e.total)}</span>
+              <button class="entry-delete" data-id="${e.id}" title="削除">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+              </button>
+            </li>
+          `;
+        }).join("")}
+      </ul>
+    `;
+    el.querySelectorAll(".entry-delete").forEach((btn) => {
+      btn.addEventListener("click", () => removeEntry(Number(btn.dataset.id)));
+    });
+  }
+
+  function renderAll() {
+    renderSummary();
+    renderMessage();
+    renderActions();
+    renderDraft();
+    renderEntries();
+  }
+
+  // ---- wiring ----
+
+  document.getElementById("captureBtn").addEventListener("click", () => {
+    if (!reading) document.getElementById("captureInput").click();
+  });
+  document.getElementById("chooseBtn").addEventListener("click", () => {
+    if (!reading) document.getElementById("chooseInput").click();
+  });
+  document.getElementById("captureInput").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (file) readReceipt(file);
+  });
+  document.getElementById("chooseInput").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (file) readReceipt(file);
+  });
+
+  document.getElementById("settingsBtn").addEventListener("click", openSettings);
+  document.getElementById("closeSettingsBtn").addEventListener("click", closeSettings);
+  document.getElementById("settingsOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "settingsOverlay") closeSettings();
+  });
+  document.getElementById("saveApiKeyBtn").addEventListener("click", () => {
+    saveApiKey(document.getElementById("apiKeyInput").value.trim());
+    const status = document.getElementById("settingsStatus");
+    status.textContent = "保存しました。";
+    status.className = "settings-status saved";
+  });
+
+  entries = loadEntries();
+  renderAll();
+})();
+</script>
+
+</body>
+</html>
