@@ -672,6 +672,317 @@ const FACILITIES = [
     verified: "2026-09-01",
     source: "https://www.city.chichibu.lg.jp/secure/22176/R809kyuukyuutouban.pdf",
   },
+  // ---- 狭山・入間 ----
+  {
+    name: "狭山市急患センター",
+    area: "sayama",
+    address: "狭山市狭山台3-24",
+    tel: "04-2958-8771",
+    depts: ["内科", "外科", "小児科"],
+    slots: [
+      { days: ["kyujitsu"], start: "09:00", end: "11:30" },
+      { dates: ["2026-04-29", "2026-05-03", "2026-05-04", "2026-05-05", "2026-05-06", "2026-08-11",
+          "2026-12-29", "2026-12-30", "2026-12-31", "2027-01-01", "2027-01-02", "2027-01-03"], start: "13:00", end: "14:30" },
+      { days: ["d2", "d3", "d5"], start: "19:30", end: "22:00", depts: ["内科", "小児科"], except: ["12-31", "01-01", "01-02"] },
+    ],
+    note: "時間は受付時間です。夜間（火・水・金）は内科・小児科のみ。日・月・木・土の夜は入間市夜間診療所へ。年末年始は12/29〜1/3（夜間は12/31〜1/2休み）。",
+    verified: "2026-10-01",
+    source: "https://www.city.sayama.saitama.jp/fukushi/hokenyobou/kyujitsusinryou/268000kyuukan_annai.html",
+  },
+  {
+    name: "狭山市急患センター（歯科）",
+    area: "sayama",
+    address: "狭山市狭山台3-24",
+    tel: "04-2957-7036",
+    depts: ["歯科"],
+    slots: [{ days: ["d0n1", "d0n3", "d0n5", "holiday", "nenmatsu"], start: "09:00", end: "11:30" }],
+    note: "時間は受付時間です。第1・3・5日曜日、祝日、年末年始（12/29〜1/3）。",
+    verified: "2026-10-01",
+    source: "https://www.city.sayama.saitama.jp/fukushi/hokenyobou/kyujitsusinryou/268000kyuukan_annai.html",
+  },
+  {
+    name: "入間市夜間診療所",
+    area: "sayama",
+    address: "入間市上藤沢730-1（入間市健康福祉センター内）",
+    tel: "04-2966-5515",
+    depts: ["内科", "小児科"],
+    slots: [{ days: ["d0", "d1", "d4", "d6"], start: "19:30", end: "22:30" }],
+    except: ["12-31", "01-01", "01-02"],
+    note: "日・月・木・土の夜（火・水・金は狭山市急患センター）。担当医が日によって変わるため、年齢・症状によっては受診できないことがあります。必ず事前に電話を。",
+    verified: "2026-10-01",
+    source: "https://www.city.iruma.saitama.jp/soshiki/kenkokanrika/7/157.html",
+  },
+  // ---- 飯能・日高 ----
+  {
+    name: "飯能地区医師会 休祝日診療所",
+    area: "hanno",
+    address: "飯能市小久保291（飯能日高消防署内）",
+    tel: "042-971-0177",
+    depts: ["内科", "小児科"],
+    slots: [
+      { days: ["sun", "holiday"], start: "09:00", end: "11:30" },
+      { days: ["sun", "holiday"], start: "13:30", end: "15:30" },
+    ],
+    except: ["12-28", "12-29", "12-30", "12-31", "01-01", "01-02", "01-03", "01-04"],
+    note: "時間は受付時間です。年末年始（12/28〜1/4）は休み。発熱などの症状がある方は必ず電話してから。",
+    verified: "2026-10-01",
+    source: "https://hannomed.or.jp/yakan/",
+  },
+  {
+    name: "飯能地区医師会 夜間診療所",
+    area: "hanno",
+    address: "飯能市小久保291（飯能日高消防署内）",
+    tel: "042-971-0177",
+    depts: ["内科", "小児科"],
+    slots: [{ days: ["daily"], start: "20:00", end: "21:45" }],
+    except: ["12-28", "12-29", "12-30", "12-31", "01-01", "01-02", "01-03", "01-04"],
+    note: "時間は受付時間です（診療は22時まで）。年末年始（12/28〜1/4）は休み。",
+    verified: "2026-10-01",
+    source: "https://hannomed.or.jp/yakan/",
+  },
+  // ---- 坂戸・鶴ヶ島・毛呂山・越生 ----
+  {
+    name: "坂戸鶴ヶ島医師会立休日急患診療所",
+    area: "sakado",
+    address: "坂戸市石井2327-5（坂戸鶴ヶ島医師会地域医療センター1階）",
+    tel: "049-289-1199",
+    depts: ["内科", "小児科"],
+    slots: [
+      { days: ["kyujitsu"], start: "09:00", end: "11:30" },
+      { days: ["kyujitsu"], start: "14:00", end: "16:30" },
+      { days: ["kyujitsu"], start: "18:00", end: "20:30" },
+    ],
+    note: "時間は受付時間です。当日の予約制（予約専用電話 050-5840-1156、またはインターネット）。外科系の診療、採血・レントゲンは行いません。",
+    verified: "2026-10-01",
+    source: "https://www.city.sakado.lg.jp/site/sakado-kosodate/516.html",
+  },
+  // ---- 富士見・ふじみ野・三芳 ----
+  {
+    name: "東入間医師会 夜間休日診療所",
+    area: "fujimi",
+    address: "ふじみ野市駒林元町3-1-20（東入間医師会会館内）",
+    tel: "049-264-9592",
+    depts: ["内科", "小児科"],
+    nenmatsuFrom: 31,
+    slots: [
+      { days: ["kyujitsu"], start: "09:00", end: "12:00" },
+      { days: ["kyujitsu"], start: "13:00", end: "16:00" },
+      { days: ["kyujitsu"], start: "19:00", end: "21:00" },
+    ],
+    note: "時間は受付時間です。日曜・祝日・年末年始（12/31〜1/3）。発熱外来は電話予約制。外科・産婦人科の休日当番もあります（東入間医師会に問い合わせ）。",
+    verified: "2026-10-01",
+    source: "https://www.city.fujimino.saitama.jp/soshikiichiran/hokencenter/kenkosuishingakari/iryoukikann/2120.html",
+  },
+  // ---- 鴻巣 ----
+  {
+    name: "鴻巣市夜間診療所",
+    area: "konosu",
+    address: "鴻巣市中央2-1（鴻巣保健センター内）",
+    tel: "048-543-1561",
+    depts: ["内科", "小児科"],
+    slots: [{ days: ["weekday"], start: "19:00", end: "21:45" }],
+    note: "時間は受付時間です（診療は22時まで）。平日の夜だけ（祝日・振替休日・年末年始は休み）。日によって対応できないことがあるので必ず電話を。",
+    verified: "2026-10-01",
+    source: "https://www.city.kounosu.saitama.jp/page/1563.html",
+  },
+  {
+    name: "鴻巣市休日当番医（内科・外科）",
+    area: "konosu",
+    address: "",
+    tel: "",
+    depts: ["内科", "外科"],
+    slots: [],
+    roster: true,
+    hoursText: "日曜・祝日に当番の医療機関が診療します。当番は日によって変わるので、市の当番医表（PDF）で確認してください。",
+    verified: "2026-10-01",
+    source: "https://www.city.kounosu.saitama.jp/page/1565.html",
+  },
+  // ---- 桶川・北本・伊奈 ----
+  {
+    name: "桶川北本伊奈地区 休日当番医",
+    area: "okekitaina",
+    address: "",
+    tel: "",
+    depts: ["内科", "外科", "小児科", "眼科", "耳鼻咽喉科"],
+    slots: [],
+    roster: true,
+    hoursText: "日曜・祝日・年末年始の9時〜17時に、当番の医療機関が診療します。当番と診療科目は日によって変わるので、当番医表（PDF）で確認し、受診前に電話を。",
+    verified: "2026-10-01",
+    source: "https://www.city.okegawa.lg.jp/soshiki/kenkofukushi/kenkozoushin/kyujitsutoban/1260.html",
+  },
+  {
+    name: "桶川・北本・伊奈地区 小児夜間救急当番医",
+    area: "okekitaina",
+    address: "当番の医療機関は日によって変わります",
+    tel: "048-597-3301",
+    depts: ["小児科"],
+    slots: [{ days: ["w1", "w2", "w3", "w4", "w5", "w6"], start: "20:00", end: "22:00" }],
+    roster: true,
+    note: "月〜土曜の20時〜22時（祝日・年末年始を除く）。当番は日によって市外の医療機関になることもあります。電話は埼玉県央広域消防本部（24時間）で、その日の当番医を案内してもらえます。",
+    verified: "2026-10-01",
+    source: "https://www.city.okegawa.lg.jp/soshiki/kenkofukushi/kenkozoushin/kyujitsutoban/1260.html",
+  },
+  // ---- 三郷・吉川・松伏 ----
+  {
+    name: "三郷市医師会立休日診療所",
+    area: "misato",
+    address: "三郷市半田1010",
+    tel: "048-949-1000",
+    depts: ["小児科"],
+    nenmatsuFrom: 31,
+    slots: [
+      { days: ["kyujitsu"], start: "10:00", end: "11:50" },
+      { days: ["kyujitsu"], start: "14:00", end: "15:50" },
+      { days: ["d0"], not: ["holiday", "nenmatsu"], start: "18:00", end: "20:30" },
+    ],
+    note: "小児科のみ・完全予約制（来院前に必ず電話）。時間は受付時間です。2026年6月に三郷市半田1010へ移転しました。祝日・年末年始は夜間の診療なし。",
+    verified: "2026-10-01",
+    source: "https://www.city.misato.lg.jp/soshiki/ikiikikenko/kenkosuishin/11/4817.html",
+  },
+  {
+    name: "三郷市 小児時間外（初期救急）診療",
+    area: "misato",
+    address: "当番の医療機関は日によって変わります",
+    tel: "",
+    depts: ["小児科"],
+    slots: [{ days: ["w1", "w2", "w3", "w4", "w5", "w6"], start: "19:00", end: "20:30" }],
+    except: ["08-13", "08-14", "08-15"],
+    roster: true,
+    note: "月〜土曜の夜（受付19時〜20時30分）。日曜・祝日・お盆・年末年始は休み。当番は市の当番表（PDF）か #7119 の医療機関案内で確認を。",
+    verified: "2026-10-01",
+    source: "https://www.city.misato.lg.jp/soshiki/ikiikikenko/kenkosuishin/11/1530.html",
+  },
+  {
+    name: "吉川中央総合病院（休日当番医）",
+    area: "misato",
+    address: "吉川市平沼111",
+    tel: "048-982-8311",
+    depts: ["内科", "外科"],
+    slots: [{ days: ["kyujitsu"], start: "09:00", end: "17:00" }],
+    note: "日曜・祝休日・年末年始（12/29〜1/3）の急患のみ。事前に電話で問い合わせを。",
+    verified: "2026-10-01",
+    source: "https://www.city.yoshikawa.saitama.jp/index.cfm/24,0,137,767,html",
+  },
+  // ---- 蓮田・白岡 ----
+  {
+    name: "蓮田病院（休日急患診療・奇数月）",
+    area: "hasuda",
+    address: "蓮田市根金1662-1",
+    tel: "048-766-8111",
+    depts: ["内科", "外科"],
+    months: "odd",
+    nenmatsuFrom: 30,
+    slots: [
+      { days: ["kyujitsu"], start: "10:00", end: "12:00" },
+      { days: ["kyujitsu"], start: "13:00", end: "16:00" },
+    ],
+    note: "奇数月は蓮田病院、偶数月は蓮田外科が担当。日曜・祝日・年末年始（12/30〜1/3）。",
+    verified: "2026-10-01",
+    source: "https://www.city.hasuda.saitama.jp/kenko/kenko/otona-kenko/kyukyu/kyujitsushinryo.html",
+  },
+  {
+    name: "蓮田外科（休日急患診療・偶数月）",
+    area: "hasuda",
+    address: "蓮田市蓮田2061",
+    tel: "048-764-1141",
+    depts: ["内科", "外科"],
+    months: "even",
+    nenmatsuFrom: 30,
+    slots: [
+      { days: ["kyujitsu"], start: "10:00", end: "12:00" },
+      { days: ["kyujitsu"], start: "13:00", end: "16:00" },
+    ],
+    note: "偶数月は蓮田外科、奇数月は蓮田病院が担当。日曜・祝日・年末年始（12/30〜1/3）。",
+    verified: "2026-10-01",
+    source: "https://www.city.hasuda.saitama.jp/kenko/kenko/otona-kenko/kyukyu/kyujitsushinryo.html",
+  },
+  {
+    name: "白岡中央総合病院（休日診療）",
+    area: "hasuda",
+    address: "白岡市小久喜938-12",
+    tel: "0480-93-0661",
+    depts: ["内科"],
+    nenmatsuFrom: 31,
+    slots: [{ days: ["kyujitsu"], start: "09:00", end: "12:00" }],
+    note: "時間は受付時間です。日曜・祝日・年末年始（12/31〜1/3）。事前に連絡を。",
+    verified: "2026-10-01",
+    source: "https://www.city.shiraoka.lg.jp/soshiki/kenkofukushibu/kenkozoshinka/2/kyuukyuu/1127.html",
+  },
+  // ---- 幸手・杉戸 ----
+  {
+    name: "幸手市 休日当番医",
+    area: "satte",
+    address: "",
+    tel: "",
+    depts: ["内科", "外科", "小児科"],
+    slots: [],
+    roster: true,
+    hoursText: "日曜・祝日の9時〜12時に当番の医療機関が急患を診ます（冬期は夜間も）。当番は市のページで確認し、受診前に電話を。",
+    verified: "2026-10-01",
+    source: "https://www.city.satte.lg.jp/soshiki/kenkouzoushin/2/1334.html",
+  },
+  {
+    name: "杉戸町 休日診療当番医",
+    area: "satte",
+    address: "",
+    tel: "",
+    depts: ["内科", "外科", "小児科"],
+    slots: [],
+    roster: true,
+    hoursText: "休日の9時〜12時に当番の医療機関が診療します（冬期は休日夜間・小児休日の当番もあり）。当番は町のページで確認し、受診前に電話を。",
+    verified: "2026-10-01",
+    source: "https://www.town.sugito.lg.jp/page/1387.html",
+  },
+  // ---- 加須・羽生 ----
+  {
+    name: "羽生市 在宅当番医",
+    area: "kazo",
+    address: "",
+    tel: "",
+    depts: ["内科", "外科", "小児科"],
+    slots: [],
+    roster: true,
+    hoursText: "日曜・祝日の9時〜17時に当番の医療機関が診療します。当番は市の在宅当番医予定表（PDF）で確認し、受診前に電話を。",
+    verified: "2026-10-01",
+    source: "https://www.city.hanyu.lg.jp/docs/2015032600027/",
+  },
+  {
+    name: "加須市 夜間の救急診療（救急告示病院）",
+    area: "kazo",
+    address: "",
+    tel: "",
+    depts: ["内科", "外科"],
+    slots: [],
+    roster: true,
+    hoursText: "夜間（18時〜翌朝9時）は市内の救急告示病院（中田病院・十善病院・西山救急クリニック）が日替わりで対応します。その日の担当は市のページで確認し、必ず事前に電話を。",
+    verified: "2026-10-01",
+    source: "https://www.city.kazo.lg.jp/soshiki/kenkou/kyukyu/14267.html",
+  },
+  // ---- 行田 ----
+  {
+    name: "行田市 休日急患診療",
+    area: "gyoda",
+    address: "",
+    tel: "",
+    depts: ["内科", "小児科", "外科"],
+    slots: [],
+    roster: true,
+    hoursText: "日曜・祝日の10時〜17時に、行田総合病院（048-552-1111）か行田中央総合病院（048-553-2000）が当番で診療します。その日の当番は市のページで確認を。",
+    verified: "2026-10-01",
+    source: "https://www.city.gyoda.lg.jp/soshiki/kenkouhukushibu/kenko/gyomu/anzen_anshin/shobo_kyukyu/1893.html",
+  },
+  // ---- 比企 ----
+  {
+    name: "比企地区こども夜間救急センター",
+    area: "hiki",
+    address: "東松山市神明町1-15-10（東松山医師会病院内）",
+    tel: "0493-22-2822",
+    depts: ["小児科"],
+    slots: [{ days: ["weekday"], start: "19:30", end: "22:00" }],
+    note: "時間は受付時間です（診療は20時から）。平日の夜だけ（祝日・年末年始は休み）。15歳以下が対象。必ず事前に「比企地区こども夜間救急相談」として電話を。",
+    verified: "2026-10-01",
+    source: "https://www.city.higashimatsuyama.lg.jp/soshiki/34/2652.html",
+  },
 ];
 
 const CRITICAL_CARE = [
@@ -712,13 +1023,15 @@ function isNenmatsu(d, from = 29) {
   return (m === 12 && day >= from) || (m === 1 && day <= 3);
 }
 // その日に当てはまる区分（"weekday" / "sat" / "sun" / "holiday" / "nenmatsu" / "kyujitsu" /
-// 日曜・祝日・年末年始以外の曜日 "w1"〜"w6"、祝日かどうかに関係ない曜日 "d0"〜"d6"）
+// 日曜・祝日・年末年始以外の曜日 "w1"〜"w6"、祝日かどうかに関係ない曜日 "d0"〜"d6"、
+// その月の第n週の曜日 "d0n1" など）
 function dayKinds(d, nenmatsuFrom) {
   const kinds = new Set(["daily"]);
   const wd = d.getDay();
   const holiday = HOLIDAYS.has(ymd(d));
   const nen = isNenmatsu(d, nenmatsuFrom);
   kinds.add(`d${wd}`);
+  kinds.add(`d${wd}n${Math.ceil(d.getDate() / 7)}`);
   if (holiday) kinds.add("holiday");
   if (nen) kinds.add("nenmatsu");
   if (wd === 0) kinds.add("sun");
@@ -745,7 +1058,9 @@ const fmt = m => `${Math.floor(m / 60) % 24}:${String(m % 60).padStart(2, "0")}`
 function slotOnDay(slot, day, fac) {
   if (slot.dates) return slot.dates.includes(ymd(day));
   const kinds = dayKinds(day, fac.nenmatsuFrom);
-  return slot.days.some(x => kinds.has(x)) && (slot.also || []).every(x => kinds.has(x));
+  const md = ymd(day).slice(5);
+  return slot.days.some(x => kinds.has(x)) && (slot.also || []).every(x => kinds.has(x))
+    && !(slot.not || []).some(x => kinds.has(x)) && !(slot.except || fac.except || []).includes(md);
 }
 function slotMatchesDept(slot, fac, dept) {
   return (slot.depts || fac.depts).includes(dept);
@@ -786,6 +1101,7 @@ const DAY_NAMES = {
   weekday: "平日", sat: "土曜", sun: "日曜", holiday: "祝日", nenmatsu: "年末年始", kyujitsu: "日曜・祝日・年末年始", daily: "毎日",
   w1: "月曜", w2: "火曜", w3: "水曜", w4: "木曜", w5: "金曜", w6: "土曜",
   d0: "日曜", d1: "月曜", d2: "火曜", d3: "水曜", d4: "木曜", d5: "金曜", d6: "土曜",
+  d0n1: "第1日曜", d0n3: "第3日曜", d0n5: "第5日曜",
 };
 function hoursSummary(fac) {
   if (!fac.slots.length) return fac.hoursText || "時間は要確認";
@@ -793,6 +1109,7 @@ function hoursSummary(fac) {
     let d = s.dates ? s.dates.map(x => `${+x.slice(5, 7)}/${+x.slice(8)}`).join("・")
       : s.days.map(x => DAY_NAMES[x]).join("・");
     if (s.also) d += `（${s.also.map(x => x === "kyujitsu" ? "祝日" : DAY_NAMES[x]).join("・")}の場合）`;
+    if (s.not) d += `（${s.not.map(x => DAY_NAMES[x]).join("・")}を除く）`;
     const dep = s.depts ? `（${s.depts.join("・")}）` : "";
     const end = toMin(s.end) <= toMin(s.start) ? `翌${s.end}` : s.end;
     return `${d} ${s.start}〜${end}${dep}`;
@@ -868,7 +1185,7 @@ function targetTime() {
 }
 
 function card(fac, st, dept) {
-  let cls = "unknown", badge = `<span class="badge">時間は要確認</span>`;
+  let cls = "unknown", badge = `<span class="badge">${fac.roster ? "日によって当番が変わる" : "時間は要確認"}</span>`;
   if (st.state === "open") { cls = "open"; badge = `<span class="badge st-open">診療中 〜${fmt(st.until)}</span>`; }
   else if (st.state === "later") { cls = "later"; badge = `<span class="badge st-later">${fmt(st.from)}から</span>`; }
   if (fac.duty) badge += `<span class="badge duty">当番</span>`;
@@ -889,7 +1206,7 @@ function card(fac, st, dept) {
     <div class="actions">
       ${fac.tel ? `<a class="tel" href="tel:${fac.tel.replace(/-/g, "")}">電話で確認する</a>` : ""}
       <a href="https://www.google.com/maps/search/?api=1&query=${mapQ}" target="_blank" rel="noopener">地図</a>
-      <a href="${esc(fac.source)}" target="_blank" rel="noopener">情報元</a>
+      <a href="${esc(fac.source)}" target="_blank" rel="noopener">${fac.roster ? "当番表を見る" : "情報元"}</a>
     </div>
   </div>`;
 }
@@ -913,7 +1230,7 @@ function render() {
   }
 
   const all = FACILITIES.concat(dutyFacilities()).filter(f => f.depts.includes(dept));
-  const list = all.filter(f => area === "all" || f.area === area);
+  const list = all.filter(f => area === "all" || f.area === area || f.area === "all");
   const open = [], later = [], unknown = [];
   for (const f of list) {
     if (!f.slots.length) { unknown.push([f, { state: "unknown" }]); continue; }
@@ -934,7 +1251,7 @@ function render() {
   // 地域内に診療中のところがなければ、近くの地域で診療中のところも見せる
   if (!open.length && area !== "all") {
     const near = (areaById(area).near || []);
-    const nearOpen = all.filter(f => near.includes(f.area))
+    const nearOpen = all.filter(f => near.includes(f.area) && f.area !== "all")
       .map(f => [f, f.slots.length ? statusAt(f, dept, t) : { state: "unknown" }])
       .filter(([, st]) => st.state === "open");
     if (nearOpen.length) {
@@ -947,7 +1264,7 @@ function render() {
     html += later.map(([f, s]) => card(f, s, dept)).join("");
   }
   if (unknown.length) {
-    html += `<h2 class="group-title"><span class="dot" style="background:#aaa"></span>時間を確認できていない施設（${unknown.length}件）</h2>`;
+    html += `<h2 class="group-title"><span class="dot" style="background:#aaa"></span>当番表・電話で確認が必要なもの（${unknown.length}件）</h2>`;
     html += unknown.map(([f, s]) => card(f, s, dept)).join("");
   }
   if (dept === "外科") {

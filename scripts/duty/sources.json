@@ -271,7 +271,8 @@
     "id": "fixed-misato-kodomo",
     "area": "misato",
     "name": "三郷市 小児時間外診療",
-    "url": "https://www.city.misato.lg.jp/soshiki/ikiikikenko/kenkosuishin/11/1530.html"
+    "url": "https://www.city.misato.lg.jp/soshiki/ikiikikenko/kenkosuishin/11/1530.html",
+    "pdf": "^令和\\d+年\\d+月～"
   },
   {
     "id": "yoshikawa",

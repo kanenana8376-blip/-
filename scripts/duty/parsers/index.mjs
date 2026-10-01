@@ -11,6 +11,12 @@ import asaka from "./asaka.mjs";
 import chichibu from "./chichibu.mjs";
 import hiki from "./hiki.mjs";
 import honjo from "./honjo.mjs";
+import iruma from "./iruma.mjs";
+import jibika from "./jibika.mjs";
+import kazo from "./kazo.mjs";
+import kazoKodomo from "./kazo-kodomo.mjs";
+import moroyama from "./moroyama.mjs";
+import yoshikawa from "./yoshikawa.mjs";
 import kasukabe from "./kasukabe.mjs";
 import kawaguchi from "./kawaguchi.mjs";
 import kawaguchiKodomo from "./kawaguchi-kodomo.mjs";
@@ -23,6 +29,12 @@ export default {
   "chichibu-ishikai": chichibu,
   "hiki": hiki,
   "honjo": honjo,
+  "iruma": iruma,
+  "jibika": jibika,
+  "kazo": kazo,
+  "kazo-kodomo": kazoKodomo,
+  "moroyama": moroyama,
+  "yoshikawa": yoshikawa,
   "kasukabe": kasukabe,
   "kawaguchi": kawaguchi,
   "fixed-kawaguchi-kodomo": kawaguchiKodomo,

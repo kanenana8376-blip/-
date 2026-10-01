@@ -2,7 +2,7 @@
 // このファイルは scripts/duty/build.mjs が自動で書き出す。手で直さないこと。
 // 形式の説明は emergency-duty-update.md を参照。
 window.DUTY_DATA = {
-  "updatedAt": "2026-10-01T23:00:27+09:00",
+  "updatedAt": "2026-10-01T23:08:36+09:00",
   "areas": [
     "kawaguchi",
     "asaka",
@@ -12,62 +12,127 @@ window.DUTY_DATA = {
     "kasukabe",
     "kuki",
     "honjo",
-    "chichibu"
+    "chichibu",
+    "sayama",
+    "sakado",
+    "misato",
+    "kazo",
+    "all"
   ],
   "coverage": {
     "2026-10-01": [
       "kawaguchi",
       "tokorozawa",
+      "hiki",
+      "soka",
       "honjo",
-      "chichibu"
+      "chichibu",
+      "sakado",
+      "misato",
+      "kazo",
+      "all"
     ],
     "2026-10-02": [
       "kawaguchi",
       "tokorozawa",
+      "hiki",
+      "soka",
       "honjo",
-      "chichibu"
+      "chichibu",
+      "sakado",
+      "misato",
+      "kazo",
+      "all"
     ],
     "2026-10-03": [
       "kawaguchi",
       "tokorozawa",
+      "hiki",
+      "soka",
       "honjo",
-      "chichibu"
+      "chichibu",
+      "sakado",
+      "misato",
+      "kazo",
+      "all"
     ],
     "2026-10-04": [
       "kawaguchi",
       "asaka",
       "tokorozawa",
+      "hiki",
+      "soka",
       "kasukabe",
       "kuki",
       "honjo",
-      "chichibu"
+      "chichibu",
+      "sayama",
+      "sakado",
+      "misato",
+      "kazo",
+      "all"
     ],
     "2026-10-05": [
       "kawaguchi",
       "asaka",
+      "hiki",
+      "soka",
       "kasukabe",
       "kuki",
       "honjo",
-      "chichibu"
+      "chichibu",
+      "sayama",
+      "sakado",
+      "misato",
+      "kazo",
+      "all"
     ],
     "2026-10-06": [
       "kawaguchi",
       "asaka",
+      "hiki",
+      "soka",
       "kasukabe",
       "kuki",
       "honjo",
-      "chichibu"
+      "chichibu",
+      "sayama",
+      "sakado",
+      "misato",
+      "kazo",
+      "all"
     ],
     "2026-10-07": [
       "kawaguchi",
       "asaka",
+      "hiki",
+      "soka",
       "kasukabe",
       "kuki",
       "honjo",
-      "chichibu"
+      "chichibu",
+      "sayama",
+      "sakado",
+      "misato",
+      "kazo",
+      "all"
     ]
   },
   "entries": [
+    {
+      "area": "misato",
+      "date": "2026-10-01",
+      "name": "津田医院",
+      "address": "松伏町松伏3432",
+      "tel": "048-993-3111",
+      "depts": [
+        "小児科"
+      ],
+      "start": "19:00",
+      "end": "21:00",
+      "note": "平日夜間の小児時間外（初期救急）診療。時間は受付時間です（診療は21時30分まで）。前もって電話で子どもの状態を伝えてから受診を。",
+      "source": "https://www.city.yoshikawa.saitama.jp/index.cfm/24,447,137,767,html"
+    },
     {
       "area": "kawaguchi",
       "date": "2026-10-01",
@@ -81,6 +146,20 @@ window.DUTY_DATA = {
       "end": "08:00",
       "note": "川口市こども夜間救急診療所が閉まった後の、子どもの夜間救急の当番病院です。入院患者の診療中で待つことがあります。受診前に必ず電話を。",
       "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
+    },
+    {
+      "area": "misato",
+      "date": "2026-10-02",
+      "name": "秋本小児科アレルギー科医院",
+      "address": "吉川市保1-3-7 吉川医療ビル5階",
+      "tel": "048-983-1515",
+      "depts": [
+        "小児科"
+      ],
+      "start": "19:00",
+      "end": "21:00",
+      "note": "平日夜間の小児時間外（初期救急）診療。時間は受付時間です（診療は21時30分まで）。前もって電話で子どもの状態を伝えてから受診を。",
+      "source": "https://www.city.yoshikawa.saitama.jp/index.cfm/24,447,137,767,html"
     },
     {
       "area": "kawaguchi",
@@ -109,6 +188,32 @@ window.DUTY_DATA = {
       "end": "08:00",
       "note": "川口市こども夜間救急診療所が閉まった後の、子どもの夜間救急の当番病院です。入院患者の診療中で待つことがあります。受診前に必ず電話を。",
       "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
+    },
+    {
+      "area": "all",
+      "date": "2026-10-04",
+      "name": "彩の国東大宮メディカルセンター",
+      "tel": "048-665-6111",
+      "depts": [
+        "耳鼻咽喉科"
+      ],
+      "start": "09:00",
+      "end": "17:00",
+      "note": "耳鼻咽喉科の休日救急（県の東地区の当番）。当番が変わることもあるので、必ず事前に電話を。",
+      "source": "https://www.pref.saitama.lg.jp/documents/77646/r08_0201.pdf"
+    },
+    {
+      "area": "all",
+      "date": "2026-10-04",
+      "name": "坂戸八幡耳鼻咽喉科クリニック",
+      "tel": "049-284-8734",
+      "depts": [
+        "耳鼻咽喉科"
+      ],
+      "start": "09:00",
+      "end": "17:00",
+      "note": "耳鼻咽喉科の休日救急（県の西地区の当番）。当番が変わることもあるので、必ず事前に電話を。",
+      "source": "https://www.pref.saitama.lg.jp/documents/77646/r08_0201.pdf"
     },
     {
       "area": "chichibu",
@@ -296,6 +401,60 @@ window.DUTY_DATA = {
       "source": "https://www.city.kuki.lg.jp/kenko/kenko_iryo/kyujitsu/1003818.html"
     },
     {
+      "area": "sayama",
+      "date": "2026-10-04",
+      "name": "小林病院",
+      "address": "入間市宮寺2417",
+      "tel": "04-2934-5121",
+      "depts": [
+        "内科"
+      ],
+      "note": "診療科目：内科。休診時間があるので必ず事前に問い合わせを。",
+      "source": "https://www.city.iruma.saitama.jp/soshiki/kenkokanrika/7/156.html",
+      "start": "09:00",
+      "end": "12:00"
+    },
+    {
+      "area": "sayama",
+      "date": "2026-10-04",
+      "name": "豊岡整形外科病院",
+      "address": "入間市豊岡1-7-16",
+      "tel": "04-2962-8256",
+      "depts": [
+        "外科"
+      ],
+      "note": "診療科目：外科。休診時間があるので必ず事前に問い合わせを。",
+      "source": "https://www.city.iruma.saitama.jp/soshiki/kenkokanrika/7/156.html",
+      "start": "09:00",
+      "end": "12:00"
+    },
+    {
+      "area": "soka",
+      "date": "2026-10-04",
+      "name": "あい小児科",
+      "address": "草加市",
+      "depts": [
+        "内科"
+      ],
+      "start": "09:00",
+      "end": "12:00",
+      "note": "住所・電話番号は情報元に載っていません。受診前に医療機関へ電話で確認を。",
+      "source": "https://sokayashio-med.or.jp/toban/"
+    },
+    {
+      "area": "soka",
+      "date": "2026-10-04",
+      "name": "山崎クリニック",
+      "address": "草加市",
+      "depts": [
+        "外科"
+      ],
+      "start": "09:00",
+      "end": "12:00",
+      "note": "住所・電話番号は情報元に載っていません。受診前に医療機関へ電話で確認を。",
+      "source": "https://sokayashio-med.or.jp/toban/"
+    },
+    {
       "area": "tokorozawa",
       "date": "2026-10-04",
       "name": "柳内医院",
@@ -367,6 +526,34 @@ window.DUTY_DATA = {
       "source": "https://www.asakamed.com/emergency/"
     },
     {
+      "area": "sayama",
+      "date": "2026-10-04",
+      "name": "小林病院",
+      "address": "入間市宮寺2417",
+      "tel": "04-2934-5121",
+      "depts": [
+        "内科"
+      ],
+      "note": "診療科目：内科。休診時間があるので必ず事前に問い合わせを。",
+      "source": "https://www.city.iruma.saitama.jp/soshiki/kenkokanrika/7/156.html",
+      "start": "13:00",
+      "end": "17:00"
+    },
+    {
+      "area": "sayama",
+      "date": "2026-10-04",
+      "name": "豊岡整形外科病院",
+      "address": "入間市豊岡1-7-16",
+      "tel": "04-2962-8256",
+      "depts": [
+        "外科"
+      ],
+      "note": "診療科目：外科。休診時間があるので必ず事前に問い合わせを。",
+      "source": "https://www.city.iruma.saitama.jp/soshiki/kenkokanrika/7/156.html",
+      "start": "13:00",
+      "end": "17:00"
+    },
+    {
       "area": "kasukabe",
       "date": "2026-10-04",
       "name": "みくに中央クリニック",
@@ -412,6 +599,32 @@ window.DUTY_DATA = {
       "source": "https://www.city.kasukabe.lg.jp/anshin_anzen/kyukyu_kyumei/kyujitsutobani/13580.html"
     },
     {
+      "area": "soka",
+      "date": "2026-10-04",
+      "name": "あい小児科",
+      "address": "草加市",
+      "depts": [
+        "内科"
+      ],
+      "start": "14:00",
+      "end": "17:00",
+      "note": "住所・電話番号は情報元に載っていません。受診前に医療機関へ電話で確認を。",
+      "source": "https://sokayashio-med.or.jp/toban/"
+    },
+    {
+      "area": "soka",
+      "date": "2026-10-04",
+      "name": "草加松原整形外科医院",
+      "address": "草加市",
+      "depts": [
+        "外科"
+      ],
+      "start": "14:00",
+      "end": "17:00",
+      "note": "住所・電話番号は情報元に載っていません。受診前に医療機関へ電話で確認を。",
+      "source": "https://sokayashio-med.or.jp/toban/"
+    },
+    {
       "area": "kawaguchi",
       "date": "2026-10-04",
       "name": "川口市立医療センター",
@@ -424,6 +637,20 @@ window.DUTY_DATA = {
       "end": "08:00",
       "note": "川口市こども夜間救急診療所が閉まった後の、子どもの夜間救急の当番病院です。入院患者の診療中で待つことがあります。受診前に必ず電話を。",
       "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
+    },
+    {
+      "area": "misato",
+      "date": "2026-10-05",
+      "name": "埼葛クリニック",
+      "address": "吉川市富新田245",
+      "tel": "048-982-3211",
+      "depts": [
+        "小児科"
+      ],
+      "start": "19:00",
+      "end": "21:00",
+      "note": "平日夜間の小児時間外（初期救急）診療。時間は受付時間です（診療は21時30分まで）。前もって電話で子どもの状態を伝えてから受診を。",
+      "source": "https://www.city.yoshikawa.saitama.jp/index.cfm/24,447,137,767,html"
     },
     {
       "area": "kawaguchi",
@@ -440,6 +667,20 @@ window.DUTY_DATA = {
       "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
     },
     {
+      "area": "misato",
+      "date": "2026-10-06",
+      "name": "土屋医院",
+      "address": "吉川市加藤664-1",
+      "tel": "048-982-2156",
+      "depts": [
+        "小児科"
+      ],
+      "start": "19:00",
+      "end": "21:00",
+      "note": "平日夜間の小児時間外（初期救急）診療。時間は受付時間です（診療は21時30分まで）。前もって電話で子どもの状態を伝えてから受診を。",
+      "source": "https://www.city.yoshikawa.saitama.jp/index.cfm/24,447,137,767,html"
+    },
+    {
       "area": "kawaguchi",
       "date": "2026-10-06",
       "name": "済生会川口総合病院",
@@ -452,6 +693,20 @@ window.DUTY_DATA = {
       "end": "08:00",
       "note": "川口市こども夜間救急診療所が閉まった後の、子どもの夜間救急の当番病院です。入院患者の診療中で待つことがあります。受診前に必ず電話を。",
       "source": "https://www.city.kawaguchi.lg.jp/soshiki/01090/010/4/1/5712.html"
+    },
+    {
+      "area": "misato",
+      "date": "2026-10-07",
+      "name": "吉川中央総合病院",
+      "address": "吉川市平沼111",
+      "tel": "048-982-8311",
+      "depts": [
+        "小児科"
+      ],
+      "start": "19:00",
+      "end": "21:00",
+      "note": "平日夜間の小児時間外（初期救急）診療。時間は受付時間です（診療は21時30分まで）。前もって電話で子どもの状態を伝えてから受診を。",
+      "source": "https://www.city.yoshikawa.saitama.jp/index.cfm/24,447,137,767,html"
     },
     {
       "area": "kawaguchi",

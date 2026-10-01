@@ -5,7 +5,7 @@
 // 使い方: node scripts/duty/fetch.mjs [出力先ディレクトリ]
 // PDFの文字変換には pdftotext（poppler-utils）を使う。
 
-import { readFile, writeFile, mkdir, rm } from "node:fs/promises";
+import { readFile, writeFile, mkdir, rm, rename } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { createHash } from "node:crypto";
@@ -28,7 +28,22 @@ const PDF_HINT = /当番|休日|夜間|急患|救急|輪番|toban|touban|kyujits
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const sha256 = buf => createHash("sha256").update(buf).digest("hex");
 
+// 一時的なつながりにくさに備えて、少し待って3回まで試す
 async function get(url) {
+  let last;
+  for (let i = 0; i < 3; i++) {
+    try {
+      return await getOnce(url);
+    } catch (e) {
+      last = e;
+      if (/HTTP 4\d\d/.test(e.message)) break;
+      await sleep(3000 * (i + 1));
+    }
+  }
+  throw last;
+}
+
+async function getOnce(url) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
   try {
@@ -103,9 +118,11 @@ function sameSiteLinks(html, baseUrl) {
 }
 const isPdf = url => /\.pdf($|\?)/i.test(new URL(url).pathname + new URL(url).search);
 
-export function pdfLinks(html, baseUrl) {
+// 当番表らしいPDF。sources.json の pdf（リンク文字の正規表現）に合うものも含める
+export function pdfLinks(html, baseUrl, extra) {
+  const re = extra ? new RegExp(extra) : null;
   return sameSiteLinks(html, baseUrl)
-    .filter(l => isPdf(l.url) && (PDF_HINT.test(l.label) || PDF_HINT.test(new URL(l.url).pathname)))
+    .filter(l => isPdf(l.url) && (PDF_HINT.test(l.label) || PDF_HINT.test(new URL(l.url).pathname) || (re && re.test(l.label))))
     .slice(0, MAX_PDFS_PER_SOURCE);
 }
 
@@ -129,10 +146,25 @@ async function pdfToText(buf) {
   }
 }
 
+// 新しいものは一時ディレクトリに保存し、取得できたときだけ前日の分と入れ替える。
+// 取得できなかった情報元は前回の保存分が残る（status.json に失敗として記録される）。
 async function fetchSource(src) {
-  const dir = path.join(OUT, src.id);
+  const final = path.join(OUT, src.id);
+  const dir = path.join(OUT, `.${src.id}.tmp`);
   await rm(dir, { recursive: true, force: true });
   await mkdir(dir, { recursive: true });
+  try {
+    const result = await fetchInto(src, dir);
+    await rm(final, { recursive: true, force: true });
+    await rename(dir, final);
+    return result;
+  } catch (e) {
+    await rm(dir, { recursive: true, force: true });
+    throw e;
+  }
+}
+
+async function fetchInto(src, dir) {
   const files = [];
   const errors = [];
 
@@ -143,7 +175,7 @@ async function fetchSource(src) {
   files.push({ file: "page.txt", url: page.finalUrl, sha256: sha256(pageText) });
 
   // follow に合うリンク先のページも取得し、そこからリンクされたPDFも集める
-  const pdfs = pdfLinks(html, page.finalUrl);
+  const pdfs = pdfLinks(html, page.finalUrl, src.pdf);
   let p = 0;
   for (const link of followLinks(html, page.finalUrl, src.follow)) {
     p += 1;
@@ -155,7 +187,7 @@ async function fetchSource(src) {
       const name = `link-${p}.txt`;
       await writeFile(path.join(dir, name), `# ${link.label}\n# ${sub.finalUrl}\n\n${text}`);
       files.push({ file: name, url: sub.finalUrl, label: link.label, sha256: sha256(text) });
-      for (const l of pdfLinks(subHtml, sub.finalUrl)) {
+      for (const l of pdfLinks(subHtml, sub.finalUrl, src.pdf)) {
         if (!pdfs.some(x => x.url === l.url)) pdfs.push(l);
       }
     } catch (e) {

@@ -5,7 +5,7 @@ export function toHalf(s) {
   return s
     .replace(/[０-９Ａ-Ｚａ-ｚ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
     .replace(/[－―‐−]/g, "-")
-    .replace(/[（]/g, "(").replace(/[）]/g, ")")
+    .replace(/[（]/g, "(").replace(/[）]/g, ")").replace(/：/g, ":")
     .replace(/　/g, " ");
 }
 
