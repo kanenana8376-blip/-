@@ -86,7 +86,9 @@ async function main() {
   }
 
   entries.sort((a, b) => (a.date + a.start + a.area).localeCompare(b.date + b.start + b.area));
-  const data = { updatedAt: jstIso(now), coverage, entries };
+  // 当番表を自動で読み取っている地域（読み取りに失敗した日も含む）
+  const areas = [...new Set(sources.filter(src => parsers[src.id]).map(src => src.area))];
+  const data = { updatedAt: jstIso(now), areas, coverage, entries };
   const body = `// 毎日更新する当番医の情報（emergency-tool.html が読み込む）
 // このファイルは scripts/duty/build.mjs が自動で書き出す。手で直さないこと。
 // 形式の説明は emergency-duty-update.md を参照。
