@@ -340,5 +340,12 @@
     "area": "all",
     "name": "埼玉県 耳鼻咽喉科 休日救急診療",
     "url": "https://www.pref.saitama.lg.jp/a0703/jibika.html"
+  },
+  {
+    "id": "fixed-fdma",
+    "area": "all",
+    "name": "総務省消防庁 救急車を上手に使いましょう",
+    "url": "https://www.fdma.go.jp/publication/portal/post1.html",
+    "pdf": "救急車|日本語"
   }
 ]
