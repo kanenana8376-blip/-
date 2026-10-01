@@ -13,12 +13,42 @@
     --line: #d8d6cd;
     --bg: #f7f5f0;
     --panel: #ffffff;
+    --field: #ffffff;
+    --on-accent: #ffffff;
+    --header-bg: #1F4E79;
+    --header-fg: #ffffff;
+    --header-sub: #cfe0ee;
     --red: #c0392b;
     --red-bg: #fdecea;
     --green: #1e7b4a;
     --green-bg: #e6f4ec;
+    --green-line: #bfe3cd;
     --amber: #8a5a00;
     --amber-bg: #fff4dc;
+    --amber-line: #f0d9a8;
+    --teal: #2f7d8c;
+    --yellow: #d9a400;
+    --grey-mark: #9a9a96;
+    --chip: #ececea;
+    --chip-ok: #eef6f0;
+    --chip-duty: #e8f0f8;
+    --note-bg: #f3f2ed;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --navy: #6ea3d6; --ink: #e8e6e1; --muted: #a8a6a0; --line: #3c3b38; --bg: #171716; --panel: #22211f;
+      --field: #2a2927; --on-accent: #10161c; --header-bg: #1a2f45; --header-fg: #f2f4f6; --header-sub: #a9c6e2; --red: #ef6b5b; --red-bg: #3a1d1a;
+      --green: #6cc596; --green-bg: #17301f; --green-line: #2d5a3c; --amber: #e8b45c; --amber-bg: #33280f;
+      --amber-line: #5b4718; --teal: #5fb3c2; --yellow: #e2b93b; --grey-mark: #7c7b77; --chip: #34332f;
+      --chip-ok: #1b3324; --chip-duty: #1d2c3b; --note-bg: #2c2b28; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --navy: #6ea3d6; --ink: #e8e6e1; --muted: #a8a6a0; --line: #3c3b38; --bg: #171716; --panel: #22211f;
+    --field: #2a2927; --on-accent: #10161c; --header-bg: #1a2f45; --header-fg: #f2f4f6; --header-sub: #a9c6e2; --red: #ef6b5b; --red-bg: #3a1d1a;
+    --green: #6cc596; --green-bg: #17301f; --green-line: #2d5a3c; --amber: #e8b45c; --amber-bg: #33280f;
+    --amber-line: #5b4718; --teal: #5fb3c2; --yellow: #e2b93b; --grey-mark: #7c7b77; --chip: #34332f;
+    --chip-ok: #1b3324; --chip-duty: #1d2c3b; --note-bg: #2c2b28; color-scheme: dark;
   }
   * { box-sizing: border-box; }
   body {
@@ -29,18 +59,18 @@
     line-height: 1.6;
   }
   header {
-    background: var(--navy);
-    color: #fff;
+    background: var(--header-bg);
+    color: var(--header-fg);
     padding: 14px 16px;
   }
   header h1 { font-size: 18px; margin: 0; }
-  header .sub { font-size: 12px; color: #cfe0ee; }
+  header .sub { font-size: 12px; color: var(--header-sub); }
   main { max-width: 720px; margin: 0 auto; padding: 12px 16px 40px; }
 
   .proto {
     background: var(--amber-bg);
     color: var(--amber);
-    border: 1px solid #f0d9a8;
+    border: 1px solid var(--amber-line);
     border-radius: 8px;
     padding: 10px 12px;
     font-size: 12.5px;
@@ -66,12 +96,12 @@
     padding: 10px 8px;
     font-weight: 700;
     font-size: 15px;
-    color: #fff;
+    color: var(--on-accent);
   }
   .call small { display: block; font-weight: 400; font-size: 11px; opacity: .9; }
   .call.c119 { background: var(--red); }
   .call.c7119 { background: var(--navy); }
-  .call.c8000 { background: #2f7d8c; }
+  .call.c8000 { background: var(--teal); }
   .urgent .more { font-size: 12.5px; margin-top: 8px; }
   .urgent .more a { color: var(--navy); }
 
@@ -91,7 +121,7 @@
     padding: 8px 10px;
     border: 1px solid var(--line);
     border-radius: 6px;
-    background: #fff;
+    background: var(--field);
   }
   .seg { display: flex; flex-wrap: wrap; gap: 6px; }
   .seg label {
@@ -102,11 +132,11 @@
     padding: 8px 10px;
     font-size: 14px;
     cursor: pointer;
-    background: #fff;
+    background: var(--field);
   }
   .seg input { position: absolute; opacity: 0; width: 1px; height: 1px; }
   .seg label:has(input:focus-visible) { outline: 2px solid var(--navy); outline-offset: 2px; }
-  .seg label:has(input:checked) { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .seg label:has(input:checked) { background: var(--navy); color: var(--on-accent); border-color: var(--navy); }
   .when-custom { margin-top: 6px; }
   .nowline { font-size: 13px; color: var(--muted); margin-top: 6px; }
 
@@ -120,23 +150,23 @@
     margin-bottom: 10px;
   }
   .card.open { border-left: 6px solid var(--green); }
-  .card.later { border-left: 6px solid #d9a400; }
-  .card.unknown { border-left: 6px solid #aaa; }
+  .card.later { border-left: 6px solid var(--yellow); }
+  .card.unknown { border-left: 6px solid var(--grey-mark); }
   .card h3 { font-size: 15.5px; margin: 0 0 2px; }
   .badges { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 6px; }
-  .badge { font-size: 11.5px; padding: 1px 8px; border-radius: 10px; background: #eee; color: var(--ink); }
+  .badge { font-size: 11.5px; padding: 1px 8px; border-radius: 10px; background: var(--chip); color: var(--ink); }
   .badge.st-open { background: var(--green-bg); color: var(--green); font-weight: 700; }
   .badge.st-later { background: var(--amber-bg); color: var(--amber); font-weight: 700; }
-  .badge.ok { background: #eef6f0; color: var(--green); }
+  .badge.ok { background: var(--chip-ok); color: var(--green); }
   .badge.warn { background: var(--amber-bg); color: var(--amber); }
-  .badge.duty { background: #e8f0f8; color: var(--navy); font-weight: 700; }
+  .badge.duty { background: var(--chip-duty); color: var(--navy); font-weight: 700; }
   .duty-info { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
   .duty-info.stale { background: var(--amber-bg); color: var(--amber); border-radius: 8px; padding: 8px 10px; }
   .duty-info.stale a { color: var(--navy); }
   .card .row { font-size: 13px; color: var(--ink); }
   .card .row .k { color: var(--muted); }
   .card .hours { font-size: 12.5px; color: var(--muted); margin-top: 4px; white-space: pre-line; }
-  .card .note { font-size: 12.5px; background: #f3f2ed; border-radius: 6px; padding: 6px 8px; margin-top: 6px; }
+  .card .note { font-size: 12.5px; background: var(--note-bg); border-radius: 6px; padding: 6px 8px; margin-top: 6px; }
   .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   .actions a {
     font-size: 13px;
@@ -146,26 +176,26 @@
     border-radius: 6px;
     padding: 5px 10px;
   }
-  .actions a.tel { background: var(--navy); color: #fff; font-weight: 700; }
+  .actions a.tel { background: var(--navy); color: var(--on-accent); font-weight: 700; }
   /* 症状から調べる */
   .sx-grid { display: grid; gap: 12px; }
   .chk { display: flex; flex-wrap: wrap; gap: 6px; }
-  .chk label { border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-size: 13.5px; background: #fff; cursor: pointer; }
+  .chk label { border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-size: 13.5px; background: var(--field); cursor: pointer; }
   .chk input { margin-right: 4px; }
-  .chk label:has(input:checked) { background: #e8f0f8; border-color: var(--navy); }
+  .chk label:has(input:checked) { background: var(--chip-duty); border-color: var(--navy); }
   .flags { border: 2px solid var(--red); border-radius: 8px; padding: 10px 12px; background: var(--red-bg); }
   .flags .lbl { color: var(--red); }
   .flags label { display: block; font-size: 14px; padding: 4px 0; }
   .sx-result { border-radius: 10px; padding: 12px 14px; margin-top: 4px; font-size: 14px; }
   .sx-result h3 { margin: 0 0 6px; font-size: 16px; }
   .sx-result ul { margin: 6px 0 0; padding-left: 20px; font-size: 13.5px; }
-  .sx-result.l119 { background: var(--red); color: #fff; }
-  .sx-result.l119 a { color: #fff; }
-  .sx-result.lconsult { background: var(--amber-bg); color: var(--amber); border: 1px solid #f0d9a8; }
-  .sx-result.lgo { background: var(--green-bg); color: var(--green); border: 1px solid #bfe3cd; }
+  .sx-result.l119 { background: var(--red); color: var(--on-accent); }
+  .sx-result.l119 a { color: var(--on-accent); }
+  .sx-result.lconsult { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-line); }
+  .sx-result.lgo { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-line); }
   .sx-note { font-size: 12px; color: var(--muted); margin-top: 6px; }
-  .sx-call { display: inline-block; margin: 6px 6px 0 0; padding: 8px 14px; border-radius: 8px; font-weight: 700; text-decoration: none; background: #fff; color: var(--red); }
-  .lconsult .sx-call, .lgo .sx-call { background: var(--navy); color: #fff; }
+  .sx-call { display: inline-block; margin: 6px 6px 0 0; padding: 8px 14px; border-radius: 8px; font-weight: 700; text-decoration: none; background: var(--panel); color: var(--red); }
+  .lconsult .sx-call, .lgo .sx-call { background: var(--navy); color: var(--on-accent); }
   .empty {
     background: var(--panel);
     border: 1px dashed var(--line);
@@ -188,7 +218,7 @@
 <main>
 
   <div class="proto">
-    <b>試作版です。</b>一部の施設は公式情報との照合がまだです（「未確認の情報」と表示）。当番は急に変わることがあるので、受診する前に必ず施設へ電話で確認してください。
+    <b>試作版です。</b>掲載している情報は、各市町村・医師会の公式ページで確認したものです。当番は急に変わることがあるので、受診する前に必ず施設へ電話で確認してください。
   </div>
 
   <section class="urgent" aria-label="すぐに119番">
@@ -1331,11 +1361,11 @@ function render() {
     }
   }
   if (later.length) {
-    html += `<h2 class="group-title"><span class="dot" style="background:#d9a400"></span>このあと今日開く（${later.length}件）</h2>`;
+    html += `<h2 class="group-title"><span class="dot" style="background:var(--yellow)"></span>このあと今日開く（${later.length}件）</h2>`;
     html += later.map(([f, s]) => card(f, s, dept)).join("");
   }
   if (unknown.length) {
-    html += `<h2 class="group-title"><span class="dot" style="background:#aaa"></span>当番表・電話で確認が必要なもの（${unknown.length}件）</h2>`;
+    html += `<h2 class="group-title"><span class="dot" style="background:var(--grey-mark)"></span>当番表・電話で確認が必要なもの（${unknown.length}件）</h2>`;
     html += unknown.map(([f, s]) => card(f, s, dept)).join("");
   }
   if (dept === "外科") {
@@ -1468,7 +1498,7 @@ function sxEvaluate() {
     out.innerHTML = `<div class="sx-result l119"><h3>いますぐ 119番 に電話してください</h3>
       <a class="sx-call" href="tel:119">119番に電話</a>
       <ul>${flagged.map(f => `<li>${esc(f)}</li>`).join("")}</ul>
-      <p class="sx-note" style="color:#fff">救急車を待つ間は、楽な姿勢で安静に。持病・飲んでいる薬・いつからかを伝えられるようにしておくと役立ちます。</p>${extra}</div>`;
+      <p class="sx-note" style="color:inherit">救急車を待つ間は、楽な姿勢で安静に。持病・飲んでいる薬・いつからかを伝えられるようにしておくと役立ちます。</p>${extra}</div>`;
     return;
   }
   // 2) 心の不調は精神科救急情報センターへ
