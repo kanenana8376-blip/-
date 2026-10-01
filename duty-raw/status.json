@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-10-01T15:07:15.342Z",
+  "fetchedAt": "2026-10-01T15:27:27.685Z",
   "sources": [
     {
       "id": "saitama-city",
@@ -18,9 +18,8 @@
     {
       "id": "warabitoda",
       "area": "kawaguchi",
-      "ok": true,
-      "files": 1,
-      "errors": []
+      "ok": false,
+      "error": "fetch failed"
     },
     {
       "id": "ageo",
