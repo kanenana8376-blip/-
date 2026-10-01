@@ -121,6 +121,7 @@
   .req-input::-webkit-outer-spin-button, .req-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .req-input.off { border-color: #e0a36b; background: #fff7ef; }
   .req-input.custom { border-color: var(--navy); background: #e8f0f8; color: var(--navy); }
+  table.grid td.cell.soft { box-shadow: inset 0 0 0 2px #e69500; }
   table.grid td.cell.swap-sel { box-shadow: inset 0 0 0 3px #ff9800; }
   .btn:disabled { opacity: 0.45; cursor: default; }
   table.grid td.cell.bad { box-shadow: inset 0 0 0 2px var(--red); }
@@ -898,7 +899,8 @@ function st(id, name, role, workType, nurseYear, wardYear, extra) {
 const STAFF_DEFAULTS = {
   nightMin: 0,          // 月の夜勤回数の下限（夜勤を偏らせないため）
   nightNg: {},          // 曜日ごとに入れない夜勤 {0..6: ['準','深','夜']}
-  ngPartners: [],       // 同じ夜勤帯に入れない相手（id）
+  ngPartners: [],       // 同じ夜勤帯に絶対に入れない相手（id）
+  avoidPartners: [],    // できれば同じ夜勤帯にしたくない相手（id）
   mentorId: null,       // 指導者（プリセプター）
   needMentor: false,    // 夜勤は指導者と同じ帯にする
   paidGranted: 20,      // 有給の年間付与日数
@@ -920,14 +922,14 @@ const DEFAULT_STAFF = [
   st(3,  '副師長B',    '副師長', '2交代', 15, 3, { nightMax: 6 }),
   st(4,  '主任A',      '主任',   '3交代', 12, 5),
   st(5,  '主任B',      '主任',   '2交代', 10, 4),
-  st(6,  '看護師06',   'スタッフ', '3交代', 9, 4),
+  st(6,  '看護師06',   'スタッフ', '3交代', 9, 4, { avoidPartners: [21] }),
   st(7,  '看護師07',   'スタッフ', '3交代', 7, 3),
   st(8,  '看護師08',   'スタッフ', '3交代', 6, 6),
   st(9,  '看護師09',   'スタッフ', '3交代', 5, 2, { nightNg: { 3: ['準', '深'] }, memo: '水曜は保育園の都合で夜勤不可' }),
   st(10, '看護師10',   'スタッフ', '3交代', 4, 4),
   st(11, '看護師11',   'スタッフ', '3交代', 8, 1),
   st(12, '看護師12',   'スタッフ', '3交代', 3, 3, { ngPartners: [13] }),
-  st(13, '看護師13',   'スタッフ', '3交代', 2, 2),
+  st(13, '看護師13',   'スタッフ', '3交代', 2, 2, { ngPartners: [12] }),
   st(14, '看護師14',   'スタッフ', '3交代', 1, 1, { mentorId: 8, needMentor: true, nightMax: 7 }),
   st(15, '看護師15',   'スタッフ', '3交代', 1, 1, { nightOK: false, mentorId: 16, memo: '夜勤デビュー前' }),
   st(16, '看護師16',   'スタッフ', '3交代', 11, 5),
@@ -935,7 +937,7 @@ const DEFAULT_STAFF = [
   st(18, '看護師18',   'スタッフ', '2交代', 11, 7, { nightMin: 6 }),
   st(19, '看護師19',   'スタッフ', '2交代', 6, 3),
   st(20, '看護師20',   'スタッフ', '2交代', 5, 5),
-  st(21, '看護師21',   'スタッフ', '2交代', 3, 3),
+  st(21, '看護師21',   'スタッフ', '2交代', 3, 3, { avoidPartners: [6] }),
   st(22, '看護師22',   'スタッフ', '2交代', 2, 2),
   st(23, '看護師23',   'スタッフ', '2交代', 1, 1, { mentorId: 18, needMentor: true, nightMax: 7 }),
   st(24, '看護師24',   'スタッフ', '2交代', 14, 1),
@@ -1172,6 +1174,8 @@ function expChips(s) {
   if (!s.nightOK && WORK_TYPES[s.workType].codes.some(isNight)) chips.push('<span class="chip nonight">夜勤なし</span>');
   const ng = nightNgLabel(s);
   if (ng) chips.push(`<span class="chip nonight" title="曜日ごとの夜勤の約束">${esc(ng)}</span>`);
+  const ngNames = DB.staff.filter(o => o !== s && pairLevel(s, o)).map(o => o.name + (pairLevel(s, o) === 'avoid' ? '（避けたい）' : ''));
+  if (ngNames.length) chips.push(`<span class="chip nonight" title="夜勤で一緒に組まない人：${esc(ngNames.join('、'))}">組まない:${esc(ngNames.join('、'))}</span>`);
   const mt = s.mentorId && staffById(s.mentorId);
   if (mt) chips.push(`<span class="chip" title="${s.needMentor ? '夜勤は指導者と同じ帯にする' : '指導者'}">指導:${esc(mt.name)}${s.needMentor ? '（夜勤同伴）' : ''}</span>`);
   return chips.join('');
@@ -1193,15 +1197,79 @@ function nightNgLabel(s) {
   });
   return Object.entries(groups).map(([codes, days]) => `${days.join('・')}曜は${codes}不可`).join(' ／ ');
 }
-function isNgPair(a, b) {
-  return (a.ngPartners || []).includes(b.id) || (b.ngPartners || []).includes(a.id);
+// 夜勤で一緒に組まない組み合わせ。どちらの人から見ても同じになるよう、両方に持たせる。
+//   never … 絶対に組まない（自動作成は必ず避ける。重なったら要修正）
+//   avoid … できれば避ける（自動作成は避けるが、人が足りなければ組む。重なったら注意）
+const PAIR_LEVELS = { never: '絶対に組まない', avoid: 'できれば避ける' };
+function pairLevel(a, b) {
+  if ((a.ngPartners || []).includes(b.id) || (b.ngPartners || []).includes(a.id)) return 'never';
+  if ((a.avoidPartners || []).includes(b.id) || (b.avoidPartners || []).includes(a.id)) return 'avoid';
+  return null;
+}
+function isNgPair(a, b) { return pairLevel(a, b) === 'never'; }
+function setPair(a, b, level) {
+  [[a, b], [b, a]].forEach(([x, y]) => {
+    x.ngPartners = (x.ngPartners || []).filter(id => id !== y.id);
+    x.avoidPartners = (x.avoidPartners || []).filter(id => id !== y.id);
+    if (level === 'never') x.ngPartners.push(y.id);
+    if (level === 'avoid') x.avoidPartners.push(y.id);
+  });
+}
+function allPairs() {
+  const out = [];
+  DB.staff.forEach((a, i) => DB.staff.slice(i + 1).forEach(b => {
+    const level = pairLevel(a, b);
+    if (level) out.push({ a, b, level });
+  }));
+  return out;
+}
+// 組み合わせの一覧と追加フォーム。onlyId を渡すとその人が入っている組み合わせだけ出す。
+function pairEditorHtml(onlyId) {
+  const pairs = allPairs().filter(p => !onlyId || p.a.id === onlyId || p.b.id === onlyId);
+  const opts = (sel) => DB.staff.map(s => `<option value="${s.id}"${s.id === sel ? ' selected' : ''}>${esc(s.name)}</option>`).join('');
+  return `
+    ${pairs.length ? `<table class="form" style="margin-bottom:8px">
+      <tr><th>組み合わせ</th><th>強さ</th><th></th></tr>
+      ${pairs.map(p => `<tr>
+        <td>${esc(p.a.name)} <span class="note">と</span> ${esc(p.b.name)}</td>
+        <td><select data-pair-level="${p.a.id}-${p.b.id}">${Object.entries(PAIR_LEVELS).map(([k, v]) => `<option value="${k}"${k === p.level ? ' selected' : ''}>${v}</option>`).join('')}</select></td>
+        <td><button class="btn small danger" data-pair-del="${p.a.id}-${p.b.id}">外す</button></td>
+      </tr>`).join('')}
+    </table>` : '<div class="note" style="margin-bottom:8px">まだ登録されていません。</div>'}
+    <div class="toolbar" style="margin:0">
+      <select data-pair-new="a">${opts(onlyId)}</select>
+      <span class="note">と</span>
+      <select data-pair-new="b"><option value="">相手を選ぶ</option>${opts(null)}</select>
+      <select data-pair-new="level">${Object.entries(PAIR_LEVELS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select>
+      <button class="btn small primary" data-pair-add>追加</button>
+    </div>`;
+}
+function wirePairEditor(root, rerender) {
+  const changed = () => { scheduleSave(); rerender(); };
+  root.querySelectorAll('[data-pair-level]').forEach(sel => {
+    sel.onchange = () => { const [a, b] = sel.dataset.pairLevel.split('-').map(Number); setPair(staffById(a), staffById(b), sel.value); changed(); };
+  });
+  root.querySelectorAll('[data-pair-del]').forEach(btn => {
+    btn.onclick = () => { const [a, b] = btn.dataset.pairDel.split('-').map(Number); setPair(staffById(a), staffById(b), null); changed(); };
+  });
+  const add = root.querySelector('[data-pair-add]');
+  if (add) add.onclick = () => {
+    const a = staffById(Number(root.querySelector('[data-pair-new="a"]').value));
+    const b = staffById(Number(root.querySelector('[data-pair-new="b"]').value));
+    const level = root.querySelector('[data-pair-new="level"]').value;
+    if (!a || !b) { showToast('2人を選んでください', 'error'); return; }
+    if (a === b) { showToast('同じ人どうしは選べません', 'error'); return; }
+    setPair(a, b, level);
+    changed();
+    showToast(`${a.name}さんと${b.name}さんを「${PAIR_LEVELS[level]}」にしました`);
+  };
 }
 // 本人ごとの約束（組み合わせNG・指導者と一緒）に反している数
 function personalProblems(members, ids) {
   const out = [];
   for (let i = 0; i < members.length; i++) {
     for (let j = i + 1; j < members.length; j++) {
-      if (isNgPair(members[i], members[j])) out.push(`${members[i].name}と${members[j].name}は同じ夜勤にしない設定`);
+      if (isNgPair(members[i], members[j])) out.push(`${members[i].name}と${members[j].name}は夜勤で組まない設定（絶対に組まない）`);
     }
   }
   members.forEach(s => {
@@ -1225,6 +1293,8 @@ function crewCheck(ids) {
     wardNew: members.filter(isWardNew).length,
     problems: [],
     personal: 0,
+    soft: [],       // できれば避けたい組み合わせ
+    pairs: [],      // 組み合わせの約束に当たった2人 {a, b, level}
   };
   if (r.total > 0) {
     if (r.vet < S.minVet) r.problems.push(`中堅以上が${r.vet}人（${S.minVet}人以上必要）`);
@@ -1235,6 +1305,14 @@ function crewCheck(ids) {
     const pp = personalProblems(members, ids);
     r.personal = pp.length;
     r.problems.push(...pp);
+    for (let i = 0; i < members.length; i++) {
+      for (let j = i + 1; j < members.length; j++) {
+        const level = pairLevel(members[i], members[j]);
+        if (!level) continue;
+        r.pairs.push({ a: members[i].id, b: members[j].id, level });
+        if (level === 'avoid') r.soft.push(`${members[i].name}と${members[j].name}が同じ夜勤（できれば避ける組み合わせ）`);
+      }
+    }
   }
   return r;
 }
@@ -1306,6 +1384,7 @@ function analyze(plan) {
   const add = (sev, d, id, msg, w) => { issues.push({ sev, d, id, msg }); score += w; };
 
   const days = [];
+  const pairCells = {};
   for (let d = 1; d <= n; d++) {
     const day = { d, dayIds: [], shortIds: [], eve: [], late: [], req: reqDay(y, m, d) };
     DB.staff.forEach(s => {
@@ -1324,6 +1403,14 @@ function analyze(plan) {
       if (ids.length < req) add('error', d, null, `${label} ${nm}が${req - ids.length}人不足（${ids.length}/${req}人）`, 60 * (req - ids.length));
       if (ids.length > req) add('warn', d, null, `${label} ${nm}が${ids.length - req}人多い（${ids.length}/${req}人）`, 15 * (ids.length - req));
       chk.problems.forEach(p => add('error', d, null, `${label} ${nm}：${p}`, 50));
+      chk.soft.forEach(p => add('warn', d, null, `${label} ${nm}：${p}`, 15));
+      // 組み合わせに当たった人のマスに印を付ける（深夜帯の2交代夜勤は前日のマス）
+      chk.pairs.forEach(pr => [[pr.a, pr.b], [pr.b, pr.a]].forEach(([id, other]) => {
+        const cellDay = (nm === '深夜帯' && plan.get(id, d) !== '深') ? d - 1 : d;
+        if (cellDay < 1) return;
+        const key = `${id}-${cellDay}`;
+        if (!pairCells[key] || pr.level === 'never') pairCells[key] = { level: pr.level, other: staffById(other).name, slot: nm };
+      }));
     });
     days.push(day);
   }
@@ -1409,7 +1496,7 @@ function analyze(plan) {
     ? nightWorkers.reduce((a, s) => a + staffStats[s.id].nightHours, 0) / nightWorkers.length : 0;
 
   issues.sort((a, b) => (a.sev === b.sev ? 0 : a.sev === 'error' ? -1 : 1) || ((a.d || 99) - (b.d || 99)));
-  return { days, staffStats, issues, score, avgNightHours, nightCap, nightNeed };
+  return { days, staffStats, issues, score, avgNightHours, nightCap, nightNeed, pairCells };
 }
 
 // ============================================================
@@ -1524,6 +1611,9 @@ function autoGenerateOnce(y, m) {
     if (s.role === '師長' || s.role === '副師長') sc += 1.0;
     if (units[s.id] < (s.nightMin || 0)) sc -= 2;                          // 下限に届いていない人を先に
     if (s.needMentor && ids.includes(s.mentorId)) sc -= 3;                 // 指導者が入っている帯に新人を
+    // できれば避けたい相手が同じ帯にいれば後回し（2交代夜勤は翌日の深夜帯も見る）
+    const together = code === '夜' && d < n ? ids.concat(crewOf('late', d + 1)) : ids;
+    together.forEach(id => { const o = staffById(id); if (o && pairLevel(s, o) === 'avoid') sc += 8; });
     return sc + Math.random() * 2.5;
   }
   function pick(cands) {
@@ -1851,7 +1941,14 @@ function applyCode(id, d, code) {
 // そのマスの前後の日の、その人に関する問題
 function issuesNear(id, d) {
   const a = analyze(buildPlan(view.y, view.m, false));
-  return a.issues.filter(i => i.id === id && i.d && Math.abs(i.d - d) <= 1 && i.sev === 'error');
+  const name = staffById(id).name;
+  return a.issues.filter(i => i.d && Math.abs(i.d - d) <= 1 && (
+    (i.id === id && i.sev === 'error') || (!i.id && mentionsStaff(i.msg, name))));
+}
+// 夜勤帯の問題文にその人が名指しされているか（「看護師1」が「看護師12」に当たらないように区切りまで見る）
+function mentionsStaff(msg, name) {
+  return msg.includes('：' + name + 'と') || msg.includes('と' + name + 'は') || msg.includes('と' + name + 'が')
+    || msg.includes('：' + name + 'の夜勤') || msg.includes('（' + name + '）');
 }
 
 function openPicker(id, d) {
@@ -1930,7 +2027,9 @@ function replacementCandidates(id, d) {
   const n = plan.n;
   const code = plan.get(id, d);
   const errCount = a => a.issues.filter(i => i.sev === 'error').length;
-  const base = errCount(analyze(plan));
+  const baseA = analyze(plan);
+  const base = errCount(baseA);
+  const baseMsgs = new Set(baseA.issues.map(i => i.msg));
   const out = [];
   DB.staff.forEach(s => {
     if (s.id === id) return;
@@ -1959,14 +2058,17 @@ function replacementCandidates(id, d) {
     [plan.cells[s.id][d], plan.cells[s.id][d + 1], plan.cells[id][d], plan.cells[id][d + 1]] = keep;
 
     const stt = a.staffStats[s.id];
+    const fresh = a.issues.filter(i => !baseMsgs.has(i.msg) && (i.sev === 'error' || mentionsStaff(i.msg, s.name)));
     out.push({
       s, give, lostOff: cur === '公' || (give === '夜' && nx === '公'),
       added: Math.max(0, errCount(a) - base),
+      soft: fresh.filter(i => i.sev !== 'error').length,
+      reason: (fresh.find(i => i.sev === 'error') || fresh[0] || {}).msg || '',
       nightRatio: stt.nightUnits / Math.max(1, s.nightMax),
       workDays: n - stt.off - stt.paid - stt.empty,
     });
   });
-  out.sort((a, b) => (a.added - b.added)
+  out.sort((a, b) => (a.added - b.added) || (a.soft - b.soft)
     || (isNight(code) ? a.nightRatio - b.nightRatio : a.workDays - b.workDays)
     || (a.lostOff - b.lostOff));
   return out;
@@ -1986,7 +2088,8 @@ function showReplacements(id, d) {
         <button class="code-btn" data-k="${k}" style="width:100%;margin-bottom:6px;background:${c.added ? '#fff8e6' : '#f3faef'}">
           <b style="font-size:14px">${esc(c.s.name)}</b>
           <span class="chip" style="background:${CODES[c.give].color}">${c.give}</span>
-          ${c.added ? `<span class="sev warn" style="font-size:11px;padding:0 6px;border-radius:4px;background:var(--yellow-bg)">要確認が${c.added}件増える</span>` : '<span style="color:#2e7d32;font-size:12px;font-weight:700">✓ 問題なし</span>'}
+          ${c.added ? `<span class="sev warn" style="font-size:11px;padding:0 6px;border-radius:4px;background:var(--yellow-bg)">要修正が${c.added}件増える</span>` : c.soft ? '<span style="color:#9c6500;font-size:12px;font-weight:700">△ 注意あり</span>' : '<span style="color:#2e7d32;font-size:12px;font-weight:700">✓ 問題なし</span>'}
+          ${c.reason ? `<small style="color:#9c0006">理由：${esc(c.reason.replace(/^\d+\/\d+\(.\) /, ''))}</small>` : ''}
           <small>${esc(WORK_TYPES[c.s.workType].label)} ・ 看${c.s.nurseYear}年目・病棟${c.s.wardYear}年目 ・ 夜勤${Math.round(c.nightRatio * c.s.nightMax)}回 ・ 勤務${c.workDays}日${c.lostOff ? ' ・ 公休が1日減ります' : ''}</small>
         </button>`).join('') : '<div class="note">条件を満たす人が見つかりませんでした（休み希望・勤務形態・夜勤の約束・勤務の並びで入れない人を除いています）。</div>'}
     </div>
@@ -2068,7 +2171,9 @@ function openDayDetail(d) {
       [`看護師${S.youngMaxYear}年目以下 ${chk.young}人 ／ 上限${S.maxYoung}人`, chk.young <= S.maxYoung],
       [`新人（看護師1年目）${chk.newbie}人 ／ 上限${S.maxNewbie}人`, chk.newbie <= S.maxNewbie],
       [`病棟1年目 ${chk.wardNew}人 ／ 上限${S.maxWardNew}人`, chk.wardNew <= S.maxWardNew],
-    ];
+      ...chk.pairs.map(pr => [`${staffById(pr.a).name}と${staffById(pr.b).name}が同じ夜勤（${PAIR_LEVELS[pr.level]}）`, pr.level !== 'never']),
+      [chk.pairs.length ? '' : '組めない組み合わせ：なし', true],
+    ].filter(([txt]) => txt);
     return `<h4 style="margin:12px 0 4px;">${title}</h4>
       <div class="crew">${ids.map(id => member(id, slot)).join('') || '<span class="note">まだ誰も入っていません</span>'}</div>
       ${rules.map(([t, ok]) => `<div class="rule ${ok ? 'okr' : 'ng'}">${ok ? '✓' : '✕'} ${t}</div>`).join('')}`;
@@ -2121,11 +2226,14 @@ function renderGrid() {
       const cls = ['cell', dayCls(d)];
       if (p) cls.push('pto');
       if (auto) cls.push('auto');
-      if (badCells.has(`${s.id}-${d}`)) cls.push('bad');
+      const pc = a.pairCells[`${s.id}-${d}`];
+      if (badCells.has(`${s.id}-${d}`) || (pc && pc.level === 'never')) cls.push('bad');
+      else if (pc) cls.push('soft');
       if (view.highlight === `${s.id}-${d}`) cls.push('flash');
       if (view.swapSel && view.swapSel.id === s.id && view.swapSel.d === d) cls.push('swap-sel');
       const bg = c && CODES[c] ? ` style="background:${CODES[c].color}"` : '';
-      row += `<td class="${cls.join(' ')}" data-id="${s.id}" data-day="${d}"${bg}${p ? ' title="休み希望"' : ''}>${c}</td>`;
+      const tip = pc ? `${pc.slot}で${pc.other}さんと同じ（${PAIR_LEVELS[pc.level]}）` : p ? '休み希望' : '';
+      row += `<td class="${cls.join(' ')}" data-id="${s.id}" data-day="${d}"${bg}${tip ? ` title="${esc(tip)}"` : ''}>${c}</td>`;
     }
     const offBad = stt.empty === 0 ? stt.off !== stt.target : stt.off > stt.target;
     const nightBad = stt.nightUnits > s.nightMax;
@@ -2161,9 +2269,11 @@ function renderGrid() {
   [['準夜帯', 'eve', 'eveCheck', S.reqEve], ['深夜帯', 'late', 'lateCheck', S.reqLate]].forEach(([nm, key, ck, req]) => {
     body += sumRow(`${nm} 人数（必要${req}）`, day => [`${day[key].length}`, countState(day[key].length, req), names(day[key])]);
     body += sumRow(`${nm} うち中堅以上`, day => [`${day[ck].vet}`, day[ck].vet < S.minVet ? 'short' : 'ok', `中堅以上 ${day[ck].vet}人`]);
-    body += sumRow(`${nm} 経験バランス`, day => {
-      const probs = day[ck].problems;
-      return [probs.length ? '✕' : (day[key].length ? '✓' : ''), probs.length ? 'short' : 'ok', probs.join(' ／ ') || 'OK'];
+    body += sumRow(`${nm} 経験・組み合わせ`, day => {
+      const probs = day[ck].problems, soft = day[ck].soft;
+      if (probs.length) return ['✕', 'short', probs.concat(soft).join(' ／ ')];
+      if (soft.length) return ['△', 'over', soft.join(' ／ ')];
+      return [day[key].length ? '✓' : '', 'ok', 'OK'];
     });
   });
 
@@ -2264,6 +2374,7 @@ function removeStaff(ids) {
   DB.staff = DB.staff.filter(s => !gone.has(s.id));
   DB.staff.forEach(o => {
     o.ngPartners = (o.ngPartners || []).filter(x => !gone.has(x));
+    o.avoidPartners = (o.avoidPartners || []).filter(x => !gone.has(x));
     if (gone.has(o.mentorId)) { o.mentorId = null; o.needMentor = false; }
   });
   ids.forEach(id => view.staffSel.delete(id));
@@ -2334,6 +2445,11 @@ function renderStaff() {
         <tbody>${rows}</tbody>
       </table>
     </div>
+    <div class="panel" id="pairPanel">
+      <h3>夜勤で一緒に組まない組み合わせ（${allPairs().length}組）</h3>
+      <div class="note" style="margin-bottom:8px">同じ準夜帯・深夜帯に入れたくない2人を登録します。「絶対に組まない」は自動作成で必ず避け、手で入れたら要修正として知らせます。「できれば避ける」は人が足りないときだけ組み、注意として知らせます。2交代の夜勤は、準夜帯と翌日の深夜帯の両方で判定します。</div>
+      ${pairEditorHtml(null)}
+    </div>
     <div class="panel">
       <h3>名前をまとめて追加</h3>
       <div class="note" style="margin-bottom:6px">新しい病棟を作ったときなどに。1行に1人ずつ名前を入れてください（あとで勤務形態・経験年数を入れます）。</div>
@@ -2372,6 +2488,7 @@ function renderStaff() {
       };
     });
   });
+  wirePairEditor(document.getElementById('pairPanel'), renderStaff);
   const setSel = ids => { sel.clear(); ids.forEach(id => sel.add(id)); renderStaff(); };
   document.querySelectorAll('[data-sel]').forEach(cb => {
     cb.onchange = () => { const id = Number(cb.dataset.sel); if (cb.checked) sel.add(id); else sel.delete(id); renderStaff(); };
@@ -2448,8 +2565,8 @@ function openStaffDetail(id) {
       <div><select id="sdMentor"><option value="">なし</option>${DB.staff.filter(o => o.id !== s.id).map(o => `<option value="${o.id}"${o.id === s.mentorId ? ' selected' : ''}>${esc(o.name)}${isVet(o) ? '（中堅以上）' : ''}</option>`).join('')}</select></div></div>
     <div class="field"><div>夜勤は指導者と同じ帯にする<div class="hint">夜勤の独り立ち前の新人向け。指導者がいない夜勤帯には入れません</div></div>
       <div><input type="checkbox" id="sdNeedMentor"${s.needMentor ? ' checked' : ''}></div></div>
-    <h4 style="margin:14px 0 4px">同じ夜勤帯に入れない人</h4>
-    <div class="chips" style="gap:6px 12px">${others.map(o => `<label style="font-size:12px;white-space:nowrap"><input type="checkbox" data-ngp="${o.id}"${isNgPair(s, o) ? ' checked' : ''}> ${esc(o.name)}</label>`).join('') || '<span class="note">夜勤に入る人がいません</span>'}</div>
+    <h4 style="margin:14px 0 4px">夜勤で一緒に組まない人</h4>
+    <div id="sdPairs">${pairEditorHtml(s.id)}</div>
     <h4 style="margin:14px 0 4px">有給休暇</h4>
     <div class="field"><div>年間の付与日数</div><div><input type="number" id="sdPaidGranted" min="0" max="40" value="${s.paidGranted}"> 日</div></div>
     <div class="field"><div>今月より前に使った日数<div class="hint">年度の途中から使い始める場合に入れてください</div></div><div><input type="number" id="sdPaidUsed" min="0" max="40" value="${s.paidUsedBefore}"> 日</div></div>
@@ -2468,17 +2585,12 @@ function openStaffDetail(id) {
       changed();
     };
   });
-  body.querySelectorAll('[data-ngp]').forEach(cb => {
-    cb.onchange = () => {
-      const o = staffById(Number(cb.dataset.ngp));
-      // 相手側にも同じ設定を持たせて、どちらから見ても分かるようにする
-      [[s, o], [o, s]].forEach(([a, b]) => {
-        a.ngPartners = (a.ngPartners || []).filter(x => x !== b.id);
-        if (cb.checked) a.ngPartners.push(b.id);
-      });
-      changed();
-    };
-  });
+  const rewirePairs = () => {
+    const box = document.getElementById('sdPairs');
+    box.innerHTML = pairEditorHtml(s.id);
+    wirePairEditor(box, () => { rewirePairs(); if (view.tab === 'staff') renderStaff(); });
+  };
+  rewirePairs();
   const num = (el, min, max) => Math.max(min, Math.min(max, Number(el.value) || 0));
   document.getElementById('sdNightMin').onchange = e => { s.nightMin = num(e.target, 0, 20); changed(); };
   document.getElementById('sdMentor').onchange = e => { s.mentorId = e.target.value ? Number(e.target.value) : null; if (!s.mentorId) { s.needMentor = false; document.getElementById('sdNeedMentor').checked = false; } changed(); };
@@ -2714,7 +2826,7 @@ function renderGuide() {
       <ul>
         <li><b>夜勤に入れない曜日</b>：「水曜は準夜・深夜とも不可」「土曜の準夜だけ不可」などを曜日ごとにチェックします。</li>
         <li><b>指導者（プリセプター）</b>：「夜勤は指導者と同じ帯にする」にすると、独り立ち前の新人は指導者がいる夜勤帯にだけ入ります。</li>
-        <li><b>同じ夜勤帯に入れない人</b>：組み合わせを避けたい2人を設定します（相手側にも自動で設定されます）。</li>
+        <li><b>夜勤で一緒に組まない人</b>：「絶対に組まない」「できれば避ける」の2段階で登録します。スタッフ画面の「夜勤で一緒に組まない組み合わせ」でまとめて管理できます。</li>
         <li><b>夜勤回数の下限</b>・<b>有給の付与日数</b>もここで設定します。</li>
       </ul>
       <h3>勤務の並びの約束ごと</h3>
@@ -2725,6 +2837,13 @@ function renderGuide() {
         <li>連続勤務は<b>${S.maxConsecWork}日まで</b>（4日か5日を「設定」で選べます。夜勤明けも勤務日に数えます）</li>
       </ul>
       <p>自動作成はこの約束を守って組みます。手で入力して約束に反したときは、その場で知らせます。</p>
+      <h3>夜勤で一緒に組まない組み合わせ</h3>
+      <ul>
+        <li><b>絶対に組まない</b>：自動作成では必ず別の夜勤にします（人が足りなくても組みません）。手で入れて重なったときはその場で知らせ、マスを<b>赤枠</b>にして「要修正」に出します。</li>
+        <li><b>できれば避ける</b>：自動作成では避けますが、ほかに入れる人がいないときは組みます。重なったマスは<b>オレンジ枠</b>、集計行は「△」、チェック結果は「注意」になります。</li>
+        <li>2交代の夜勤（16:30〜翌9:00）は、その日の準夜帯と<b>翌日の深夜帯</b>の両方で判定します。</li>
+        <li>急な休みの「代わりを探す」でも、組めない人と重なる候補は下に並び、理由を表示します。</li>
+      </ul>
       <h3>休み希望</h3>
       <p>休み希望（★公・★有）は<b>1人${S.maxPtoRequests}日まで</b>入れられます（日数は「設定」で変えられます）。休み希望の<b>前の日に準夜</b>（休みの日の未明まで勤務になる）、<b>次の日に深夜</b>（休みの日の夜中から勤務になる）は入れません。2交代夜勤も、次の日が休み希望なら入れません。</p>
       <h3>急な休みのとき</h3>
@@ -2809,10 +2928,10 @@ function buildWardWorkbook(y, m) {
     ['日勤', day => [day.dayCount, day.dayCount < day.req]],
     ['準夜帯', day => [day.eve.length, day.eve.length < S.reqEve]],
     ['準夜帯 中堅以上', day => [day.eveCheck.vet, day.eveCheck.vet < S.minVet]],
-    ['準夜帯 経験バランス', day => [day.eveCheck.problems.length ? '✕' : '○', day.eveCheck.problems.length > 0]],
+    ['準夜帯 経験・組み合わせ', day => [day.eveCheck.problems.length ? '✕' : day.eveCheck.soft.length ? '△' : '○', day.eveCheck.problems.length > 0]],
     ['深夜帯', day => [day.late.length, day.late.length < S.reqLate]],
     ['深夜帯 中堅以上', day => [day.lateCheck.vet, day.lateCheck.vet < S.minVet]],
-    ['深夜帯 経験バランス', day => [day.lateCheck.problems.length ? '✕' : '○', day.lateCheck.problems.length > 0]],
+    ['深夜帯 経験・組み合わせ', day => [day.lateCheck.problems.length ? '✕' : day.lateCheck.soft.length ? '△' : '○', day.lateCheck.problems.length > 0]],
   ];
   sumRows.forEach(([label, fn]) => {
     sh.set('A' + r, label, { style: sty.sum });
@@ -2827,7 +2946,7 @@ function buildWardWorkbook(y, m) {
   sh.freeze(4, 1);
 
   const sh2 = new SheetBuilder('スタッフ一覧');
-  ['氏名', '役職', '勤務形態', '看護師経験', '病棟経験', '区分', '夜勤可', '夜勤上限', '夜勤下限', '公休調整', '土日祝休み', '曜日の夜勤NG', '同じ夜勤にしない人', '指導者', '有給付与', 'メモ'].forEach((h, i) => sh2.set(colLetter(i + 1) + '1', h, { style: sty.head }));
+  ['氏名', '役職', '勤務形態', '看護師経験', '病棟経験', '区分', '夜勤可', '夜勤上限', '夜勤下限', '公休調整', '土日祝休み', '曜日の夜勤NG', '夜勤で組まない人', '指導者', '有給付与', 'メモ'].forEach((h, i) => sh2.set(colLetter(i + 1) + '1', h, { style: sty.head }));
   DB.staff.forEach((s, i) => {
     const rr = i + 2;
     const kinds = [];
@@ -2836,7 +2955,7 @@ function buildWardWorkbook(y, m) {
     if (isVet(s)) kinds.push('中堅以上');
     const mt = s.mentorId && staffById(s.mentorId);
     [s.name, s.role, WORK_TYPES[s.workType].label, s.nurseYear, s.wardYear, kinds.join('・'), s.nightOK ? '○' : '×', s.nightMax, s.nightMin || 0, s.offAdjust, s.weekendOff ? '○' : '',
-      nightNgLabel(s), (s.ngPartners || []).map(staffById).filter(Boolean).map(o => o.name).join('、'), mt ? mt.name + (s.needMentor ? '（夜勤同伴）' : '') : '', s.paidGranted, s.memo || '']
+      nightNgLabel(s), DB.staff.filter(o => o !== s && pairLevel(s, o)).map(o => o.name + (pairLevel(s, o) === 'avoid' ? '（できれば避ける）' : '')).join('、'), mt ? mt.name + (s.needMentor ? '（夜勤同伴）' : '') : '', s.paidGranted, s.memo || '']
       .forEach((v, k) => sh2.set(colLetter(k + 1) + rr, v, { style: sty.text }));
   });
   sh2.colWidth('A', 14).colWidth('C', 20).colWidth('F', 20).colWidth('L', 22).colWidth('M', 20).colWidth('N', 18).colWidth('P', 24);
