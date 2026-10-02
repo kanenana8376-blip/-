@@ -385,7 +385,7 @@
         <table id="breakdownTable"></table>
       </div>
       <div class="companies">
-        <h3>会社別 査定見積もり比較（国内主要買取チェーン10社を参考にしたシミュレーション）</h3>
+        <h3>会社別 査定見積もり比較（国内主要買取チェーン11社を参考にしたシミュレーション）</h3>
         <div id="companyList" class="company-list"></div>
       </div>
       <div class="advice no-print">
@@ -634,6 +634,16 @@
       flatMultiplier: 1.02,
       perk: "出店強化中につき積極的な買取価格を提示しやすい",
       bonus: 0.1
+    },
+    {
+      name: "ソコカラ",
+      type: "事故車・廃車専門・海外輸出",
+      note: "事故車・水没車・不動車・低年式車の買取に特化。世界110ヶ国への独自輸出網を活かし、他社では値がつきにくい車でも高額査定になりやすい。",
+      categoryMultiplier: { "軽自動車": 1.05, "コンパクト": 1.03 },
+      flatMultiplier: 0.98,
+      repairFactor: 0.90,
+      perk: "事故車・不動車・車検切れでも出張引き取り無料",
+      bonus: 0
     }
   ];
 
@@ -817,7 +827,10 @@
 
     // 会社別の見積もり
     const quotes = COMPANIES.map(company => {
-      const mult = companyMultiplier(company, model.category);
+      let mult = companyMultiplier(company, model.category);
+      if (repair === "yes" && company.repairFactor != null) {
+        mult *= company.repairFactor / repairFactor;
+      }
       const amount = Math.max(5, appraisalBase * mult + company.bonus);
       return { company, amount };
     }).sort((a, b) => b.amount - a.amount);
